@@ -1,0 +1,154 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      5135,        144]
+NotebookOptionsPosition[      4825,        128]
+NotebookOutlinePosition[      5162,        143]
+CellTagsIndexPosition[      5119,        140]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"Manipulate", "[", 
+  RowBox[{
+   RowBox[{"ParametricPlot3D", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"\[Lambda]", "*", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"Exp", "[", 
+            RowBox[{"-", "\[Theta]1"}], "]"}], "+", 
+           RowBox[{"Exp", "[", 
+            RowBox[{"-", "\[Theta]2"}], "]"}]}], ")"}]}], "+", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", "\[Lambda]"}], ")"}], "*", "\[Theta]1"}]}], ",", 
+       RowBox[{
+        RowBox[{"\[Lambda]", "*", 
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", "2"}], "*", "\[Theta]1"}], "]"}], "+", 
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", "2"}], "*", "\[Theta]2"}], "]"}]}], ")"}]}], "+", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", "\[Lambda]"}], ")"}], "*", "\[Theta]2"}]}], ",", 
+       RowBox[{"\[Lambda]", "*", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"Exp", "[", 
+           RowBox[{
+            RowBox[{"-", "3"}], "*", "\[Theta]1"}], "]"}], "+", 
+          RowBox[{"Exp", "[", 
+           RowBox[{
+            RowBox[{"-", "3"}], "*", "\[Theta]2"}], "]"}]}], ")"}]}]}], "}"}],
+      ",", 
+     RowBox[{"{", 
+      RowBox[{"\[Theta]1", ",", "0", ",", "10"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"\[Theta]2", ",", "0", ",", "10"}], "}"}], ",", " ", 
+     RowBox[{"AxesLabel", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{"\"\<f(1)\>\"", ",", "\"\<f(2)\>\"", ",", "\"\<f(3)\>\""}], 
+       "}"}]}], ",", 
+     RowBox[{"PlotRange", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"0", ",", "2"}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"0", ",", "2"}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"0", ",", "2"}], "}"}]}], "}"}]}]}], "]"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\[Lambda]", ",", "0", ",", "1"}], "}"}]}], "]"}]], "Input"],
+
+Cell[BoxData[
+ TagBox[
+  StyleBox[
+   DynamicModuleBox[{$CellContext`\[Lambda]$$ = 0.43871593475341797`, 
+    Typeset`show$$ = True, Typeset`bookmarkList$$ = {}, 
+    Typeset`bookmarkMode$$ = "Menu", Typeset`animator$$, Typeset`animvar$$ = 
+    1, Typeset`name$$ = "\"untitled\"", Typeset`specs$$ = {{
+      Hold[$CellContext`\[Lambda]$$], 0, 1}}, Typeset`size$$ = {
+    360., {193., 196.}}, Typeset`update$$ = 0, Typeset`initDone$$, 
+    Typeset`skipInitDone$$ = True, $CellContext`\[Lambda]$549856$$ = 0}, 
+    DynamicBox[Manipulate`ManipulateBoxes[
+     1, StandardForm, "Variables" :> {$CellContext`\[Lambda]$$ = 0}, 
+      "ControllerVariables" :> {
+        Hold[$CellContext`\[Lambda]$$, $CellContext`\[Lambda]$549856$$, 0]}, 
+      "OtherVariables" :> {
+       Typeset`show$$, Typeset`bookmarkList$$, Typeset`bookmarkMode$$, 
+        Typeset`animator$$, Typeset`animvar$$, Typeset`name$$, 
+        Typeset`specs$$, Typeset`size$$, Typeset`update$$, Typeset`initDone$$,
+         Typeset`skipInitDone$$}, "Body" :> 
+      ParametricPlot3D[{$CellContext`\[Lambda]$$ (
+           Exp[-$CellContext`\[Theta]1] + Exp[-$CellContext`\[Theta]2]) + (
+           1 - $CellContext`\[Lambda]$$) $CellContext`\[Theta]1, \
+$CellContext`\[Lambda]$$ (Exp[(-2) $CellContext`\[Theta]1] + 
+           Exp[(-2) $CellContext`\[Theta]2]) + (
+           1 - $CellContext`\[Lambda]$$) $CellContext`\[Theta]2, \
+$CellContext`\[Lambda]$$ (Exp[(-3) $CellContext`\[Theta]1] + 
+          Exp[(-3) $CellContext`\[Theta]2])}, {$CellContext`\[Theta]1, 0, 
+         10}, {$CellContext`\[Theta]2, 0, 10}, 
+        AxesLabel -> {"f(1)", "f(2)", "f(3)"}, 
+        PlotRange -> {{0, 2}, {0, 2}, {0, 2}}], 
+      "Specifications" :> {{$CellContext`\[Lambda]$$, 0, 1}}, "Options" :> {},
+       "DefaultOptions" :> {}],
+     ImageSizeCache->{405., {247., 252.}},
+     SingleEvaluation->True],
+    Deinitialization:>None,
+    DynamicModuleValues:>{},
+    SynchronousInitialization->True,
+    UnsavedVariables:>{Typeset`initDone$$},
+    UntrackedVariables:>{Typeset`size$$}], "Manipulate",
+   Deployed->True,
+   StripOnInput->False],
+  Manipulate`InterpretManipulate[1]]], "Output",
+ CellChangeTimes->{3.6363074779834347`*^9}]
+}, Open  ]]
+},
+WindowSize->{740, 867},
+WindowMargins->{{150, Automatic}, {Automatic, 52}},
+FrontEndVersion->"8.0 for Linux x86 (64-bit) (November 7, 2010)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[579, 22, 2037, 59, 107, "Input"],
+Cell[2619, 83, 2190, 42, 516, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+
