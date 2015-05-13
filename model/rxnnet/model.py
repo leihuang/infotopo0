@@ -92,6 +92,18 @@ class Network(Network0):
     v = rates
     
     
+    def copy(self):
+        """
+        Why does copy.deepcopy miss the functional definitions in namespace?
+        """
+        net = copy.deepcopy(self)
+        # the following block is taken from method 'change_varid'
+        for fid, f in net.functionDefinitions.items():
+            fstr = 'lambda %s: %s' % (','.join(f.variables), f.math)
+            net.namespace[fid] = eval(fstr, net.namespace)
+        return net
+        
+    
     def domain(self):
         """
         Output:
@@ -652,7 +664,10 @@ class Network(Network0):
             assignments2 = butil.chkeys(event.event_assignments, f)
             net2.add_event(eid2, trigger2, assignments2)
             
-        net2.functionDefinitions = self.functionDefinitions.copy() 
+        net2.functionDefinitions = self.functionDefinitions.copy()
+        for fid, f in net2.functionDefinitions.items():
+            fstr = 'lambda %s: %s' % (','.join(f.variables), f.math)
+            net2.namespace[fid] = eval(fstr, net2.namespace)
 
         ## final processings
         # method _makeCrossReferences will take care of at least
@@ -991,7 +1006,24 @@ class Network(Network0):
             return self.get_flux_resp_mat().to_series()
         else:
             raise ValueError("Unrecognized variable type: %s"%vartype)
-        
+    
+    
+    def get_s(self, **kwargs_ss):
+        return self.get_ssvals_type(vartype='concn', **kwargs_ss)    
+    
+    
+    def get_J(self, **kwargs_ss):
+        return self.get_ssvals_type(vartype='flux', **kwargs_ss)
+    
+    
+    @property
+    def s(self):
+        return self.get_s()
+    
+    @property
+    def J(self):
+        return self.get_J()
+    
     
     # steady-state
     def get_ssvals(self, varids=None, **kwargs_ss):
