@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)http://127.0.0.1:8890/notebooks/Sampling_Funcs.ipynb# -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+
+    <title>Sampling_Funcs</title>
+    <link rel="shortcut icon" type="image/x-icon" href="http://127.0.0.1:8890/static/base/images/favicon.ico?v=4e6c6be5716444f7ac7b902e7f388939">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link rel="stylesheet" href="./Sampling_Funcs_files/jquery-ui.min.css" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+
+
+<script type="text/javascript" src="./Sampling_Funcs_files/MathJax.js" charset="utf-8"></script>
+
+<script type="text/javascript">
+// MathJax disabled, set as null to distingish from *missing* MathJax,
+// where it will be undefined, and should prompt a dialog later.
+window.mathjax_url = "http://cdn.mathjax.org/mathjax/latest/MathJax.js";
+</script>
+
+<link rel="stylesheet" href="http://127.0.0.1:8890/static/components/codemirror/lib/codemirror.css?v=8648836fd3925961e1561f7e43892718">
+
+
+    <link rel="stylesheet" href="./Sampling_Funcs_files/style.min.css" type="text/css">
+    
+
+<link rel="stylesheet" href="./Sampling_Funcs_files/override.css" type="text/css">
+
+
+    <link rel="stylesheet" href="./Sampling_Funcs_files/custom.css" type="text/css">
+    <script src="./Sampling_Funcs_files/require.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+      require.config({
+          baseUrl: '/static/',
+          paths: {
+            nbextensions : '/nbextensions',
+            underscore : '/static/components/underscore/underscore-min',
+            backbone : '/static/components/backbone/backbone-min', 
+          },
+          shim: {
+            underscore: {
+              exports: '_'
+            },
+            backbone: {
+              deps: ["underscore", "jquery"],
+              exports: "Backbone"
+            }
+          }
+      });
+    </script>
+
+    
+    
+
+<script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="components/marked/lib/marked" src="./Sampling_Funcs_files/marked.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/init" src="./Sampling_Funcs_files/init.js"></script><style type="text/css"></style><style type="text/css" id="diigolet-chrome-css">body#dummybodyid .diigolet,body#dummybodyid .diigolet a,body#dummybodyid .diigolet em,body#dummybodyid .diigolet span,body#dummybodyid .diigolet div,body#dummybodyid .diigolet dl,body#dummybodyid .diigolet dt,body#dummybodyid .diigolet dd,body#dummybodyid .diigolet ul,body#dummybodyid .diigolet ol,body#dummybodyid .diigolet li,body#dummybodyid .diigolet h1,body#dummybodyid .diigolet h2,body#dummybodyid .diigolet h3,body#dummybodyid .diigolet h4,body#dummybodyid .diigolet h5,body#dummybodyid .diigolet h6,body#dummybodyid .diigolet pre,body#dummybodyid .diigolet form,body#dummybodyid .diigolet fieldset,body#dummybodyid .diigolet p,body#dummybodyid .diigolet blockquote,body#dummybodyid .diigolet th,body#dummybodyid .diigolet td,body#dummybodyid .diigolet input,body#dummybodyid .diigolet textarea,body#dummybodyid .diigolet select,body#dummybodyid .diigolet *{background:transparent none;padding:0;margin:0;border:#000 0 solid;text-align:left;text-decoration:none;text-transform:none;text-indent:0;line-height:normal;word-break:normal;word-wrap:normal;width:auto;height:auto;color:inherit;font:inherit;float:none;cursor:default;position:static;overflow:visible;max-width:none;box-shadow:none;opacity:1;border-radius:0;}
+body#dummybodyid .diigolet{color:#000;font:normal normal normal 13px arial,helvetica,clean,sans-serif;}
+body#dummybodyid .diigolet input[type=text],body#dummybodyid .diigolet textarea,body#dummybodyid .diigolet select,body#dummybodyid .diigolet fieldset{background-color:#FFF;border:1px #999 solid;padding:1px;font-size:12px;display:inline;border-radius:2px;-webkit-transition:border linear .2s,box-shadow linear .2s;}
+body#dummybodyid .diigolet select{padding:0;height:20px;}
+body#dummybodyid .diigolet input[type=text],body#dummybodyid .diigolet textarea{cursor:text;}
+body#dummybodyid .diigolet input[type=text]{height:20px;}
+body#dummybodyid .diigolet input[type="button"],body#dummybodyid .diigolet input[type="submit"],body#dummybodyid .diigolet input[type="reset"],body#dummybodyid .diigolet input[type="file"]{color:buttontext;cursor:default;padding:2px 5px;text-align:center;border:1px solid #ccc;background:#fff;border-radius:2px;background-image:-webkit-gradient(linear,0% 0,0% 100%,from(#f8f8f8),to(#d2d2d2));}
+body#dummybodyid .diigolet input[type="button"]:active,body#dummybodyid .diigolet input[type="submit"]:active,body#dummybodyid .diigolet input[type="reset"]:active,body#dummybodyid .diigolet input[type="file"]:active{background:#ddd;}
+body#dummybodyid .diigolet textarea{white-space:normal!important;resize:vertical!important;padding:2px!important;}
+body#dummybodyid .diigolet input.diigo-check{border:none;vertical-align:middle;}
+body#dummybodyid .diigolet input.diigo-button{font-size:12px!important;font-weight:bold;padding:4px 8px;cursor:pointer;border-radius:4px;}
+body#dummybodyid .diigolet input.diigo-button#diigolet-dlgBm-btnSave{width:56px;color:white;height:25px;-webkit-border-radius:4px;background-color:rgba(237,237,237,0);-webkit-box-shadow:0 1px 1px rgba(0,0,0,.15);border:solid 1px #0388dc;background-image:-webkit-linear-gradient(top,#4eaffa,#0492f5);}
+body#dummybodyid .diigolet input.diigo-button#diigolet-dlgBm-btnSave:hover{background-image:-webkit-linear-gradient(top,#349ef0,#0580d6);}
+body#dummybodyid .diigolet input.diigo-button#diigolet-dlgBm-btnSave:active{background-image:-webkit-linear-gradient(bottom,#4eaffa,#0492f5);}
+body#dummybodyid .diigolet input.diigo-downlist{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/arrow-down.png) 50% 50% no-repeat,-webkit-gradient(linear,0% 0,0% 100%,from(#f8f8f8),to(#d2d2d2));width:12px;margin-left:-16px;}
+body#dummybodyid .diigolet input.diigo-downlist:active{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/arrow-down.png) 50% 50% no-repeat,#ddd;}
+body#dummybodyid .diigolet div.diigo-buttonswitchlist{padding:4px 2px;border:1px solid #ccc;position:absolute;right:72px;background:#fff;z-index:100000;}
+body#dummybodyid .diigolet div.diigo-buttonswitchlist ul li{padding:2px 6px;}
+body#dummybodyid .diigolet div.diigo-buttonswitchlist ul li:hover{background:#43658F;color:#fff;cursor:pointer;}
+body#dummybodyid #diigoletFNSubmit{width:50px;}
+body#dummybodyid .diigolet table{border-collapse:collapse;border-spacing:0;width:auto;}
+body#dummybodyid .diigolet label{cursor:pointer!important;display:inline;vertical-align:middle;}
+body#dummybodyid .diigolet fieldset,body#dummybodyid .diigolet img{border:0;}
+body#dummybodyid .diigolet address,body#dummybodyid .diigolet caption,body#dummybodyid .diigolet cite,body#dummybodyid .diigolet code,body#dummybodyid .diigolet dfn,body#dummybodyid .diigolet em,body#dummybodyid .diigolet strong,body#dummybodyid .diigolet th,body#dummybodyid .diigolet var{font-style:normal;font-weight:bold;}
+body#dummybodyid .diigolet ol,body#dummybodyid .diigolet ul,body#dummybodyid .diigolet li{list-style:none;display:block;}
+body#dummybodyid .diigolet caption,body#dummybodyid .diigolet th{text-align:left;}
+body#dummybodyid .diigolet h1,body#dummybodyid .diigolet h2,body#dummybodyid .diigolet h3,body#dummybodyid .diigolet h4,body#dummybodyid .diigolet h5,body#dummybodyid .diigolet h6{font-weight:bold;}
+body#dummybodyid .diigolet q:before,body#dummybodyid .diigolet q:after{content:'';}
+body#dummybodyid .diigolet abbr,body#dummybodyid .diigolet acronym{border:0;}
+body#dummybodyid .diigolet a:link,body#dummybodyid .diigolet a:visited,body#dummybodyid .diigolet a:hover,body#dummybodyid .diigolet a:active{text-decoration:none;color:#00F;cursor:pointer!important;}
+body#dummybodyid .diigolet a:hover{text-decoration:underline;}
+body#dummybodyid .diigolet a *{cursor:inherit;}
+body#dummybodyid #diigolet-tray{position:fixed;top:0;left:10;width:16px;height:16px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv3.gif") no-repeat left -4px;z-index:2147483646;}
+body#dummybodyid .diigolet a.diigolet-Help:link,body#dummybodyid .diigolet a.diigolet-Help:visited{color:#06F;}
+body#dummybodyid .diigolet a.diigolet-Help:hover,body#dummybodyid .diigo a.diigolet-Help:active{color:#00F;}
+body#dummybodyid .diigolet label{margin-left:3px;}
+body#dummybodyid .diigolet span.noComments{color:#AAA;font-size:10px;}
+body#dummybodyid #diigolet-toolbar{border:none;width:100%;position:absolute;top:0;left:0;z-index:2147483647;color:#333;}
+body#dummybodyid #diigolet-tb-content{padding:3px 5px;background:#EFEDDE url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigolet-toolbar-bg2.gif) repeat scroll 0;}
+body#dummybodyid #diigolet-tb-bar span,body#dummybodyid #diigolet-tb-bar div,body#dummybodyid #diigolet-tb-bar a,body#dummybodyid #diigolet-tb-bar em{line-height:24px;}
+body#dummybodyid #diigolet-tb-shadow{height:5px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigolet-toolbar-shadow.png) repeat-x left top;}
+* html body#dummybodyid #diigolet-tb-shadow.ie6{filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true,sizingMethod=scale,src="chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigolet-toolbar-shadow.png");overflow:hidden;background:none;}
+body#dummybodyid #diigolet-help{display:none;position:absolute;top:29px;right:10px;width:200px;border:1px #ccc solid;background-color:#FFC;padding:6px 16px 6px 6px;}
+body#dummybodyid .diigolet a.diigoletButton{height:24px;float:left;padding-right:4px;cursor:pointer!important;}
+body#dummybodyid .diigolet a.diigoletButton:hover{text-decoration:none;color:#000;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3_r.png") no-repeat right top;}
+body#dummybodyid .diigolet a.diigoletButton:active{background-position:right bottom;}
+body#dummybodyid .diigolet a.diigoletButton b{font-weight:normal;color:#000;line-height:24px;float:left;padding-left:4px;height:24px;}
+body#dummybodyid #diigolet-button-highlight-dropdown{width:8px;height:16px;margin-right:4px;background:transparent url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/down_arrow.gif') no-repeat scroll left 2px;}
+body#dummybodyid #diigolet-button-highlight-dropdown.mouseovered{border-left:1px solid #888;margin-right:0;text-decoration:none;width:11px;height:24px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn4.png") no-repeat left top!important;}
+body#dummybodyid #diigolet-button-highlight-dropdown.mouseoveredIe{border-left:1px solid #888;margin-right:1px;text-decoration:none;width:11px;height:24px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn4.png") no-repeat left top!important;}
+body#dummybodyid #diigolet-button-highlight-dropdown.checked{border-left:1px solid #888;margin-right:0;text-decoration:none;width:11px;height:24px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn4_s.png") no-repeat left top!important;}
+body#dummybodyid #diigolet-button-highlight.mouseovered{text-decoration:none;color:#000;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3_r.png") no-repeat right top!important;}
+body#dummybodyid #diigolet-button-highlight.mouseoveredIe{text-decoration:none;color:#000;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3_r.png") no-repeat right top!important;}
+body#dummybodyid #diigolet-button-highlight.mouseovered b.outer{background:transparent url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3.png') no-repeat left top;}
+body#dummybodyid #diigolet-button-highlight.mouseoveredIe b.outer{background:transparent url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3.png') no-repeat left top;}
+body#dummybodyid a#diigolet-button-highlight b.outer{padding-right:5px;}
+body#dummybodyid a#diigolet-button-highlight{padding-right:0!important;}
+body#dummybodyid a.diigoletButton:hover b.outer{background:transparent url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3.png') no-repeat left top;}
+body#dummybodyid a.diigoletButton:active b.outer{background-position:left bottom;}
+body#dummybodyid .diigolet a.diigoletButton b b{font-size:12px;padding-left:20px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv3.gif") no-repeat left 50%;}
+body#dummybodyid .diigolet a.diigoletButton:active b b{position:relative;top:1px;left:1px;}
+body#dummybodyid .diigolet a.diigoletButton.diigoletDisabled{cursor:default;}
+body#dummybodyid .diigolet a.diigoletButton.diigoletDisabled b b{color:#999;position:static;}
+body#dummybodyid .diigolet a.diigoletButton.diigoletDisabled:hover{background:none transparent;}
+body#dummybodyid .diigolet a.diigoletButton.diigoletDisabled:hover b.outer{background:none transparent;}
+body#dummybodyid .diigolet a.diigoletButton.checked{background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3_r.png") no-repeat right top;background-position:right bottom;}
+body#dummybodyid .diigolet a.diigoletButton.checked b.outer{background:transparent url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletBtn3.png') no-repeat left top;background-position:left bottom;}
+body#dummybodyid .diigolet a.diigoletButton.checked b b{position:relative;top:1px;left:1px;}
+body#dummybodyid #diigolet-tb-btnSidebar b b{background-position:left -24px;}
+body#dummybodyid #diigolet-tb-btnSidebar.toClose b b{background-position:left -48px;}
+body#dummybodyid #diigolet-tb-btnBookmark b b{background-position:left -144px;}
+body#dummybodyid #diigolet-tb-btnBookmark.saved b b{background-position:left -120px;}
+body#dummybodyid #diigolet-button-highlight b b{background-position:left -72px;}
+body#dummybodyid #diigolet-button-highlight.dontShow b b{background-position:left -96px;}
+body#dummybodyid #diigolet-button-highlight.yellow b b{background-position:left -355px;}
+body#dummybodyid #diigolet-button-highlight.blue b b{background-position:left -375px;}
+body#dummybodyid #diigolet-button-highlight.green b b{background-position:left -395px;}
+body#dummybodyid #diigolet-button-highlight.pink b b{background-position:left -415px;}
+body#dummybodyid .diigolet .colorItem{padding-left:20px;height:16px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv3.gif") no-repeat left -440px;}
+body#dummybodyid #diigolet-context-yellow b,body#dummybodyid #diigolet-colorMenu-yellow b{background-position:left -440px;}
+body#dummybodyid #diigolet-context-blue b,body#dummybodyid #diigolet-colorMenu-blue b{background-position:left -460px;}
+body#dummybodyid #diigolet-context-green b,body#dummybodyid #diigolet-colorMenu-green b{background-position:left -480px;}
+body#dummybodyid #diigolet-context-pink b,body#dummybodyid #diigolet-colorMenu-pink b{background-position:left -500px;}
+body#dummybodyid #diigolet-context-yellow.colorchecked b,body#dummybodyid #diigolet-colorMenu-yellow.colorchecked b{background-position:left -520px;}
+body#dummybodyid #diigolet-context-blue.colorchecked b,body#dummybodyid #diigolet-colorMenu-blue.colorchecked b{background-position:left -540px;}
+body#dummybodyid #diigolet-context-green.colorchecked b,body#dummybodyid #diigolet-colorMenu-green.colorchecked b{background-position:left -560px;}
+body#dummybodyid #diigolet-context-pink.colorchecked b,body#dummybodyid #diigolet-colorMenu-pink.colorchecked b{background-position:left -580px;}
+body#dummybodyid #diigolet-tb-btnFloatNote b b{background-position:left -167px;}
+body#dummybodyid #diigolet-tb-btnTwitter b b{background:transparent url("http://twitter.com/favicon.ico") no-repeat left 50%;}
+body#dummybodyid #diigolet-tb-btnComment b b{background-position:left -192px;}
+body#dummybodyid #diigolet-tb-btnComment.commented b b{background-position:left -192px;}
+body#dummybodyid #diigolet-tb-btnMore b b{background-position:left 0;}
+body#dummybodyid #diigolet-tb-btnSignIn b b{background-position:left -264px;}
+body#dummybodyid #diigolet-tb-btnHide{float:right;height:24px;width:16px;background:transparent url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv3.gif") no-repeat left -240px;}
+body#dummybodyid div.diigoIcon{cursor:pointer!important;margin:0;padding:0;position:absolute;display:none;width:24px!important;z-index:2147483643;height:23px!important;background:transparent url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/edit-highlight.png') no-repeat left;-webkit-transition:-webkit-transform 150ms ease;vertical-align:text-bottom;}
+body#dummybodyid span.diigoHighlightCommentLocator{vertical-align:text-bottom;}
+body#dummybodyid div.diigoIcon span{color:#000;display:block;font-family:Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;line-height:18px;text-align:center;text-shadow:0 1px 1px #FFF;text-decoration:none;text-indent:0;display:none;}
+body#dummybodyid div.diigoHighlightcommented{display:inline-block!important;}
+body#dummybodyid div.ImageIcon{background-color:transparent!important;}
+body#dummybodyid div.diigoIcon:hover{background-color:transparent!important;background-repeat:no-repeat!important;-webkit-transform:translate(0px,-2px);}
+body#dummybodyid div.diigoHighlightcommented.TextIcon{bottom:0;}
+body#dummybodyid div.diigoHighlightcommented.public{background:#FFF url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/public-annotation.png') no-repeat left;}
+body#dummybodyid div.diigoHighlightcommented.private.yellow{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 0 no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.private.blue{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -46px no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.private.green{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -92px no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.private.pink{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -138px no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.group.yellow{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -23px no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.group.blue{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -69px no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.group.green{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -115px no-repeat;}
+body#dummybodyid div.diigoHighlightcommented.group.pink{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/annotation-icon.png') 0 -161px no-repeat;}
+body#dummybodyid #diigolet-toolbar .dropdownMenu{display:none;border:1px solid #999;font:12px arial,helvetica,clean,sans-serif;background-color:Menu;padding:2px 0;z-index:2147483647;position:absolute;top:30px;width:140px;}
+body#dummybodyid #diigolet-toolbar .dropdownMenu a,body#dummybodyid #diigolet-toolbar .dropdownMenu a:link,body#dummybodyid #diigolet-toolbar .dropdownMenu a:visited,body#dummybodyid #diigolet-toolbar .dropdownMenu a:hover,body#dummybodyid #diigolet-toolbar .dropdownMenu a:active{display:block;padding:2px 12px;font-weight:normal;text-decoration:none;color:#000;background:#fff;cursor:default;}
+body#dummybodyid #diigolet-toolbar .dropdownMenu a:hover,body#dummybodyid #diigolet-toolbar .dropdownMenu a:active{color:#fff;background:#09f;}
+body#dummybodyid #diigolet-notify{display:none;position:absolute;top:33px;left:0;border:1px #ccc solid;background-color:#FFC;padding:6px 16px 6px 6px;z-index:2147483647;}
+body#dummybodyid #diigolet-notify.right{left:auto;right:0;text-align:right;}
+body#dummybodyid .diigolet .tagList{margin:2px 0;float:left;}
+body#dummybodyid .diigolet .diigo-su-tag .tagButton{display:inline-block;height:16px;padding:0 5px;line-height:16px;background-color:#f2f2f2;border-top:1px solid rgba(0,0,0,0);border-left:1px solid rgba(0,0,0,0);border-right:1px solid #C9D7F1;border-bottom:1px solid #C9D7F1;color:#858585;border-radius:1px;cursor:pointer;margin-right:3px;}
+body#dummybodyid .diigolet .diigo-su-tag .tagButton:hover{border-color:#82b3f8;}
+body#dummybodyid .diigolet .diigo-su-tag .tagButton.inused{color:#3f99a1;}
+body#dummybodyid .diigolet .diigo-su-tag .tagButton.selected{border-color:#82b3f8;}
+body#dummybodyid .diigolet .tagLoading a{display:none;margin-bottom:10px;}
+body#dummybodyid .diigolet .tagList.tagLoading .loading{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/indicator.gif) no-repeat left top;height:16px;padding-left:22px;display:block;}
+body#dummybodyid .diigolet .tagLoading .tagListHeader{display:none;}
+body#dummybodyid .diigolet .tagListHeader{cursor:pointer;float:left;width:100px;line-height:23px;}
+body#dummybodyid .diigolet .tagListHeader:hover{text-decoration:underline;}
+body#dummybodyid .diigolet .tagList div{color:#666!important;font-size:12px!important;font-weight:bold!important;padding-right:5px!important;text-align:left!important;}
+body#dummybodyid #diigolet-twitter{background-color:threedface;font-family:Arial,sans-serif;font-size:13px;color:windowtext;padding:5px 5px;margin:0;left:0;top:30px;z-index:2147483646;width:380px;position:static;border:1px #09F solid;border-left-width:0;}
+body#dummybodyid #diigolet-twitter input{vertical-align:middle;}
+body#dummybodyid .diigolet .twitterlogo{width:210px;height:49px;FILTER:progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true,sizingMethod=scale,src="http://assets3.twitter.com/images/twitter.png");}
+body#dummybodyid #diigolet-tagForward{background-color:white;width:460px;font-family:Arial,Helvetica,sans-serif;-webkit-border-radius:0;cursor:default;position:static;right:5px;top:75px;z-index:2147483646;border:1px solid rgba(0,0,0,.25);box-shadow:0 1px 5px rgba(0,0,0,.3);-webkit-user-select:none;background-clip:content-box;-webkit-animation:fadeinScale 200ms ease;}
+body#dummybodyid #diigolet-tagForward.show{-webkit-animation:fadeinScale 200ms ease;}
+body#dummybodyid #diigolet-tagForward.hide{-webkit-animation:fadeoutScale 200ms ease;}
+body#dummybodyid #diigolet-tagForward *{-webkit-box-sizing:content-box!important;box-sizing:content-box!important;}
+body#dummybodyid #diigolet-tagForward-topBar{height:38px;vertical-align:middle;background-color:#f5f5f5;border-bottom:1px solid #ddd;}
+body#dummybodyid #diigolet-tagForward-topBar>span{line-height:38px;display:inline-block;margin-left:15px;color:#4B4B4B;font-size:16px;cursor:move;}
+body#dummybodyid #diigolet-tagForward-topBar .focus-research-tip{margin-left:3px;font-size:12px;display:none;}
+body#dummybodyid #diigolet-tagForward .tabContainer{text-align:center;margin:5px;}
+body#dummybodyid #diigolet-tagForward .tab{margin-right:8px;margin-left:8px;padding:0 8px 2px 8px;font-weight:bold;}
+body#dummybodyid #diigolet-tagForward .tabContainer a:link,body#dummybodyid #diigolet-tagForward .tabContainer a:visited{padding:4px;border:1px #fff solid;font-weight:bold;color:#06c;text-decoration:none;}
+body#dummybodyid #diigolet-tagForward .tabContainer a.active:link,body#dummybodyid #diigolet-tagForward .tabContainer a.active:visited{border:none;background-color:#09f;color:#fff;padding:5px;}
+body#dummybodyid #diigolet-tagForward .tabContainer a:hover,body#dummybodyid #diigolet-tagForward .tabContainer a:active{border:1px #09f solid;}
+body#dummybodyid #diigolet-tagForward div.tabContent{display:none;}
+body#dummybodyid #diigolet-tagForward div.tabContent.active{display:block;}
+body#dummybodyid #diigolet-tagForward-caption{text-align:center;line-height:30px;font-size:14px;font-weight:bold;}
+body#dummybodyid #diigolet-tagForward-remove{float:right;color:#f00;background:-webkit-linear-gradient(bottom,#ebebeb,#f5f5f5);margin-top:6px;margin-right:15px;cursor:pointer;height:24px;width:27px;border:1px solid #c4c4c4;border-radius:4px;box-shadow:0 1px 0 #fff;}
+body#dummybodyid #diigolet-tagForward-remove:active{background:-webkit-linear-gradient(top,#ebebeb,#f5f5f5);}
+body#dummybodyid #diigolet-tagForward-remove>span{float:left;background-image:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/remove.png');height:14px;width:11px;margin-top:5px;margin-left:8px;cursor:pointer;}
+body#dummybodyid #diigolet-tagForward-remove:hover>span{background-position:0 -14px;}
+body#dummybodyid #diigolet-Bookmark-Form{padding:20px 15px 0 15px;}
+body#dummybodyid #diigolet-Bookmark-Form input[type="text"],body#dummybodyid #diigolet-Bookmark-Form textarea{outline:none;border:none;background-color:white;-webkit-transition:height .1s ease-in-out;}
+body#dummybodyid #diigolet-Bookmark-Form input[type="text"]{line-height:20px;min-height:20px;}
+body#dummybodyid #diigolet-tagForward .diigo-hr{width:426px;border-top:1px #ccc solid;margin:0 auto;height:1px;overflow:hidden;}
+body#dummybodyid .diigolet .diigo-table{margin:10px 20px;}
+body#dummybodyid .diigolet .diigo-table td{padding:2px 0;}
+body#dummybodyid .diigolet .diigo-table th{color:#666;font-weight:bold;padding-right:5px;width:62px;text-align:left;font-size:12px!important;}
+body#dummybodyid .diigolet .diigolet-input{width:350px;padding:1px;font-size:12px!important;height:16px!important;padding-left:3px!important;line-height:16px!important;outline:none!important;}
+body#dummybodyid .diigolet .diigolet-input:focus{border:solid 1px #3996ed;-webkit-box-shadow:0 0 1px rgba(77,144,254,.55);}
+body#dummybodyid #Diigo-Bookmark-Description,body#dummybodyid #Diigo-Forward-PS{border:1px solid #d7d7d7;background-color:white;-webkit-transition:border 400ms ease;min-height:56px;}
+body#dummybodyid #Diigo-Bookmark-Description.focus{border:1px solid #aaa;}
+body#dummybodyid #Diigo-Bookmark-Description-Input{width:413px;max-width:413px;font-family:Arial;height:45px;margin-left:6px;margin-top:3px;font-size:12px;padding:2px;}
+body#dummybodyid #Diigo-Bookmark-Url{border-left:1px solid #DCDCDC;border-right:1px solid #DCDCDC;background-color:white;position:relative;-webkit-transform:rotateX(-90deg);height:0;position:relative;}
+body#dummybodyid #Diigo-Bookmark-Url.fold{-webkit-animation:fold 400ms ease both;-webkit-animation-play-state:running;}
+body#dummybodyid #Diigo-Bookmark-Url.unfold{-webkit-animation:unfold 400ms ease both;-webkit-animation-play-state:running;border-bottom:1px solid #DCDCDC;}
+body#dummybodyid #Diigo-Bookmark-Url>div#url-arrow{height:6px;width:13px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/dp-arrow.png");position:absolute;left:11px;top:-6px;}
+body#dummybodyid #Diigo-Bookmark-Url-Input{margin-top:3px;width:412px;margin-left:5px;}
+body#dummybodyid #Diigo-Bookmark-Title{height:30px;border:1px solid #d7d7d7;background-color:white;-webkit-transition:border 400ms ease;position:relative;}
+body#dummybodyid .diigolet .diigo-alert-tip{background-color:rgba(255,0,0,0.8);position:absolute;left:117px;top:-29px;padding:4px 6px;display:block;font-size:12px;font-weight:bold;pointer-events:none;font-family:arial,sans-serif;color:white;display:none;line-height:16px;}
+body#dummybodyid .diigolet .diigo-alert-tip span{background:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/alert.png') -6px -4px no-repeat;text-indent:17px;display:inline-block;vertical-align:middle;}
+body#dummybodyid .diigolet .diigo-alert-tip .diigo-alert-tip-arrow{position:absolute;border:5px solid;border-top-color:transparent;border-right-color:transparent;border-bottom-color:rgba(255,0,0,0.8);border-left-color:transparent;top:24px;height:0;width:0;line-height:0;-webkit-transform:rotate(180deg);left:91px;}
+body#dummybodyid .diigolet #Diigo-Bookmark-Url .diigo-alert-tip{left:136px;}
+body#dummybodyid .diigolet #Diigo-Bookmark-Url .diigo-alert-tip-arrow{left:71px;}
+body#dummybodyid #Diigo-Bookmark-Title.focus{border:1px solid #aaa;}
+body#dummybodyid #Diigo-Bookmark-Title-Input{margin:4px 0 0 0;width:392px;border:none;outline:none;font-size:14px;}
+body#dummybodyid #Diigo-Bookmark-Title #link-icon{float:left;height:30px;width:30px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/URL.png") 4px 0 no-repeat;cursor:pointer;}
+body#dummybodyid #Diigo-Bookmark-Title #link-icon:hover{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/URL.png") 4px -30px no-repeat;}
+body#dummybodyid #Diigo-Bookmark-Title #link-icon.unfold{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/URL.png") 4px -30px no-repeat;}
+body#dummybodyid #Diigo-Bookmark-Options .diigo-option{font-size:12px;height:inherit;width:120px;display:inline-block;padding:13px 0 15px 0;color:#555;}
+body#dummybodyid .diigo-option:hover{background-position:0 -20px;}
+body#dummybodyid .diigo-option:active{background-position:0 -40px;}
+body#dummybodyid .diigo-option.active{background-position:0 -40px;}
+body#dummybodyid .diigo-option .op-checkbox,body#dummybodyid #Diigo-Bookmark-checkShareExisting .op-checkbox{height:13px;width:15px;display:inline-block;vertical-align:middle;position:relative;cursor:pointer;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/checkbox.png");}
+body#dummybodyid .diigo-option .op-label{margin-left:7px;text-indent:20px;display:inline-block;vertical-align:middle;cursor:pointer;}
+body#dummybodyid #Diigo-Bookmark-checkShareExisting{display:none;}
+body#dummybodyid #Diigo-Bookmark-checkShareExisting .op-label{margin-left:7px;text-indent:-6px;display:inline-block;vertical-align:middle;cursor:pointer;}
+body#dummybodyid #Diigo-Bookmark-Options .op-checkbox-container{display:inline;cursor:pointer;}
+body#dummybodyid #Diigo-Bookmark-uploadCache{margin-left:20px;}
+body#dummybodyid .diigolet .op-checkbox-container:hover>.op-checkbox{background-position:0 -13px;}
+body#dummybodyid .diigolet .op-checkbox-container.checked .op-checkbox{background-position:0 -26px;}
+body#dummybodyid #Diigo-Bookmark-Privacy .op-label{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/private.png");background-repeat:no-repeat;}
+body#dummybodyid #Diigo-Bookmark-Unread .op-label{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/op-readlater.png");background-repeat:no-repeat;}
+body#dummybodyid #Diigo-Bookmark-uploadCache .op-label{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/cache.png");background-repeat:no-repeat;}
+body#dummybodyid #Diigo-Bookmark-Url.invalid{border:1px solid #f00;margin-top:-1px;}
+body#dummybodyid #Diigo-Bookmark-Url.invalid div{background-position:0 -6px;}
+body#dummybodyid #Diigo-Bookmark-Title.invalid{border:1px solid #f00;}
+body#dummybodyid #Diigo-Bookmark-Tag-Wrapper{min-height:24px;border:1px solid #d7d7d7;background-color:white;margin-top:15px;position:relative;-webkit-transition:border 400ms ease;height:30px;}
+body#dummybodyid #Diigo-Bookmark-Tag-Wrapper.focus{border:1px solid #aaa;}
+body#dummybodyid #Diigo-Bookmark-Tag-Input{margin-top:4px;margin-left:2px;width:389px;}
+body#dummybodyid #Diigo-Bookmark-Tag{height:30px;}
+body#dummybodyid .diigolet #Diigo-Bookmark-Tag{box-shadow:none;}
+body#dummybodyid #Diigo-Bookmark-Tag-Wrapper.active{border:solid 1px #3996ed;-webkit-box-shadow:0 0 1px rgba(77,144,254,.55);}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud{border:1px solid #d7d7d7;border-bottom-right-radius:3px;border-bottom-left-radius:3px;display:none;background-color:white;font-size:12px;margin-top:-1px;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud>div:first-child{height:25px;width:100%;line-height:25px;font-weight:bold;border-bottom:1px solid #ccc;text-indent:2px;clear:both;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud>div:first-child a{float:right;margin-right:3px;text-decoration:none;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud>div:first-child a:hover{text-decoration:underline;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud-Container{max-height:180px;overflow:auto;width:421px;padding:3px 5px 5px 0;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud-Container::-webkit-scrollbar{width:6px;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud-Container::-webkit-scrollbar-track-piece{background-color:transparent;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud-Container::-webkit-scrollbar-thumb:vertical{height:20px;background-color:#CCC;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud-Container::-webkit-scrollbar-thumb:hover{background-color:#aaa;}
+body#dummybodyid #Diigo-Bookmark-Tag-Wrapper.opened+#Diigo-Bookmark-Tag-Cloud{visibility:visible;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud ul li{display:inline-block;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud .Diigo-Bookmark-Tag-item{margin-left:3px;text-decoration:none;color:#04c;line-height:normal;display:inline-block;line-height:140%;cursor:pointer;padding:0 2px;}
+body#dummybodyid #Diigo-Bookmark-checkShare{display:none;}
+body#dummybodyid #Diigo-Bookmark-checkShareExisting{margin-right:3px;}
+body#dummybodyid #Diigo-Bookmark-checkShare input[type=checkbox]{width:14px;height:14px;margin:0;cursor:pointer;vertical-align:middle;background:#fff;border:1px solid #dcdcdc;-webkit-border-radius:1px;-moz-border-radius:1px;border-radius:1px;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;position:relative!important;}
+body#dummybodyid #Diigo-Bookmark-checkShare input[type=checkbox]:hover{border-color:#c6c6c6;-webkit-box-shadow:inset 0 1px 1px rgba(0,0,0,0.1);-moz-box-shadow:inset 0 1px 1px rgba(0,0,0,0.1);box-shadow:inset 0 1px 1px rgba(0,0,0,0.1);}
+body#dummybodyid #Diigo-Bookmark-checkShare input[type=checkbox]:active{border-color:#c6c6c6;background:#ebebeb;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud .Diigo-Bookmark-Tag-item.selected{background-color:#09f;color:white;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud>div:first-child{height:20px;width:100%;line-height:20px;font-weight:bold;border-bottom:1px solid #ccc;text-indent:2px;}
+body#dummybodyid #Diigo-Bookmark-Tag-Cloud .Diigo-Bookmark-Tag-item:hover{text-decoration:underline;}
+body#dummybodyid #Diigo-Bookmark-Tag-Eidt{float:right;margin-right:3px;}
+body#dummybodyid #Diigo-Bookmark-Tag-suggestion{margin-top:7px;}
+body#dummybodyid #diigolet-bm-tagListContainer-recommend{margin-top:3px;display:none;}
+body#dummybodyid #Diigo-Bookmark-Tag-suggestion .diigo-su-tag{line-height:26px;font-size:12px;min-height:26px;margin-top:5px;}
+body#dummybodyid #Diigo-Bookmark-Tag-suggestion .diigo-su-tag a{display:inline-block;text-decoration:none;color:#555;width:93px;}
+body#dummybodyid #Diigo-Bookmark-Tag-suggestion .loading{display:inline-block;height:10px;width:120px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/loading.gif");}
+body#dummybodyid #Diigo-Bookmark-Tag-suggestion .diigo-su-tag a:hover{text-decoration:underline;}
+body#dummybodyid #Diigo-Bookmark-Tag-dropdown{height:30px;width:28px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/dropdown.png");float:left;cursor:pointer;}
+body#dummybodyid #Diigo-Bookmark-Tag-dropdown:hover{background-position:0 -30px;}
+body#dummybodyid .diigo-table .diigo-invalid-input{display:none;height:16px;width:16px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/icons.png");background-position:-16px -80px;margin-left:4px;}
+body#dummybodyid #diigo-list-group{margin-top:17px;width:430px;height:24px;}
+body#dummybodyid #diigo-list-group>div{float:left;height:20px;font-size:12px;color:#04c;width:200px;font-weight:bold;line-height:20px;}
+body#dummybodyid #diigo-list-group #diigo-list-add{position:relative;display:none;}
+body#dummybodyid #diigo-list-add .diigo-alert-tip{left:7px;top:-29px;}
+body#dummybodyid #diigo-list-add .diigo-alert-tip .diigo-alert-tip-arrow{left:43px;}
+body#dummybodyid #diigo-list-group #diigo-list-addInput{width:102px;height:26px;border:1px solid #d7d7d7;-webkit-transition:border 400ms ease;padding:0 3px;font-weight:normal;color:#000;border-radius:0;}
+body#dummybodyid #diigo-list-group #diigo-list-addInput:focus{border:1px solid #aaa;}
+body#dummybodyid #diigo-list-add>*{float:left;}
+body#dummybodyid #diigo-list-addBtn{height:26px;min-width:38px;background-image:-webkit-linear-gradient(top,#53aaf0,#118cef);border:1px solid #066ec1;color:#fff;border-radius:2px;line-height:26px;font-weight:normal;margin-left:6px;cursor:pointer;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all;}
+body#dummybodyid #diigo-list-addBtn:not(.processing):hover{background-image:-webkit-linear-gradient(top,#45a2ee,#037bdb);}
+body#dummybodyid #diigo-list-addBtn:not(.processing):active{background-image:-webkit-linear-gradient(bottom,#53aaf0,#118cef);}
+body#dummybodyid #diigo-list-addBtn .label{margin-left:8px;cursor:pointer;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.320,1.275) all;}
+body#dummybodyid #diigo-list-addBtn .spinner{left:8px;margin-left:-16px;opacity:0;height:16px;width:16px;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.320,1.275) all;display:inline-block;position:relative;top:3px;visibility:hidden;}
+body#dummybodyid #diigo-list-addBtn.processing+a{display:none;}
+body#dummybodyid #diigo-list-addBtn.processing .spinner{opacity:1;margin-left:12px;left:-7px;visibility:visible;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/addlist-processing.gif");}
+body#dummybodyid #diigo-list-addCancel{color:#999;cursor:pointer;font-weight:normal;line-height:26px;margin-left:5px;font-size:12px;margin-top:2px;}
+body#dummybodyid #diigo-list-addCancel:hover{text-decoration:underline;}
+body#dummybodyid #diigo-list-group>div>select:hover{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/select-arrow-hover.png"),-webkit-linear-gradient(top,#fbfbfb,#f3f3f3);}
+body#dummybodyid #diigo-list-group>div>select.processing{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/loading5.gif"),-webkit-linear-gradient(top,#f5f5f5,#fff);}
+body#dummybodyid #diigo-list-group>div>select:active{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/select-arrow-hover.png"),-webkit-linear-gradient(top,#f5f5f5,#fff);}
+body#dummybodyid #diigo-group{margin-left:26px;}
+body#dummybodyid #diigolet-bm-tagListContainer-group{display:none;}
+body#dummybodyid #diigo-list-group>div>select{height:28px;width:200px;display:block;-webkit-appearance:none!important;border:1px solid #d7d7d7;background-position:right;background-repeat:no-repeat;color:#333;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/img/popup-image/select-arrow.png"),-webkit-linear-gradient(top,#fff,#f5f5f5);outline:none;cursor:pointer;font-size:12px;padding-right:22px;border-radius:0;font-weight:normal;box-sizing:border-box!important;}
+body#dummybodyid #Diigo-Bookmark-bottom{height:49px;padding-top:24px;}
+body#dummybodyid #Diigo-Bookmark-bottom>div:first-child{float:left;margin-top:3px;margin-left:15px;}
+body#dummybodyid #diigolet-dlgBm-btnSave{display:inline-block;height:28px;width:82px;line-height:28px;background-image:-webkit-linear-gradient(top,#53aaf0,#118cef);float:right;cursor:pointer;margin-right:15px;text-align:center;color:white;border-radius:2px;border:1px solid #066ec1;font-size:14px;}
+body#dummybodyid #diigolet-dlgBm-btnSave:hover{background-image:-webkit-linear-gradient(top,#45a2ee,#037bdb);}
+body#dummybodyid #diigolet-dlgBm-btnSave:active{background-image:-webkit-linear-gradient(bottom,#53aaf0,#118cef);}
+body#dummybodyid #diigolet-dlgBm-btnCancel{display:inline-block;float:right;font-size:14px;color:#999;height:12px;cursor:pointer;margin-top:8px;margin-right:19px;}
+body#dummybodyid #diigolet-dlgBm-btnCancel:hover{text-decoration:underline;}
+body#dummybodyid .diigolet .diigolet-submit{width:140px;height:25px;text-align:center;}
+body#dummybodyid #diigolet-txtPermalink{background-color:#eee;padding:3px;font-size:13px;}
+body#dummybodyid #diigolet-cross-promotion{font-family:arial,helvetica,sans-serif;font-size:12px;padding:10px;}
+body#dummybodyid #diigolet-cross-promotion a{background:whiteSmoke;border:1px solid #CCC;color:#06C;display:block;padding:3px 10px;text-align:center;text-decoration:none;-webkit-box-shadow:rgba(255,255,255,0.6) 0 1px 0;-webkit-border-radius:10px;-webkit-transition:all .25s linear;}
+body#dummybodyid #diigolet-cross-promotion a:hover{background:white;text-decoration:none;color:#04c;}
+body#dummybodyid .diigoletContexMenu{font:12px arial,helvetica,clean,sans-serif;z-index:2147483645;}
+body#dummybodyid #diigolet-csm #diigolet-csm-research-mode{width:18px;height:18px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/focus-research-csm.png");position:absolute;top:-8px;left:-9px;z-index:1;display:none;}
+body#dummybodyid #diigolet-csm.diigo-researchMode #diigolet-csm-research-mode{display:block;}
+body#dummybodyid #diigolet-csm .csm-action{display:block;height:22px!important;width:27px!important;border:1px solid rgba(0,0,0,.15);border-radius:1px 0 0 1px;opacity:.9;z-index:100000;float:left;margin:0!important;}
+body#dummybodyid #diigolet-csm #diigolet-csm-highlight{background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/highlight-csm.png),-webkit-linear-gradient(#fff,#f5f5f5);}
+body#dummybodyid #diigolet-csm #diigolet-csm-highlight:active{background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/highlight-csm.png),-webkit-linear-gradient(#f2f2f2,#fff);}
+body#dummybodyid #diigolet-csm #diigolet-csm-highlightAndComment{border-width:1px 1px 1px 0;border-style:solid;border-color:rgba(0,0,0,.15);border-radius:1px 0 0 1px;background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/stickynote-csm.png),-webkit-linear-gradient(#fff,#f5f5f5);}
+body#dummybodyid #diigolet-csm #diigolet-csm-highlightAndComment:active{background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/stickynote-csm.png),-webkit-linear-gradient(#f2f2f2,#fff);}
+body#dummybodyid #diigolet-csm #diigolet-csm-search{border-width:1px 1px 1px 0;border-style:solid;border-color:rgba(0,0,0,.15);border-radius:1px 0 0 1px;background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/search-csm.png),-webkit-linear-gradient(#fff,#f5f5f5);}
+body#dummybodyid #diigolet-csm #diigolet-csm-search:active{background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/search-csm.png),-webkit-linear-gradient(#f2f2f2,#fff);}
+body#dummybodyid #diigolet-csm.yellow #diigolet-csm-highlight{background-position:0 0;}
+body#dummybodyid #diigolet-csm.blue #diigolet-csm-highlight{background-position:0 -22px;}
+body#dummybodyid #diigolet-csm.green #diigolet-csm-highlight{background-position:0 -44px;}
+body#dummybodyid #diigolet-csm.pink #diigolet-csm-highlight{background-position:0 -66px;}
+body#dummybodyid #diigolet-csm.yellow #diigolet-csm-highlightAndComment{background-position:0 0;}
+body#dummybodyid #diigolet-csm.blue #diigolet-csm-highlightAndComment{background-position:0 -22px;}
+body#dummybodyid #diigolet-csm.green #diigolet-csm-highlightAndComment{background-position:0 -44px;}
+body#dummybodyid #diigolet-csm.pink #diigolet-csm-highlightAndComment{background-position:0 -66px;}
+body#dummybodyid #diigolet-csm .csm-action:not(#diigolet-csm-search).editing{opacity:1!important;}
+body#dummybodyid #diigolet-csm a:visited,body#dummybodyid #diigolet-csm a:link{padding:0!important;}
+body#dummybodyid #diigolet-csm{z-index:100000;height:22px!important;}
+body#dummybodyid #diigolet-csm>div{float:left;position:relative;}
+body#dummybodyid #diigolet-csm a:hover{opacity:1!important;}
+body#dummybodyid #diigolet-csm #diigolet-csm-dropdown:hover{background-position:0 -44px;}
+body#dummybodyid #diigolet-csm #diigolet-csm-highlight:hover+a#diigolet-csm-dropdown{background-position:0 -22px;}
+body#dummybodyid #diigolet-csm #diigolet-csm-dropdown:active{background-position:0 -66px;}
+body#dummybodyid #diigolet-csm .diigolet-csm-color{position:absolute;top:23px;left:1px;background-color:white;-webkit-box-shadow:0 1px 2px rgba(0,0,0,.35);line-height:13px;overflow:hidden;height:0;visibility:visible!important;z-index:-1;display:block!important;}
+body#dummybodyid #diigolet-csm-highlightAndComment-wrapper .diigolet-csm-color{left:0;}
+body#dummybodyid #diigolet-csm .diigolet-csm-color.hidden{height:0;}
+body#dummybodyid #diigolet-csm .diigolet-csm-color.small{height:0;width:27px;display:block;}
+body#dummybodyid #diigolet-csm .diigolet-csm-coloritem{float:left;display:block;cursor:pointer;padding:0;margin:0;}
+body#dummybodyid .diigolet-csm-color.small .diigolet-csm-coloritem{height:7px;width:10px;}
+body#dummybodyid #diigolet-csm .diigolet-csm-coloritem.yellow{background-color:#fc6;border:1px solid #fc6;margin-right:1px;margin-bottom:1px;margin-left:1px;margin-top:1px;}
+body#dummybodyid #diigolet-csm .diigolet-csm-coloritem.blue{background-color:#7ccce5;border:1px solid #7ccce5;margin-bottom:1px;margin-top:1px;}
+body#dummybodyid #diigolet-csm .diigolet-csm-coloritem.green{background-color:#b4db66;border:1px solid #b4db66;margin-right:1px;margin-left:1px;margin-bottom:1px;}
+body#dummybodyid #diigolet-csm .diigolet-csm-coloritem.pink{background-color:#f98baf;border:1px solid #f98baf;margin-right:0!important;margin-bottom:1px;}
+body#dummybodyid #diigolet-csm .diigolet-csm-color .diigolet-csm-coloritem:hover{border-color:#36c;}
+body#dummybodyid #diigolet-annMenu{height:26px;border-top:2px solid #43B4EA;border-radius:2px;background-color:#fff;padding:1px;position:absolute;box-shadow:-1px 0 0 rgba(0,0,0,0.1),1px 0 0 rgba(0,0,0,0.1),0px 1px 1px rgba(0,0,0,0.2);-webkit-user-select:none;-webkit-animation:fadeIn 130ms ease-in;box-sizing:content-box!important;}
+body#dummybodyid #diigolet-annMenu .diigolet-annMenu-item{height:20px;width:20px;float:left;padding:1px;position:relative;cursor:pointer;-webkit-transition:background-color 200ms ease;border-radius:3px;padding:3px;box-sizing:content-box!important;}
+body#dummybodyid #diigolet-annMenu .diigolet-annMenu-item *{box-sizing:content-box!important;}
+body#dummybodyid #diigolet-annMenu .diigolet-annMenu-item>b{cursor:pointer;}
+body#dummybodyid #diigolet-annMenu .diigolet-annMenu-item:hover{background-color:#d8f2ff;}
+body#dummybodyid #diigolet-annMenu #diigolet-annMenu-currentColor{height:12px;width:12px;border:1px solid #289FE4;margin:3px 0 0 2px;}
+body#dummybodyid #diigolet-annMenu #diigolet-annMenu-currentColor>b{height:10px;width:10px;border:1px solid #fff;display:block;background-color:#fc6;cursor:pointer;}
+body#dummybodyid #diigolet-annMenu #diigolet-annMenu-currentColor.yellow>b{background-color:#fc6;}
+body#dummybodyid #diigolet-annMenu #diigolet-annMenu-currentColor.blue>b{background-color:#7ccce5;}
+body#dummybodyid #diigolet-annMenu #diigolet-annMenu-currentColor.green>b{background-color:#b4db66;}
+body#dummybodyid #diigolet-annMenu #diigolet-annMenu-currentColor.pink>b{background-color:#f98baf;}
+body#dummybodyid #diigolet-annMenu .diigolet-annMenu-item>b{display:block;height:20px;width:20px;}
+body#dummybodyid #diigolet-annMenu-add>b{background-image:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/ann-add.png');}
+body#dummybodyid #diigolet-annMenu-share>b{background-image:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/ann-share.png');}
+body#dummybodyid #diigolet-annMenu-del>b{background-image:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/ann-del.png');}
+body#dummybodyid #diigolet-annMenu-more>b{background-image:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/ann-more.png');}
+body#dummybodyid #diigolet-annMenu-colorPicker{height:62px;width:14px;border:1px solid #96bbd5;padding:3px 2px;background-color:#fff;position:relative;top:3px;left:-1px;display:none;-webkit-animation:diigo-dropdown .15s ease-in 1;}
+body#dummybodyid #diigolet-annMenu-colorPicker .ann-colorItem{height:12px;width:12px;border-width:1px;border-style:solid;display:block;margin-bottom:2px;}
+body#dummybodyid #diigolet-annMenu-colorPicker .ann-colorItem:hover{border-color:#06f!important;}
+body#dummybodyid #diigolet-annMenu-colorPicker .ann-colorItem.colorchecked b{width:4px;height:4px;background:#666;margin-top:4px;margin-left:4px;display:block;}
+body#dummybodyid .ann-colorItem#diigolet-context-yellow{border-color:#e9a110;background-color:#fc6;}
+body#dummybodyid .ann-colorItem#diigolet-context-blue{border-color:#33a5c9;background-color:#7ccce5;}
+body#dummybodyid .ann-colorItem#diigolet-context-green{border-color:#9ac83b;background-color:#b4db66;}
+body#dummybodyid .ann-colorItem#diigolet-context-pink{border-color:#da376c;background-color:#f98baf;}
+body#dummybodyid #diigolet-annMenu-arrow{position:absolute;top:100%;left:33px;height:8px;width:14px;background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/ann-arrow.png);}
+body#dummybodyid #diigolet-annMenu.onlyMy #diigolet-annMenu-arrow{left:59px;}
+body#dummybodyid #diigolet-annMenu-tip{padding-left:4px;border-top:1px solid #eee;margin-top:1px;color:#999;}
+body#dummybodyid #diigolet-annMenu-moreThings{display:none;position:absolute;top:110%;left:77%;min-width:236px;max-width:236px;padding:3px;border:1px solid #94bcd6;box-shadow:0 1px 2px rgba(0,0,0,.15);background-color:#fff;border-radius:3px;font:12px/18px arial;color:#333;}
+body#dummybodyid .diigoletContexMenu a:link,body#dummybodyid .diigoletContexMenu a:visited{display:block;padding:2px 3px;text-decoration:none;color:#000;cursor:default;white-space:nowrap;}
+body#dummybodyid .diigoletContexMenu a:hover:not(.colorItem),body#dummybodyid .diigoletContexMenu a:active{color:#fff;background:#09f;}
+body#dummybodyid .diigoletContexMenu div.sep{line-height:0;border-top:1px solid #AAA;margin:3px 0;}
+body#dummybodyid *html .diigoletContexMenu ._selection a{width:45px;}
+body#dummybodyid *html .diigoletContexMenu ._highlight a{width:90px;}
+body#dummybodyid .diigolet.diigoletFN{z-index:2147483644;width:300px;-webkit-user-select:none;}
+body#dummybodyid #diigolet-dlg-sticky.groupNew #FN-post-form{display:block;}
+body#dummybodyid #diigolet-dlg-sticky.groupNew #FN-group-content-nav{display:none;}
+body#dummybodyid #diigolet-dlg-sticky.groupNew #FN-group-content{display:none;}
+body#dummybodyid .diigolet.diigoletFN.onlyPrivate #diigolet-dlg-sticky-switcher{margin-left:29px;}
+body#dummybodyid .diigolet.diigoletFN.onlyGroup #diigolet-dlg-sticky-switcher{margin-left:29px;}
+body#dummybodyid #diigolet-dlg-sticky-top{height:30px;border-radius:2px 2px 0 0;position:relative;z-index:2;-webkit-transition:background-color 200ms ease;padding-right:5px;}
+body#dummybodyid #diigolet-dlg-sticky.yellow #diigolet-dlg-sticky-top{background:#f1c40f;}
+body#dummybodyid #diigolet-dlg-sticky.blue #diigolet-dlg-sticky-top{background:#5cc7ff;}
+body#dummybodyid #diigolet-dlg-sticky.green #diigolet-dlg-sticky-top{background:#47bf87;}
+body#dummybodyid #diigolet-dlg-sticky.pink #diigolet-dlg-sticky-top{background:#fe97bc;}
+body#dummybodyid #diigolet-dlg-sticky-content{background-color:#fcfbf7;border-radius:0 0 2px 2px;border-width:0 1px 1px 1px;border-color:rgba(0,0,0,.08);border-style:solid;box-shadow:0 1px 3px rgba(0,0,0,.08);position:relative;}
+body#dummybodyid #diigolet-dlg-sticky-logo{float:left;height:20px;width:20px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/FN-logo.png") 50% 50% no-repeat;margin:4px 5px 0 4px;}
+body#dummybodyid #diigolet-dlg-sticky-top>span{vertical-align:middle;line-height:28px;font-size:14px;color:#bb6602;}
+body#dummybodyid #diigolet-dlg-sticky-close{float:right;height:20px;width:20px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/FN-close.png") 50% 50% no-repeat;margin:5px 4px 0 0;cursor:pointer;display:none;}
+body#dummybodyid #diigolet-dlg-sticky-color{position:relative;float:right;margin:7px 4px 0 0;cursor:pointer;z-index:2;}
+body#dummybodyid #diigolet-dlg-sticky-addTab{height:12px;width:21px;margin:9px 7px 0 0;display:none;float:right;cursor:pointer;}
+body#dummybodyid #diigolet-dlg-sticky.onlyPrivate #diigolet-dlg-sticky-addTab{display:block;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/add-tab.png") 0 0 no-repeat;}
+body#dummybodyid #diigolet-dlg-sticky.onlyGroup #diigolet-dlg-sticky-addTab{display:block;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/add-tab.png") 0 -12px no-repeat;}
+body#dummybodyid #diigolet-dlg-sticky-currentColor{height:12px;width:12px;border:1px solid #fff;cursor:pointer;border-radius:1px;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker{height:62px;width:13px;padding:3px 3px 3px 2px;background-color:#fff;position:absolute;top:122%;left:-2px;display:none;-webkit-animation:diigo-dropdown .15s ease-in 1;box-shadow:0 1px 1px rgba(0,0,0,0.25);z-index:3;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem{height:12px;width:12px;border-width:1px;border-style:solid;display:block;margin-bottom:2px;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem[color="yellow"]{border-color:#e9a110;background-color:#fc6;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem[color="blue"]{border-color:#33a5c9;background-color:#7ccce5;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem[color="green"]{border-color:#9ac83b;background-color:#b4db66;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem[color="pink"]{border-color:#da376c;background-color:#f98baf;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem.colorchecked b{width:4px;height:4px;background:#666;margin-top:4px;margin-left:4px;display:block;}
+body#dummybodyid #diigolet-dlg-sticky-colorPicker .dlg-colorItem:hover{border-color:#06f!important;}
+body#dummybodyid .FN-content-wrapper{display:none;opacity:0;-webkit-animation:fadeIn .2s ease-out;}
+body#dummybodyid 0%{opacity:0;}
+body#dummybodyid 100%{opacity:1;}
+body#dummybodyid .FN-content-wrapper.private{min-height:120px;}
+body#dummybodyid #diigolet-dlg-sticky-content .FN-content-wrapper.private textarea{margin:6px 6px 0 6px;min-height:104px;width:282px;background-color:#fcfbf7;border:none;outline:none;overflow-y:visible;resize:none!important;font-size:12px;line-height:18px;word-wrap:break-word;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer{text-align:right;margin-top:-5px;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editing{height:30px;border-top:1px solid #ECECE7;display:none;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editing a{float:right;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editing #FN-private-saveBtn{height:20px;width:50px;border-radius:2px;border:1px solid #85a0a6;color:#85a0a6;font-size:12px;text-align:center;line-height:20px;margin:4px 4px 4px 10px;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editing #FN-private-saveBtn:active{background:#85a0a6;color:#fff;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editing #FN-private-cancelBtn{text-decoration:none;color:#A3A39E;font-size:12px;line-height:30px;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editing #FN-private-cancelBtn:hover{text-decoration:underline;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-content-footer #editDone{height:22px;}
+body#dummybodyid #FN-private-saveBtn.notify{-webkit-animation:borderNotice 600ms ease both;-webkit-animation-iteration-count:2;}
+body#dummybodyid #FN-content-footer #FN-private-datetime{font-family:Arial,Helvetica;font-size:12px;color:#999;line-height:22px;margin-right:10px;float:right;}
+body#dummybodyid #FN-content-footer #FN-private-delete{display:none;float:left;vertical-align:middle;line-height:22px;margin-left:8px;color:#999;cursor:pointer;-webkit-transition:color 200ms ease;}
+body#dummybodyid #FN-content-footer #FN-private-delete b{display:block;float:left;height:12px;width:11px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/private-del.png");background-repeat:no-repeat;margin:5px 3px 0 0;cursor:pointer;}
+body#dummybodyid #FN-content-footer #FN-private-delete:hover{color:red;}
+body#dummybodyid #FN-content-footer #FN-private-delete:hover b{background-position:0 -12px;}
+body#dummybodyid .FN-content-wrapper.group{min-height:50px;}
+body#dummybodyid .FN-radio{display:none;}
+body#dummybodyid #diigolet-dlg-sticky-switcher{position:absolute;left:82px;top:-25px;z-index:2;}
+body#dummybodyid #diigolet-dlg-sticky-switcher.onlyOneTab span{margin-left:28px;}
+body#dummybodyid #diigolet-dlg-sticky-switcher .FN-switcher{float:left;height:14px;text-align:center;font-size:12px;cursor:pointer;padding:3px 8px;color:#fff;line-height:14px;-webkit-transition:background-color 200ms ease;border-radius:2px;}
+body#dummybodyid #diigolet-dlg-sticky-switcher .FN-switcher b{height:12px;width:13px;float:left;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/tab-logo.png");background-repeat:no-repeat;margin:1px 1px 0 0;cursor:pointer;}
+body#dummybodyid #diigolet-dlg-sticky-content.private #FN-switcher-private{background-color:rgba(0,0,0,.12);}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-switcher-private b{background-position:0 0;}
+body#dummybodyid #diigolet-dlg-sticky-content #FN-switcher-group b{background-position:0 -12px;}
+body#dummybodyid #diigolet-dlg-sticky-content.group #FN-switcher-group{background-color:rgba(0,0,0,.12);}
+body#dummybodyid #diigolet-dlg-sticky.onlyPrivate #FN-switcher-group{display:none;}
+body#dummybodyid #diigolet-dlg-sticky.onlyGroup #FN-switcher-private{display:none;}
+body#dummybodyid #diigolet-dlg-sticky-content.private .FN-content-wrapper.private{opacity:1;display:block;}
+body#dummybodyid #diigolet-dlg-sticky-content.group .FN-content-wrapper.group{opacity:1;-webkit-transition:opacity ease-out .2s .1s;display:block;}
+body#dummybodyid #FN-post-form{padding:10px;display:none;}
+body#dummybodyid #FN-post-form>div:last-child{margin-top:6px;}
+body#dummybodyid #FN-post-form textarea{width:272px;max-width:272px;height:54px;outline:none;line-height:18px;border:1px solid #ddd;}
+body#dummybodyid #FN-post-form textarea.notify,body#dummybodyid #FN-post-form select.notify{-webkit-animation:borderNotice 600ms ease both;-webkit-animation-iteration-count:2;}
+body#dummybodyid #FN-post-form button{float:right;margin:0;height:24px;width:50px;text-align:center;background-image:-webkit-linear-gradient(top,#fff,#f5f5f5);border:1px solid #ccc;font-size:14px;border-radius:2px;cursor:pointer;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all,10ms ease background-color;overflow:hidden;position:relative;}
+body#dummybodyid #FN-post-form .button-label{-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all;position:relative;cursor:pointer;z-index:3;}
+body#dummybodyid #FN-post-form .button-spinner{position:absolute;z-index:2;display:inline-block;width:18px;height:18px;opacity:0;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all;left:31px;margin-left:-16px;margin-top:-10px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/uploading.gif");}
+body#dummybodyid #FN-post-form textarea:disabled{color:#999;background-color:#eee;}
+body#dummybodyid #FN-post-form button:disabled{background-color:#ddd;background-image:none;cursor:default;}
+body#dummybodyid #FN-post-form button:disabled .button-label{opacity:0;top:16px;}
+body#dummybodyid #FN-post-form button:disabled .button-spinner{opacity:1;top:12px;}
+body#dummybodyid #FN-post-form a{float:right;font-size:12px;text-decoration:none;color:#aaa;margin:5px 12px 5px 5px;}
+body#dummybodyid #FN-post-form a:hover{text-decoration:underline;}
+body#dummybodyid #FN-post-form.notEdit #FN-group-share{margin-left:67px;}
+body#dummybodyid #FN-post-form.notEdit div:first-child{display:none;}
+body#dummybodyid #FN-post-form.notEdit button,body#dummybodyid #FN-post-form.notEdit a{display:none;}
+body#dummybodyid #FN-group-content-nav{width:100%;height:25px;border-bottom:1px solid #eee;color:#333;font-size:12px;text-align:center;position:relative;z-index:1;}
+body#dummybodyid #FN-current-group{line-height:25px;padding:2px 10px;cursor:pointer;}
+body#dummybodyid #FN-current-group b{height:0;width:0;border-width:5px;border-style:solid;border-bottom-color:transparent;border-left-color:transparent;border-right-color:transparent;border-top-color:#666;display:inline-block;margin:2px 2px 0 6px;vertical-align:middle;cursor:pointer;}
+body#dummybodyid #FN-current-group span{cursor:pointer;}
+body#dummybodyid #FN-group-menu{margin:0;position:absolute;width:196px;top:90%;left:50px;background-color:#fff;border:1px solid rgba(0,0,0,.12);text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.1);-webkit-animation:diigo-dropdown .15s ease-in 1;padding:2px;display:none;}
+body#dummybodyid #FN-group-content-nav li{list-style:none;height:20px;width:100%;line-height:20px;font-size:12px;color:#333;cursor:pointer;text-indent:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body#dummybodyid #FN-group-share-new-ul{margin-top:2px;padding-top:2px;border-top:1px solid #ccc;}
+body#dummybodyid #FN-group-content-nav li:hover{background-color:#aaa;color:#fff;}
+body#dummybodyid #FN-group-content-container{min-height:80px;max-height:200px;overflow-y:auto;padding:0 10px 10px 10px;margin-top:-1px;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item{border-top:1px solid #eee;padding:5px 0;position:relative;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item-tbar{position:relative;font-size:12px;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item-content{font-size:12px;line-height:18px;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item-tbar .FN-group-comment-name{text-decoration:none;margin-right:3px;color:#0072d6;float:left;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item-time{font-size:12px;color:#777;}
+body#dummybodyid #FN-group-content-postform{padding:10px;position:relative;}
+body#dummybodyid #FN-group-content-postform textarea{height:18px;width:204px;max-width:208px;border:1px solid #d7d7d7;outline:none;line-height:18px;vertical-align:bottom;-webkit-transition:background-color .1s ease-in-out;}
+body#dummybodyid #FN-group-content-postform.active textarea{height:36px;border-color:#aaa;}
+body#dummybodyid #FN-group-content-postform textarea.notify{-webkit-animation:borderNotice 600ms ease both;-webkit-animation-iteration-count:2;}
+body#dummybodyid #FN-group-content-postform textarea:disabled{color:#999;background-color:#eee;}
+body#dummybodyid #FN-group-content-postform .post-action{vertical-align:bottom;display:inline-block;width:50px;padding:0 0 0 14px;}
+body#dummybodyid #FN-group-content-postform .post-action a{position:relative;left:4px;top:2px;color:#aaa;display:none;}
+body#dummybodyid #FN-group-content-postform.active .post-action a{display:block;}
+body#dummybodyid #FN-group-content-postform .post-action a:hover{text-decoration:underline;}
+body#dummybodyid #FN-group-content-postform button{margin:0;height:24px;width:50px;text-align:center;background-image:-webkit-linear-gradient(top,#fff,#f5f5f5);border:1px solid #ccc;font-size:14px;cursor:pointer;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all,10ms ease background-color;overflow:hidden;position:relative;}
+body#dummybodyid #FN-group-content-postform .button-label{-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all;position:relative;cursor:pointer;z-index:3;}
+body#dummybodyid #FN-group-content-postform .button-spinner{position:absolute;z-index:2;display:inline-block;width:18px;height:18px;opacity:0;-webkit-transition:.3s cubic-bezier(0.175,0.885,0.32,1.275) all;left:31px;margin-left:-16px;margin-top:-10px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/uploading.gif");}
+body#dummybodyid #FN-group-content-postform button:disabled{background-color:#ddd;background-image:none;cursor:default;}
+body#dummybodyid #FN-group-content-postform button:disabled .button-label{opacity:0;top:16px;}
+body#dummybodyid #FN-group-content-postform button:disabled .button-spinner{opacity:1;top:12px;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item-delete{text-decoration:none;font-size:12px;color:#999;cursor:pointer;visibility:hidden;float:right;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item:hover .FN-group-comment-item-delete{visibility:visible;}
+body#dummybodyid #FN-group-content-container .FN-group-comment-item-delete:hover{color:red;}
+body#dummybodyid #diigolet-dlg-sticky-content ::-webkit-scrollbar{width:8px;}
+body#dummybodyid #diigolet-dlg-sticky-content ::-webkit-scrollbar-track-piece{background-color:transparent;}
+body#dummybodyid #diigolet-dlg-sticky-content ::-webkit-scrollbar-thumb:vertical{height:20px;background-color:#CCC;}
+body#dummybodyid #diigolet-dlg-sticky-content ::-webkit-scrollbar-thumb:hover{background-color:#aaa;}
+body#dummybodyid #diigolet-dlg-sticky-content select{-webkit-appearance:none;width:150px;height:24px;border:1px solid #ccc;background-position:right;background-repeat:no-repeat;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/FN-select-arrow.png"),-webkit-linear-gradient(top,#fff,#fafafa);outline:none;cursor:pointer;font-size:12px;border-radius:2px;padding-right:14px;}
+body#dummybodyid .diigolet.diigoletFN a:link,body#dummybodyid .diigolet.diigoletFN a:visited{color:#06c;}
+body#dummybodyid .diigolet.diigoletFN a:hover,body#dummybodyid .diigolet.diigoletFN a:active{color:#333;text-decoration:none;}
+body#dummybodyid .diigolet .diigoletFNL{width:23px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_l.png) no-repeat left top;}
+body#dummybodyid .diigolet .diigoletFNT{height:32px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_t.png) no-repeat right top;cursor:move!important;}
+body#dummybodyid .diigolet .diigoletFNR{width:16px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_r.png) no-repeat left bottom;overflow:hidden;vertical-align:bottom;}
+body#dummybodyid .diigolet .diigoletFNB{height:34px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_b.png) no-repeat left bottom;}
+body#dummybodyid .diigolet .diigoletFNTH{vertical-align:top;width:12px;}
+body#dummybodyid .diigolet .diigoletFNTH div{width:12px;height:12px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_h_rt.gif) no-repeat right top;position:relative;top:5px;left:-22px;overflow:hidden;cursor:ne-resize!important;}
+body#dummybodyid .diigolet .diigoletFNB{vertical-align:top;overflow:hidden;}
+body#dummybodyid .diigolet .diigoletFNPosN .diigoletFNXjjR,body#dummybodyid .diigolet .diigoletFNPosN .diigoletFNXjjT,body#dummybodyid .diigolet .diigoletFNPosN .diigoletFNXjjB,body#dummybodyid .diigolet .diigoletFNPosN .diigoletFNTH div,body#dummybodyid .diigolet .diigoletFNPosN .diigoletFNB div{display:none;}
+body#dummybodyid .diigolet .diigoletFNT h1{font:12px/19px Arial,Helvetica,sans-serif;font-weight:bold;color:#666;margin:4px 0 0 5px;padding:0;}
+body#dummybodyid .diigolet .diigoletFNT div.menu{margin:3px 21px 10px 0;background-color:#fff9a4;border-right:1px solid #f2e984;border-left:1px solid #c9b822;}
+body#dummybodyid .diigolet .diigoletFNT div.menu a{display:block;line-height:19px;float:left;color:#666;padding:0 5px;border-right:1px solid #c9b822;text-decoration:none;}
+body#dummybodyid .diigolet .diigoletFNT div.menu a:hover,body#dummybodyid .diigolet .diigoletFNT div.menu a:active{background-color:#fff587;color:#333;}
+body#dummybodyid .diigolet .diigoletFNT div.menu a.diigoletFNOpt{background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_downdot.gif) no-repeat right top;padding-right:14px;}
+body#dummybodyid .diigolet .diigoletFNT{font:12px/32px Arial,Helvetica,sans-serif;}
+body#dummybodyid .diigolet .diigoletFNContent,body#dummybodyid .diigolet .diigoletFNComment{background-color:#fff89f;color:#666;font-family:Arial,Helvetica,sans-serif;font-size:11px;overflow:auto;width:355px;zoom:1;border-bottom:1px solid #E0DB9D;}
+body#dummybodyid .diigolet .diigoletFNContent .diigoletFNAuthorP{font-size:10px;font-weight:normal;color:#666;margin:0 11px 5px 0;padding:2px 5px;line-height:100%;}
+body#dummybodyid .diigolet .diigoletFNContent .diigoletFNAuthorP .diigoletFNAuthor{border-bottom:1px dotted #ccc;color:#06c;}
+body#dummybodyid .diigolet .diigoletFNContent .diigoletFNAuthorP .diigoletFNAuthor:hover,body#dummybodyid .diigoletFNContent .diigoletFNAuthorP .diigoletFNAuthor:active{border-bottom:1px solid #ccc;color:#333;}
+body#dummybodyid .diigolet .diigoletFNContent .diigoletFNAuthorP a{color:#999;}
+body#dummybodyid .diigolet .diigoletFNContent .diigoletFNAuthorP a:hover,body#dummybodyid .diigoletFNContent .diigoletFNAuthorP a:active{color:#666;}
+body#dummybodyid .diigolet.diigoletFN blockquote{display:inline-block;}
+body#dummybodyid .diigolet .diigoletFNComment select,body#dummybodyid .diigolet .diigoletFNComment input,body#dummybodyid .diigolet .diigoletFNComment textarea{font:11px/15px Verdana,Arial,Helvetica,sans-serif;max-width:345px;}
+body#dummybodyid .diigolet .diigoletFNComment p{margin:5px 0;}
+body#dummybodyid .diigolet .diigoletFNTDiv{height:32px;overflow:hidden;}
+body#dummybodyid .diigolet.diigoletFN .menu{float:right;height:19px;overflow:hidden;}
+body#dummybodyid .diigolet .labelList label{margin-right:2px;background-color:#eee;color:#666;white-space:nowrap;font-weight:normal;font-size:9px;}
+body#dummybodyid .diigolet .labelList span{padding:0 2px;}
+body#dummybodyid .diigolet .labelList a{padding:0 2px;background-color:#ffe76a;}
+body#dummybodyid .diigolet .labelList a:hover{color:#fef5c7;text-decoration:none;}
+body#dummybodyid .diigolet .labelList a.del{border:none;padding-right:2px;font-weight:normal;}
+body#dummybodyid .diigolet a.del{cursor:pointer;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv3.gif") no-repeat left -343px;}
+body#dummybodyid .diigolet a.del:hover{filter:alpha(opacity=100);-moz-opacity:1;background-position:1px -342px;text-decoration:none;}
+body#dummybodyid .diigolet ul.diigoletFNDropdown{position:absolute;display:none;left:10px;background-color:#fff89f;border:1px solid #c9b822;z-index:2147483647;}
+body#dummybodyid .diigolet ul.diigoletFNDropdown li{padding-left:25px;}
+body#dummybodyid .diigolet ul.diigoletFNDropdown a:link,body#dummybodyid .diigolet ul.diigoletFNDropdown a:visited{color:#666;display:block;width:85px;font:11px Arial,Helvetica,sans-serif;}
+body#dummybodyid .diigolet ul.diigoletFNDropdown a:hover,body#dummybodyid .diigolet ul.diigoletFNDropdown a:active{background-color:#fff567;color:#333;}
+body#dummybodyid .diigolet.diigoletFNIEPatch .diigoletFNL{background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_l.gif) no-repeat left top;}
+body#dummybodyid .diigolet.diigoletFNIEPatch .diigoletFNT{background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_t.gif) no-repeat right top;}
+body#dummybodyid .diigolet.diigoletFNIEPatch .diigoletFNR{background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_r.gif) no-repeat left bottom;}
+body#dummybodyid .diigolet.diigoletFNIEPatch .diigoletFNB{background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_b.gif) no-repeat left bottom;}
+body#dummybodyid .diigolet.diigoletFNIEPatch .diigoletFNT{height:23px;}
+body#dummybodyid .diigolet.diigoletFNIEPatch .diigoletFNTDiv{height:23px;}
+body#dummybodyid .diigoletFN.editing .diigoletFNComment{display:block;}
+body#dummybodyid .personalText{color:#555!important;font-size:10px!important;display:inline-block;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;width:343px!important;margin-top:4px!important;}
+body#dummybodyid .IconFeild{float:left!important;margin-left:8px!important;margin-top:5px!important;}
+body#dummybodyid .IconFeild:hover .editIcon{background-position:right!important;}
+body#dummybodyid .multipalCol{padding-top:0!important;}
+body#dummybodyid .singleCol{padding-top:7px!important;}
+body#dummybodyid .myCommentSpan{margin-left:35px!important;}
+body#dummybodyid .notMyCommentSpan{margin-left:15px!important;}
+body#dummybodyid .footText{line-height:1.5;width:343px!important;}
+body#dummybodyid div.floatNote{position:absolute!important;width:34px;height:34px;text-align:center;background-image:url('chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_icon.png')!important;background-repeat:no-repeat;z-index:2147483643;}
+body#dummybodyid div.floatNote.private.yellow{background-position:0 0;}
+body#dummybodyid div.floatNote.private.blue{background-position:0 -68px;}
+body#dummybodyid div.floatNote.private.green{background-position:0 -136px;}
+body#dummybodyid div.floatNote.private.pink{background-position:0 -204px;}
+body#dummybodyid div.floatNote.group.yellow{background-position:0 -34px;}
+body#dummybodyid div.floatNote.group.blue{background-position:0 -102px;}
+body#dummybodyid div.floatNote.group.green{background-position:0 -170px;}
+body#dummybodyid div.floatNote.group.pink{background-position:0 -238px;}
+body#dummybodyid div.floatNote.diigoshow{-webkit-animation:bounceIn 400ms ease both;-webkit-animation-play-state:running;}
+body#dummybodyid div.floatNote.diigoadd{-webkit-animation:flipInY 600ms ease both;-webkit-animation-play-state:running;}
+body#dummybodyid div.floatNote span{position:absolute;left:-4px;top:-3px;display:block;border-radius:15px;background-color:#666;padding:2px 3px;border:1px solid #fff;height:8px;font-size:11px;color:#fff;line-height:8px;}
+html body#dummybodyid div.floatNote{filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true,sizingMethod=scale,src="chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_icon.png");overflow:hidden;background:none;overflow:visible;}
+body#dummybodyid em.diigoHighlight{text-align:inherit;text-decoration:inherit;line-height:inherit;font:inherit;color:inherit;display:inline;position:relative;zoom:1;margin:0;padding:0;}
+body#dummybodyid em.diigoHighlight.diigoHighlightcommented{margin-right:25px;}
+body#dummybodyid em.diigoHighlight.mouseOvered{background-color:#ffc62a!important;}
+body#dummybodyid em.diigoHighlight.yellow{background-color:#FF9;}
+body#dummybodyid img.diigoHighlight.yellow{cursor:pointer;outline:2px solid #FF9!important;}
+body#dummybodyid em.diigoHighlight.blue{background-color:#ABD5FF;}
+body#dummybodyid img.diigoHighlight.blue{cursor:pointer;outline:2px solid #ABD5FF!important;}
+body#dummybodyid em.diigoHighlight.green{background-color:#B2E57E;}
+body#dummybodyid img.diigoHighlight.green{cursor:pointer;outline:2px solid #B2E57E!important;}
+body#dummybodyid em.diigoHighlight.pink{background-color:#fcc;}
+body#dummybodyid img.diigoHighlight.pink{cursor:pointer;outline:2px solid #fcc!important;}
+body#dummybodyid img.diigoHighlight.mouseOvered{cursor:pointer;outline:2px solid #ffc62a!important;}
+body#dummybodyid .diigolet .diigolet-closeBtn{position:absolute;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/close1.gif);width:14px;height:14px;top:2px;right:2px;cursor:pointer!important;}
+body#dummybodyid .ac_results{border:1px solid #ddd;background:#fff none repeat scroll 0;cursor:pointer!important;font-size:11px!important;left:0;position:absolute;width:392px;z-index:2147483647;border-radius:1px;}
+body#dummybodyid .ac_results ul{margin:0;padding:0;}
+body#dummybodyid .ac_results li{list-style-image:none;list-style-position:outside;list-style-type:none;padding:2px 5px;border-radius:1px;}
+body#dummybodyid .ac_results a{width:100%;}
+body#dummybodyid .ac_results li.over{color:white;background:#09f none repeat scroll 0;}
+body#dummybodyid #gtooltip{background-color:#2a2a2a;border:1px solid #fff;color:#fff;display:block;font-size:12px!important;font-weight:bold!important;opacity:0;padding:4px 6px!important;pointer-events:none;position:absolute!important;-webkit-transition:visibility .13s,opacity .13s ease-out,left 0 linear .13s,top 0 linear .13s;-moz-transition:visibility .13s,opacity .13s ease-out,left 0 linear .13s,top 0 linear .13s;-o-transition:visibility .13s,opacity .13s ease-out,left 0 linear .13s,top 0 linear .13s;transition:visibility .13s,opacity .13s ease-out,left 0 linear .13s,top 0 linear .13s;visibility:hidden;font-family:arial,sans-serif!important;z-index:2147483647;top:-100px;left:-100px;line-height:15px!important;}
+body#dummybodyid #gtooltip.show{visibility:visible;opacity:1;-webkit-transition:visibility 0,opacity .13s ease-in;}
+body#dummybodyid #gtooltip #gtooltip-arrow{position:absolute!important;border:5px solid!important;border-top-color:transparent!important;border-right-color:transparent!important;border-bottom-color:#2a2a2a!important;border-left-color:transparent!important;height:0!important;width:0!important;line-height:0!important;}
+body#dummybodyid #gtooltip #gtooltip-content{white-space:nowrap!important;}
+body#dummybodyid .diigo-scrollmarker{height:6px;width:6px;cursor:pointer;overflow:hidden;font-size:12px;z-index:1000000;border-radius:20px;}
+body#dummybodyid #diigolet-highlight-share{background-color:#fcfbf7;width:402px;font-family:Arial,Helvetica,sans-serif;-webkit-border-radius:0;cursor:default;position:absolute;z-index:2147483646;box-shadow:0 1px 3px rgba(0,0,0,.08);background-clip:content-box;visibility:hidden;opacity:0;border-radius:2px;}
+body#dummybodyid #diigolet-highlight-share.show{opacity:1;visibility:visible;}
+body#dummybodyid #diigolet-highlight-share-top{height:30px;vertical-align:middle;background-color:#39baf6;line-height:30px;padding:0 10px;font-size:14px;color:white;text-align:left;border-radius:2px 2px 0 0;}
+body#dummybodyid .diigolet-question-mark{height:12px;width:12px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/q-mark.png");cursor:pointer;position:relative;display:inline-block;margin:9px 7px 0 6px;}
+body#dummybodyid .diigolet-question-mark-tip{padding:5px;position:absolute;bottom:139%;left:-82px;display:none;width:180px;color:#7f8d99;border-radius:2px;box-shadow:0 0 0 2px rgba(0,0,0,.2);background:#fff;font:normal 12px/14px Arial,helvetica,sans-serif;}
+body#dummybodyid #diigolet-highlight-share-close{float:right;height:16px;width:16px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/win-close.png") 50% 50% no-repeat;margin-top:7px;opacity:.5;cursor:pointer;}
+body#dummybodyid #diigolet-highlight-share-close:hover{opacity:1;}
+body#dummybodyid #diigolet-highlight-container{border-radius:0 0 2px 2px;border-width:0 1px 1px 1px;border-color:rgba(0,0,0,.08);border-style:solid;}
+body#dummybodyid #diigolet-highlight-main{padding:10px 10px;}
+body#dummybodyid #diigolet-highlight-share-textarea{border:1px solid #d7d7d7;outline:none;width:372px;height:42px;max-width:374px;line-height:18px;-webkit-transition:border-color 200ms ease;font:12px/14px Arial;min-height:42px;padding:3px 3px;resize:vertical;box-sizing:content-box;}
+body#dummybodyid #diigolet-highlight-share-textarea:disabled{background-color:#eee;}
+body#dummybodyid #diigolet-highlight-share-textarea:focus{border:1px solid #AAA;}
+body#dummybodyid .clearfloat:after{display:block;clear:both;content:"";visibility:hidden;height:0;}
+body#dummybodyid .clearfloat{zoom:1;}
+body#dummybodyid #diigolet-highlight-footer{padding:0 10px 10px 10px;position:relative;}
+body#dummybodyid #diigolet-highlight-footer a{float:right;}
+body#dummybodyid #diigolet-highlight-share-copybtn{height:24px;width:60px;line-height:24px;cursor:pointer;text-align:center;color:white;border-radius:2px;border:1px solid #066ec1;font-size:12px;text-decoration:none;border-radius:2px;border:1px solid #85a0a6;color:#85a0a6;font-size:12px;text-align:center;}
+body#dummybodyid #diigolet-highlight-share-copybtn:active{background:#85a0a6;color:#fff;}
+body#dummybodyid #diigolet-highlight-share-cancelbtn{color:#999;height:12px;font-size:12px;margin:6px 14px 0 0;text-decoration:none;border:none!important;}
+body#dummybodyid #diigolet-highlight-share-cancelbtn:hover{text-decoration:underline;}
+body#dummybodyid #diigolet-highlight-footer .diigolet-highlight-social-btn{float:left!important;height:26px;width:26px;margin-right:12px;}
+body#dummybodyid #diigolet-highlight-share-twitter{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/highlight-share.png");}
+body#dummybodyid #diigolet-highlight-share-facebook{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/highlight-share.png");background-position:-26px 0;}
+body#dummybodyid #diigolet-highlight-share-copySuccess{position:absolute;top:0;right:85px;padding:5px 10px;background:#FFF1A8;color:black;border-radius:3px;line-height:18px;font-size:12px;-webkit-transition:all .3s;opacity:0;-webkit-transform-style:preserve-3d;-webkit-transform:rotateY(-70deg);}
+body#dummybodyid #diigolet-highlight-share-copySuccess.show{-webkit-transform:rotateY(0deg);opacity:1;}
+body#dummybodyid #diigo-annotationList{background-color:#fff;width:423px;font-family:Arial,Helvetica,sans-serif;-webkit-border-radius:0;cursor:default;z-index:2147483646;box-shadow:0 1px 3px rgba(0,0,0,0.08);background-clip:content-box;border-radius:2px;position:fixed;top:52px;left:0;-webkit-animation:slideInRight 200ms ease;}
+body#dummybodyid #diigo-annotationList-btn{height:20px;width:20px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/warning-orphanHighlight.png");position:fixed;right:0;top:55px;cursor:pointer;z-index:1000001;}
+body#dummybodyid #diigo-annotationList-top{height:30px;vertical-align:middle;background-color:#39BAF6;line-height:30px;padding:0 10px;font-size:14px;color:#FFF;text-align:left;border-radius:2px 2px 0 0;text-indent:5px;}
+body#dummybodyid #diigo-annotationList-top b{height:12px;width:14px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/list-icon.png");float:left;margin-top:10px;margin-left:-4px;display:block;}
+body#dummybodyid #diigo-annotationList-close{float:right;height:16px;width:16px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/win-close.png") 50% 50% no-repeat;margin-top:7px;opacity:.5;cursor:pointer;}
+body#dummybodyid #diigo-annotationList-close:hover{opacity:1;}
+body#dummybodyid #diigo-annotationList-toolbar{height:30px;font:normal 12px/30px arial,Helvetica;}
+body#dummybodyid #diigo-annotationList-toolbar span{float:left;color:#333;margin-left:10px;}
+body#dummybodyid #diigo-annotationList-toolbar a{float:right;margin-right:10px;text-decoration:none;color:#0072d6;}
+body#dummybodyid #diigo-annotationList-box{border-radius:0 0 2px 2px;border-width:0 1px 1px 1px;border-color:rgba(0,0,0,0.08);border-style:solid;padding:5px 6px 0 6px;position:relative;max-height:300px;overflow:auto;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item{margin-bottom:8px;position:relative;background-color:#f9f9f9;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-orphan .diigo-annotationList-highlight,body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-orphan .diigo-annotationList-sticky{padding-right:19px;}
+body#dummybodyid .diigo-annotationList-item .diigo-annotationList-orphan-warning{height:19px;width:19px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/orphan-warning.png");position:absolute;top:0;right:0;opacity:.65;}
+body#dummybodyid .diigo-orphan-warning{height:15px;width:15px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/orphan-warning-small.png");float:left;opacity:.65;margin-right:4px;margin-top:7px;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-highlight{padding:6px 6px;font:normal 12px/14px arial,Helvetica;color:#333;border-left-style:solid;border-left-width:4px;border-bottom:1px solid #eee;position:relative;word-wrap:break-word;white-space:normal;word-break:break-all;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-yellow .diigo-annotationList-highlight{border-left-color:#FFBA01;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-blue .diigo-annotationList-highlight{border-left-color:#6EAAF5;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-green .diigo-annotationList-highlight{border-left-color:#7BBD3F;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-pink .diigo-annotationList-highlight{border-left-color:#FF9C9C;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-sticky{padding:6px 6px 6px 26px;font:normal 12px/14px arial,Helvetica;color:#333;background-color:#f9f9f9;border-left-style:solid;border-left-width:4px;border-left-color:#DDD;border-bottom:1px solid #eee;position:relative;word-wrap:break-word;white-space:normal;word-break:break-all;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-yellow .diigo-annotationList-sticky .diigo-anntationList-floatIcon{background-position:0 -16px;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-blue .diigo-annotationList-sticky .diigo-anntationList-floatIcon{background-position:0 -32px;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-green .diigo-annotationList-sticky .diigo-anntationList-floatIcon{background-position:0 -48px;}
+body#dummybodyid #diigo-annotationList-box .diigo-annotationList-item.diigo-pink .diigo-annotationList-sticky .diigo-anntationList-floatIcon{background-position:0 -64px;}
+body#dummybodyid .diigo-annotationList-item .diigo-annotationList-item-action{position:absolute;right:1px;bottom:1px;font:normal 10px/12px arial,Helvetica;display:none;z-index:10000;}
+body#dummybodyid .diigo-annotationList-item .diigo-annotationList-item-btn{background-color:rgba(0,0,0,0.3);padding:2px;color:#fff;cursor:pointer;z-index:1;opacity:.8;float:left;margin-left:5px;}
+body#dummybodyid .diigo-annotationList-item .diigo-annotationList-item-btn:hover{opacity:1;}
+body#dummybodyid .diigo-annotationList-commentItem{padding:5px 6px;background-color:#f9f9f9;word-break:break-all;border-left-style:solid;border-left-width:4px;border-left-color:#DDD;border-bottom:1px solid #eee;font:normal 12px/14px arial,Helvetica;}
+body#dummybodyid .diigo-annotationList-item:hover .diigo-annotationList-item-action{display:block;}
+body#dummybodyid .diigo-anntationList-floatIcon{background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/float_note_icon.png");height:16px;width:16px;position:absolute;left:5px;top:5px;}
+body#dummybodyid #diigo-annotationList-main{position:relative;}
+body#dummybodyid #diigo-annotationList-notification{height:30px;width:150px;border:2px solid rgba(0,0,0,.15);position:absolute;left:50%;top:50%;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/success.png") 5px 50% no-repeat;text-indent:26px;font:normal 12px/30px arial,Helvetica;background-color:#fff;border-radius:2px;-webkit-transform:translate(-50%,-50%);background-clip:content-box;z-index:1;display:none;}
+body#dummybodyid #diigo-annotationList-noItem{padding:10px;font-weight:bold;}
+body#dummybodyid .diigo-customize-scrollbar::-webkit-scrollbar{width:6px;}
+body#dummybodyid .diigo-customize-scrollbar::-webkit-scrollbar-track-piece{background-color:transparent;}
+body#dummybodyid .diigo-customize-scrollbar::-webkit-scrollbar-thumb:vertical{height:20px;background-color:#CCC;}
+body#dummybodyid .diigo-customize-scrollbar::-webkit-scrollbar-thumb:hover{background-color:#aaa;}
+body#dummybodyid .diigolet-highlight-selected{-webkit-animation:highlight 800ms ease-in-out;}
+body#dummybodyid #d3df-sidebar{border:1px #ccc solid;z-index:99997;}
+body#dummybodyid #d3df-sidebar div.heading{padding:3px;font-size:13px;border-top:1px #E8EEF7 solid;font-weight:bold;zoom:1;}
+body#dummybodyid #d3df-sidebar div.popOut{width:16px;height:16px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/popout.gif) no-repeat scroll left top;cursor:pointer;}
+body#dummybodyid #d3df-sidebar div.popOut.popIn{background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/popin.gif);}
+body#dummybodyid #d3df-sidebar div.popOut.close{background-image:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/close1.gif);}
+body#dummybodyid #d3df-sidebar div.heading a.add{background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv1.gif) no-repeat scroll left -172px;padding-left:18px;display:block;float:right;font-weight:normal;}
+body#dummybodyid #d3df-sidebar a.togglePanel{background:transparent url(http://www.diigo.com/images/v2/eoc.gif) no-repeat scroll left top;display:block;float:right;width:16px;height:16px;}
+body#dummybodyid #d3df-sidebar a.togglePanel.collapsed{background-position:left bottom;}
+body#dummybodyid #d3df-sidebar ul,body#dummybodyid #d3df-sidebar ul li{list-style:none;overflow:hidden;zoom:1;}
+body#dummybodyid #d3df-sidebar li.highlight a.highlight{overflow:hidden;height:24px;zoom:1;}
+body#dummybodyid #d3df-sidebar ul.highlights li{margin:1px;}
+body#dummybodyid #d3df-sidebar ul.comments li{margin:1px;padding:2px;}
+body#dummybodyid #d3df-sidebar div.noComments{font-size:11px;text-align:center;padding:15px 5px;}
+body#dummybodyid #d3df-sidebar p.commentBody,body#dummybodyid #d3df-sidebar p.commentBody a{font-size:11px;}
+body#dummybodyid #d3df-sidebar a.avatar{float:left;margin-right:3px;}
+body#dummybodyid #d3df-sidebar a.avatar img{padding:1px;border:1px #CCC solid;width:32px;height:32px;}
+body#dummybodyid #d3df-sidebar .commentInfo{font-size:12px;}
+body#dummybodyid #d3df-sidebar .commentInfo a{border-bottom:1px dotted #999;}
+body#dummybodyid #d3df-sidebar a.highlight{line-height:24px;padding-left:18px;display:block;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv1.gif) no-repeat scroll left -192px;}
+body#dummybodyid #d3df-sidebar a.floatNote{padding-left:16px;background:transparent url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/diigoletIconv1.gif) no-repeat scroll left -144px;}
+body#dummybodyid #d3df-sidebar a.highlight .jumpTo{line-height:24px;padding-left:5px;font-size:12px;font-style:italic;}
+body#dummybodyid #d3df-sidebar.themeDefault .bgColor1{background-color:#C3D9FF;}
+body#dummybodyid #d3df-sidebar.themeDefault .bgColor2{background-color:#E8EEF7;}
+body#dummybodyid #d3df-sidebar.themeDefault .bgColor3{background-color:#FFF;}
+body#dummybodyid #d3df-sidebar.themeDefault .color1{color:#999;}
+body#dummybodyid #d3df-sidebar.themeDefault .color2{color:#333;}
+body#dummybodyid.diigoHiPen-yellow{cursor:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/highlighter-orange.cur) 4 15,text!important;}
+body#dummybodyid.diigoHiPen-blue{cursor:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/highlighter-blue.cur) 4 15,auto!important;}
+body#dummybodyid.diigoHiPen-green{cursor:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/highlighter-green.cur) 4 15,text!important;}
+body#dummybodyid.diigoHiPen-pink{cursor:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/ietoolbar-images/highlighter-pink.cur) 4 15,text!important;}
+body#dummybodyid .diigolet.notice{font:bold 13px/1.5 Helvetica,Arial,sans-serif;position:fixed;top:5px;left:0;width:100%;text-align:center;z-index:2147483647;height:1px;-webkit-animation:fadeIn 400ms ease;}
+body#dummybodyid .diigolet.notice>div{border:1px solid #fad42e;background:#fea;border-radius:5px;color:#000;display:inline-block;padding:5px 10px 5px 5px;-webkit-box-shadow:rgba(0,0,0,0.3) 0 1px 1px;}
+body#dummybodyid .diigolet.notice>div>b{display:inline-block;height:16px;width:16px;margin:2px 3px 0 0;background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) 0 -80px no-repeat;float:left;}
+body#dummybodyid .diigolet.notice>div>p>a{font-size:12px;}
+body#dummybodyid .diigolet.notice>div>p{float:left;max-width:420px;}
+body#dummybodyid .diigolet.notice>div.alert{background:#fef6f3;border-color:#cd0a0a;}
+body#dummybodyid .diigolet.notice>div.alert p #retry{margin-left:3px;text-decoration:underline;}
+body#dummybodyid .diigolet.notice>div.alert>b{background-position:-16px -80px;}
+body#dummybodyid .diigolet.notice>div.info>b{background-position:-32px -80px;}
+body#dummybodyid .diigolet.notice>div.wait>b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/processing.gif) no-repeat scroll left 0 transparent;}
+body#dummybodyid .diigolet.notice div #close{display:block;height:12px;width:12px;background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/close.png);float:right;margin-left:10px;margin-top:3px;}
+body#dummybodyid .diigolet.notice div #close:hover{background-position:0 -12px;}
+body#dummybodyid #diigolet-panel-panel{z-index:2147483641;}
+body#dummybodyid #diigolet-panel-panel.notSignedIn .signedIn{display:none;}
+body#dummybodyid #diigolet-panel-panel.signedIn .notSignedIn{display:none;}
+body#dummybodyid #diigolet-panel-panel{height:36px;border-top-left-radius:19px;border-bottom-left-radius:19px;font:normal 12px/1.5 Helvetica,Arial,sans-serif;position:fixed;left:5px;top:5px;background-color:#fff;-webkit-box-shadow:rgba(0,0,0,0.3) 0 1px 3px;white-space:nowrap;border:1px solid rgba(47,95,122,.3);-webkit-user-select:none;background-clip:content-box;}
+body#dummybodyid #diigolet-panel-panel:hover #diigolet-panel-space{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -379px 0 no-repeat;opacity:.4;}
+body#dummybodyid #diigolet-panel-panel.fold #diigolet-panel-logo{opacity:1;width:28px;}
+body#dummybodyid #diigolet-panel-panel.fold #diigolet-panel-main{width:0;border-radius:0;}
+body#dummybodyid #diigolet-panel-panel.orphanHighlight.fold #diigolet-panel-logo{background-position:-84px 0;}
+body#dummybodyid #diigolet-panel-panel.orphanHighlight.fold #diigolet-panel-logo:hover{background-position:-112px 0;}
+body#dummybodyid .clearfloat:after{display:block;clear:both;content:"";visibility:hidden;height:0;}
+body#dummybodyid .clearfloat{zoom:1;}
+body#dummybodyid #diigolet-panel-main{height:36px;display:inline-block;background-color:rgba(255,255,255,1);border-radius:19px 0 0 19px;overflow:hidden;-webkit-transition:left 100ms ease-in-out;}
+body#dummybodyid #diigolet-panel-logo{display:inline-block;width:0;height:36px;border-top-left-radius:19px;border-bottom-left-radius:19px;background-image:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/di.png");background-position:0 0;background-color:#fff;opacity:0;cursor:pointer;}
+body#dummybodyid #diigolet-panel-logo:hover{background-position:-28px 0;}
+body#dummybodyid #diigolet-panel-space{width:12px;height:36px;display:inline-block;background-color:#fff;}
+body#dummybodyid #diigolet-panel-panel .diigolet-panel-btn{height:36px;float:left;}
+body#dummybodyid #diigolet-panel-panel .diigolet-panel-btn>b{height:36px;width:36px;display:block;cursor:pointer;margin:0 auto;-webkit-transition:background-color 200ms ease;}
+body#dummybodyid #diigolet-panel-panel .diigolet-panel-btn>b:hover{background-color:#E7F0FF;}
+body#dummybodyid #diigolet-panel-panel .diigolet-panel-btn>b:active{-webkit-transform:scale(.9);}
+body#dummybodyid #diigolet-panel-fold{height:36px;float:left;cursor:pointer;width:19px;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") 0 0 no-repeat;}
+body#dummybodyid #diigolet-panel-fold:hover{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -38px 0 no-repeat;}
+body#dummybodyid #diigolet-panel-Highlight{width:48px;}
+body#dummybodyid #diigolet-panel-btnHighlight{width:34px;height:36px;float:right;}
+body#dummybodyid #diigolet-panel-btnHighlight>b{height:36px;width:36px;display:block;cursor:pointer;-webkit-transition:background-color 200ms ease,border-radius 200ms ease;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -105px 0 no-repeat;}
+body#dummybodyid #diigolet-panel-Highlight.pen #diigolet-panel-btnHighlight>b{height:36px;width:36px;margin:0;}
+body#dummybodyid #diigolet-panel-Highlight:not(.pen) #diigolet-panel-btnHighlight>b:hover{background-color:#E7F0FF!important;}
+body#dummybodyid #diigolet-panel-btnHighlight>b:active{-webkit-transform:scale(.9);}
+body#dummybodyid #diigolet-panel-Highlight.pen #diigolet-panel-btnHighlight>b{background-color:#E7F0FF;-webkit-transform:scale(0.9);}
+body#dummybodyid #diigolet-panel-btnHighlight.yellow>b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -73px 0 no-repeat;}
+body#dummybodyid #diigolet-panel-btnHighlight.blue>b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -105px 0 no-repeat;}
+body#dummybodyid #diigolet-panel-btnHighlight.green>b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -137px 0 no-repeat;}
+body#dummybodyid #diigolet-panel-btnHighlight.pink>b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -169px 0 no-repeat;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown.yellow>b{background-color:#ffb000;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown.blue>b{background-color:#39abed;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown.green>b{background-color:#7c0;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown.pink>b{background-color:#f6b;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown{width:14px;height:36px;float:right;background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -360px 0 no-repeat;cursor:pointer;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown:hover{background-color:#E7F0FF;}
+body#dummybodyid #diigolet-panel-hightlight-dropdown>b{height:5px;width:5px;border-radius:12px;display:block;margin-top:16px;margin-left:5px;cursor:pointer;}
+body#dummybodyid #diigolet-panel-btnStickyNote{width:42px;}
+body#dummybodyid #diigolet-panel-btnStickyNote b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -234px -1px no-repeat;}
+body#dummybodyid #diigolet-panel-btnBookmark{width:42px;}
+body#dummybodyid #diigolet-panel-btnBookmark b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -296px -1px no-repeat;}
+body#dummybodyid #diigolet-panel-btnBookmark.diigo-research-mode b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -485x -1px no-repeat;}
+body#dummybodyid #diigolet-panel-btnBookmark.saved b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -328px -1px no-repeat;}
+body#dummybodyid #diigolet-panel-btnAnnotationList b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -419px -1px no-repeat;}
+body#dummybodyid #diigolet-panel-panel.orphanHighlight #diigolet-panel-btnAnnotationList b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -451px -1px no-repeat;}
+body#dummybodyid #diigolet-panel-orphanHighlight{width:46px;}
+body#dummybodyid #diigolet-panel-orphanHighlight b{background:url("chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/toolbar-icon.png") -266px -1px no-repeat;}
+body#dummybodyid #diigolet-panel-colorPicker{display:none;position:absolute;left:15px;top:41px;width:91px;background-color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);border-radius:2px;padding:5px 0;-webkit-animation:diigo-dropdown .15s ease-in 1;}
+body#dummybodyid #diigolet-panel-colorPicker.dropdownShown{display:block;}
+body#dummybodyid #diigolet-panel-colorPicker-arrow{border:5px solid;border-top-color:transparent;border-right-color:transparent;border-bottom-color:#fff;border-left-color:transparent;position:absolute;left:40px;top:-9px;}
+body#dummybodyid #diigolet-panel-colorPicker li{font-weight:normal;display:block;padding-right:10px!important;padding-left:10px!important;text-decoration:none!important;line-height:26px;height:26px;color:#434343;min-width:60px;width:71px;background:none!important;border:none!important;-webkit-transition:background-color 200ms ease;}
+body#dummybodyid #diigolet-panel-colorPicker li:hover{background-color:#e8e8e8!important;color:#434343!important;text-decoration:none!important;}
+body#dummybodyid #diigolet-panel-colorPicker li span{display:inline-block;width:12px;height:12px;border-radius:7px;margin-right:5px;vertical-align:middle;margin-bottom:3px;}
+body#dummybodyid #diigolet-panel-colorPicker li span b{width:4px;height:4px;background:#606060;margin-top:4px;margin-left:4px;border-radius:2px;}
+body#dummybodyid #diigolet-panel-colorPicker li.selected span b{display:block;}
+body#dummybodyid #diigolet-panel-colorPicker li.yellow span{background:#fde200;border:1px solid #b0a224;}
+body#dummybodyid #diigolet-panel-colorPicker li.blue span{background:#7db3f9;border:1px solid #63799a;}
+body#dummybodyid #diigolet-panel-colorPicker li.green span{background:#86ca25;border:1px solid #718b49;}
+body#dummybodyid #diigolet-panel-colorPicker li.pink span{background:#ff9b9a;border:1px solid #ae657a;}
+body#dummybodyid .diigolet .moreActionShare b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) 0 -96px no-repeat;}
+body#dummybodyid #diigolet-dialog-share{background-color:#fcfbf7;border-radius:2px;font:normal 13px/1.5 Helvetica,Arial,sans-serif;position:fixed;left:5px;top:7px;box-shadow:0 1px 3px rgba(0,0,0,.08);white-space:nowrap;width:520px;z-index:2147483646;}
+body#dummybodyid #diigolet-dialog-share *{white-space:normal;}
+body#dummybodyid #diigolet-dialog-share-title{height:30px;vertical-align:middle;background-color:#39baf6;line-height:30px;padding:0 10px;font-size:14px;color:white;text-align:left;border-radius:2px 2px 0 0;}
+body#dummybodyid #diigolet-dialog-share-closeBtn{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/images/win-close.png) 50% 50% no-repeat;float:right;height:16px;margin-left:10px;width:16px;margin-top:7px;}
+body#dummybodyid #diigolet-dialog-share-content{border-radius:0 0 2px 2px;border-width:1px 1px 1px 1px;border-color:rgba(0,0,0,.08);border-style:solid;}
+body#dummybodyid #diigolet-share-shareToTabs{background-color:#fcfbf7;list-style-type:none;padding:0 5px;margin:0;height:30px;line-height:30px;border-left:1px solid rgba(0,0,0,.08);border-right:1px solid rgba(0,0,0,.08);}
+body#dummybodyid #diigolet-share-shareToTabs li{display:inline-block;line-height:22px;height:24px;margin-top:6px;}
+body#dummybodyid #diigolet-share-shareToTabs li a{text-decoration:none;border-bottom-color:#3669a8;border-top-left-radius:5px;border-top-right-radius:5px;color:#000;opacity:.8;display:block;padding:0 5px;}
+body#dummybodyid #diigolet-share-shareToTabs a:hover{opacity:1;}
+body#dummybodyid #diigolet-share-shareToTabs a.current{border-radius:2px 2px 0 0;border-width:1px 1px 0 1px;border-color:rgba(0,0,0,.08);border-style:solid;border-bottom:1px solid #fcfbf7;color:#000;opacity:1;z-index:0;position:relative;top:1px;}
+body#dummybodyid #diigolet-share-shareToTabs a.current:hover{color:#222;}
+body#dummybodyid #diigolet-share-shareToTabs li b{display:inline-block;width:16px;height:16px;vertical-align:text-bottom;margin-right:3px;}
+body#dummybodyid .diigolet .shareToTwitter b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) -16px -96px no-repeat;}
+body#dummybodyid .diigolet .shareToFacebook b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) -32px -96px no-repeat;}
+body#dummybodyid .diigolet .shareToGplus b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) -48px -96px no-repeat;}
+body#dummybodyid .diigolet .shareToEmail b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) 0 -112px no-repeat;}
+body#dummybodyid .diigolet .getAnnotatedLink b{background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) -16px -112px no-repeat;}
+body#dummybodyid .diigolet .twitterDesc{color:#777;font-size:13px;line-height:20px;}
+body#dummybodyid #diigolet-twitter-saveBtn{display:block;line-height:24px;cursor:pointer;text-align:center;color:white;border-radius:2px;border:1px solid #066ec1;font-size:12px;text-decoration:none;border-radius:2px;border:1px solid #85a0a6;color:#85a0a6;font-size:12px;text-align:center;height:20px;width:50px;line-height:20px;float:right;}
+body#dummybodyid #diigolet-twitter-saveBtn:active{background:#85a0a6;color:#fff;}
+body#dummybodyid #diigolet-twitter-cancelBtn{color:#999;height:12px;font-size:12px;margin:1px 8px 0 6px;text-decoration:none;float:right;}
+body#dummybodyid #diigolet-twitter-cancelBtn:hover{text-decoration:underline;}
+body#dummybodyid #diigolet-email-saveBtn{display:block;line-height:24px;cursor:pointer;text-align:center;color:white;border-radius:2px;border:1px solid #066ec1;font-size:12px;text-decoration:none;border-radius:2px;border:1px solid #85a0a6;color:#85a0a6;font-size:12px;text-align:center;height:20px;width:50px;line-height:20px;float:right;margin-top:4px;}
+body#dummybodyid #diigolet-email-saveBtn:active{background:#85a0a6;color:#fff;}
+body#dummybodyid #diigolet-email-cancelBtn{color:#999;height:12px;font-size:12px;margin:6px 14px 0 0;text-decoration:none;float:right;}
+body#dummybodyid #diigolet-email-cancelBtn:hover{text-decoration:underline;}
+body#dummybodyid #diigolet-annotatedLink-saveBtn{display:block;line-height:24px;cursor:pointer;text-align:center;color:white;border-radius:2px;border:1px solid #066ec1;font-size:12px;text-decoration:none;border-radius:2px;border:1px solid #85a0a6;color:#85a0a6;font-size:12px;text-align:center;height:20px;width:50px;line-height:20px;float:right;}
+body#dummybodyid #diigolet-annotatedLink-saveBtn:active{background:#85a0a6;color:#fff;}
+body#dummybodyid #diigolet-annotatedLink-cancelBtn{color:#999;height:12px;font-size:12px;margin:2px 8px 0 6px;text-decoration:none;float:right;}
+body#dummybodyid #diigolet-annotatedLink-cancelBtn:hover{text-decoration:underline;}
+body#dummybodyid #diigolet-share-twitterLeftChars{color:#999;float:right;font-size:20px;font-weight:700;line-height:20px;}
+body#dummybodyid #diigolet-share-twitterLeftChars.full{color:#F00;}
+body#dummybodyid #diigolet-dialog-share .inputTxt{border:1px solid #7F9DB9;font:normal 12px/1.5 Arial,Helvetica,sans-serif;border:1px solid #d7d7d7;-webkit-transition:border-color 200ms ease;outline:none;}
+body#dummybodyid #diigolet-dialog-share .inputTxt:focus{border:1px solid #AAA;}
+body#dummybodyid #diigolet-dialog-share-twitterMsg{height:54px;width:492px;}
+body#dummybodyid #diigolet-dialog-share .buttonRow{margin-top:5px;text-align:right;}
+body#dummybodyid #diigolet-dialog-share .buttonRow input{margin-left:5px;padding:1px 6px;}
+body#dummybodyid #diigolet-dialog-share input.defaultAction{font-weight:700;}
+body#dummybodyid #diigolet-dialog-share-twitter{padding:10px;}
+body#dummybodyid #diigolet-dialog-share-facebook{padding:5px;font-size:20px;height:100px;line-height:100px;text-align:center;}
+body#dummybodyid #diigolet-dialog-share-gPlus{padding:5px;font-size:20px;height:100px;line-height:100px;text-align:center;}
+body#dummybodyid #diigolet-dialog-share-gBuzz iframe{border:none;height:340px;width:100%;overflow:hidden;}
+body#dummybodyid #diigolet-dialog-share-email{padding:10px;}
+body#dummybodyid #diigolet-dialog-share-email>table{width:100%;border-width:0;margin-bottom:5px;}
+body#dummybodyid #diigolet-dialog-share-email>table td{padding:2px 0;}
+body#dummybodyid #diigolet-dialog-share-email label{font-weight:700;}
+body#dummybodyid #diigolet-dialog-share-email-to,body#dummybodyid #diigolet-dialog-share-email-subject{width:100%;}
+body#dummybodyid #diigolet-dialog-share-email-message{height:72px;width:100%;}
+body#dummybodyid #diigolet-dialog-share-email-quotes-checker{font-weight:400!important;float:right;}
+body#dummybodyid #diigolet-dialog-share-email-quotes-checker input{margin-right:2px;vertical-align:text-bottom;}
+body#dummybodyid #diigolet-dialog-share-email-quotes{border:1px solid #bbb;border-radius:3px;width:100%;max-height:150px;overflow-y:scroll;}
+body#dummybodyid #diigolet-aidlog-share-email-quotes-content{margin:5px 10px 10px 10px;}
+body#dummybodyid #diigolet-dialog-share-annotatedLink{padding:10px;}
+body#dummybodyid .diigolet .annotatedLinkInfo{border:1px solid #fad42e;background:#fea;border-radius:5px;color:#000;display:inline-block;padding:0 0 0 20px!important;position:relative;margin-bottom:10px!important;}
+body#dummybodyid .diigolet .annotatedLinkInfo b{display:inline-block;height:16px;width:16px;margin-right:3px;background:url(chrome-extension://oojbgadfejifecebmdnhhkbhdjaphole/diigolet/chrome-panel-images/icons.png) -32px -80px no-repeat;position:absolute;left:1px;top:1px;}
+body#dummybodyid #diigolet-dialog-share-annotatedLink-value{font-weight:700!important;font-size:13px!important;padding:2px;width:496px;}
+body#dummybodyid #diigolet-dialog-share-annotatedLink-value.loading{color:#ccc;font-style:italic;}
+body#dummybodyid #diigolet-dialog-share-annotatedLink-optLinks{float:left;}
+body#dummybodyid .diigolet .autocompleteContacts{border:1px solid #d9d9d9;border-top-color:#999;border-left-color:#999;width:380px;}
+body#dummybodyid .diigolet .recInput{font:12px verdana;border-width:0;float:left;margin:2px;padding-top:2px;}
+body#dummybodyid .diigolet .recItem{border:1px solid #7B9EBD;padding:0 2px;background-color:#F0F5FE;float:left;margin:2px 2px 0 0;}
+body#dummybodyid .diigolet .recInputSizer{position:absolute;visibility:hidden;left:0;bottom:0;font:11px verdana;}
+body#dummybodyid .diigolet .accTip{position:absolute;border:1px solid #ddd;border-top:none;background-color:#f5f5f5;font-size:11px;color:#777;text-align:left;padding:2px 0;text-indent:5px;z-index:8998;}
+body#dummybodyid .diigolet .accNotice{position:absolute;border:1px solid #ffd324;border-top:none;background-color:#fff6bf;font-size:11px;color:#600;text-align:left;padding:2px 0;text-indent:5px;z-index:8999;}
+body#dummybodyid .diigolet .accList{position:absolute;border:1px solid #999;border-top:none;background-color:#fff;font:10px verdana;color:#777;text-align:left;z-index:9000;line-height:18px;}
+body#dummybodyid .diigolet .accList .cItem{border-bottom:1px solid #ddd;background-color:#fff;cursor:pointer;padding:2px;color:#333;}
+body#dummybodyid .diigolet .accList .cItem b{font-size:11px;font-weight:normal;color:#000;}
+body#dummybodyid .diigolet .accList .cItem i,body#dummybodyid .recItem i{font-size:7pt;color:#090;font-style:normal;margin-right:2px;}
+body#dummybodyid .diigolet .accList div strong{background-color:#FFFADB;padding:0 2px;}
+body#dummybodyid .diigolet .accList div.hover{background-color:#E0ECFF;text-decoration:none;}
+body#dummybodyid .diigolet .recItem a{color:#999;font-family:Verdana,Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;line-height:16px;margin:0 1px 0 3px;}
+body#dummybodyid .diigolet .recItem a:hover{color:#333;text-decoration:none;}
+body#dummybodyid .diigolet .cItem span.extraDesc{float:none;font-weight:normal;color:#777;margin-left:10px;font-style:italic;}
+body#dummybodyid .diigolet .cItem span.extraDesc .keywordStrong{color:#000;font-style:italic;background-color:#fff;}
+body#dummybodyid .diigolet .cItem span.keywordStrong{float:none;font-weight:bold;}
+</style><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_bool" src="./Sampling_Funcs_files/widget_bool.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_button" src="./Sampling_Funcs_files/widget_button.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_container" src="./Sampling_Funcs_files/widget_container.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_float" src="./Sampling_Funcs_files/widget_float.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_image" src="./Sampling_Funcs_files/widget_image.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_int" src="./Sampling_Funcs_files/widget_int.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_selection" src="./Sampling_Funcs_files/widget_selection.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_selectioncontainer" src="./Sampling_Funcs_files/widget_selectioncontainer.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget_string" src="./Sampling_Funcs_files/widget_string.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgets/widget" src="./Sampling_Funcs_files/widget.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="notebook/js/widgetmanager" src="./Sampling_Funcs_files/widgetmanager.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="underscore" src="./Sampling_Funcs_files/underscore-min.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="backbone" src="./Sampling_Funcs_files/backbone-min.js"></script><style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Hover_Arrow {position: absolute; width: 15px; height: 11px; cursor: pointer}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 5px 0px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 5px; -webkit-border-radius: 5px; -moz-border-radius: 5px; -khtml-border-radius: 5px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 1px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; color: #666666}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: .7em}
+.MathJax_MenuRadioCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuLabel {padding: 1px 2em 3px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #DDDDDD; margin: 4px 3px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: #606872; color: white}
+.MathJax_Menu_Close {position: absolute; width: 31px; height: 31px; top: -15px; left: -15px}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1em; bottom: 1.5em; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><style type="text/css">.MathJax_Display {text-align: center; margin: 0; position: relative; display: block!important; text-indent: 0; max-width: none; max-height: none; min-width: 0; min-height: 0; width: 100%}
+.MathJax .merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MathJax .MJX-monospace {font-family: monospace}
+.MathJax .MJX-sans-serif {font-family: sans-serif}
+#MathJax_Tooltip {background-color: InfoBackground; color: InfoText; border: 1px solid black; box-shadow: 2px 2px 5px #AAAAAA; -webkit-box-shadow: 2px 2px 5px #AAAAAA; -moz-box-shadow: 2px 2px 5px #AAAAAA; -khtml-box-shadow: 2px 2px 5px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true'); padding: 3px 4px; z-index: 401; position: absolute; left: 0; top: 0; width: auto; height: auto; display: none}
+.MathJax {display: inline; font-style: normal; font-weight: normal; line-height: normal; font-size: 100%; font-size-adjust: none; text-indent: 0; text-align: left; text-transform: none; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; padding: 0; margin: 0}
+.MathJax img, .MathJax nobr, .MathJax a {border: 0; padding: 0; margin: 0; max-width: none; max-height: none; min-width: 0; min-height: 0; vertical-align: 0; line-height: normal; text-decoration: none}
+img.MathJax_strut {border: 0!important; padding: 0!important; margin: 0!important; vertical-align: 0!important}
+.MathJax span {display: inline; position: static; border: 0; padding: 0; margin: 0; vertical-align: 0; line-height: normal; text-decoration: none}
+.MathJax nobr {white-space: nowrap!important}
+.MathJax img {display: inline!important; float: none!important}
+.MathJax * {transition: none; -webkit-transition: none; -moz-transition: none; -ms-transition: none; -o-transition: none}
+.MathJax_Processing {visibility: hidden; position: fixed; width: 0; height: 0; overflow: hidden}
+.MathJax_Processed {display: none!important}
+.MathJax_ExBox {display: block!important; overflow: hidden; width: 1px; height: 60ex; min-height: 0; max-height: none}
+.MathJax .MathJax_EmBox {display: block!important; overflow: hidden; width: 1px; height: 60em; min-height: 0; max-height: none}
+.MathJax .MathJax_HitBox {cursor: text; background: white; opacity: 0; filter: alpha(opacity=0)}
+.MathJax .MathJax_HitBox * {filter: none; opacity: 1; background: transparent}
+#MathJax_Tooltip * {filter: none; opacity: 1; background: transparent}
+@font-face {font-family: MathJax_Blank; src: url('about:blank')}
+.MathJax .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style></head>
+
+<body data-project="/Users/lei/Dropbox/Research/informationtopology/sloppyneuron.git/code/For_Lei" data-base-url="/" data-base-kernel-url="/" data-notebook-name="Sampling_Funcs.ipynb" data-notebook-path="" class="notebook_app" id="dummybodyid"><div style="visibility: hidden; overflow: hidden; position: absolute; top: 0px; height: 1px; width: auto; padding: 0px; border: 0px; margin: 0px; text-align: left; text-indent: 0px; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal;"><div id="MathJax_Hidden"></div></div><div id="MathJax_Message" style="display: none;"></div>
+
+<noscript>
+    &lt;div id='noscript'&gt;
+      IPython Notebook requires JavaScript.&lt;br&gt;
+      Please enable it to proceed.
+  &lt;/div&gt;
+</noscript>
+
+<div id="header" class="navbar navbar-static-top border-box-sizing" style="display: block;">
+  <div class="navbar-inner navbar-nobg">
+    <div class="container">
+    <div id="ipython_notebook" class="nav brand pull-left"><a href="http://127.0.0.1:8890/tree/" alt="dashboard"><img src="./Sampling_Funcs_files/ipynblogo.png" alt="IPython Notebook"></a></div>
+
+    
+
+      <span id="login_widget">
+        
+      </span>
+
+    
+
+    
+
+<span id="save_widget" class="nav pull-left">
+    <span id="notebook_name">Sampling_Funcs</span>
+    <span id="checkpoint_status"></span>
+    <span id="autosave_status">(autosaved)</span>
+</span>
+
+
+    </div>
+  </div>
+</div>
+
+<div id="site" class="border-box-sizing" style="display: block;">
+
+
+<div id="menubar-container" class="container">
+<div id="menubar" class="border-box-sizing">
+<div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+    <ul id="menus" class="nav">
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">File</a>
+            <ul id="file_menu" class="dropdown-menu">
+                <li id="new_notebook" title="Make a new notebook (Opens a new window)">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">New</a></li>
+                <li id="open_notebook" title="Opens a new window with the Dashboard view">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Open...</a></li>
+                <!-- <hr/> -->
+                <li class="divider"></li>
+                <li id="copy_notebook" title="Open a copy of this notebook&#39;s contents and start a new kernel">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Make a Copy...</a></li>
+                <li id="rename_notebook"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Rename...</a></li>
+                <li id="save_checkpoint"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Save and Checkpoint</a></li>
+                <!-- <hr/> -->
+                <li class="divider"></li>
+                <li id="restore_checkpoint" class="dropdown-submenu"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Revert to Checkpoint</a>
+                  <ul class="dropdown-menu"><li class="disabled"><a>No checkpoints</a></li></ul>
+                </li>
+                <li class="divider"></li>
+                <li id="print_preview"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Print Preview</a></li>
+                <li class="dropdown-submenu"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Download as</a>
+                    <ul class="dropdown-menu">
+                        <li id="download_ipynb"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">IPython Notebook (.ipynb)</a></li>
+                        <li id="download_py"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Python (.py)</a></li>
+                        <li id="download_html"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">HTML (.html)</a></li>
+                        <li id="download_rst"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">reST (.rst)</a></li>
+                    </ul>
+                </li>
+                <li class="divider"></li>
+                
+                <li id="kill_and_exit" title="Shutdown this notebook&#39;s kernel, and close this window">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Close and halt</a></li>
+            </ul>
+        </li>
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">Edit</a>
+            <ul id="edit_menu" class="dropdown-menu">
+                <li id="cut_cell"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Cut Cell</a></li>
+                <li id="copy_cell"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Copy Cell</a></li>
+                <li id="paste_cell_above" class="disabled"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Paste Cell Above</a></li>
+                <li id="paste_cell_below" class="disabled"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Paste Cell Below</a></li>
+                <li id="paste_cell_replace" class="disabled"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Paste Cell &amp; Replace</a></li>
+                <li id="delete_cell"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Delete Cell</a></li>
+                <li id="undelete_cell" class="disabled"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Undo Delete Cell</a></li>
+                <li class="divider"></li>
+                <li id="split_cell"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Split Cell</a></li>
+                <li id="merge_cell_above"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Merge Cell Above</a></li>
+                <li id="merge_cell_below"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Merge Cell Below</a></li>
+                <li class="divider"></li>
+                <li id="move_cell_up"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Move Cell Up</a></li>
+                <li id="move_cell_down"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Move Cell Down</a></li>
+                <li class="divider"></li>
+                <li id="edit_nb_metadata"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Edit Notebook Metadata</a></li>
+            </ul>
+        </li>
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">View</a>
+            <ul id="view_menu" class="dropdown-menu">
+                <li id="toggle_header" title="Show/Hide the IPython Notebook logo and notebook title (above menu bar)">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Toggle Header</a></li>
+                <li id="toggle_toolbar" title="Show/Hide the action icons (below menu bar)">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Toggle Toolbar</a></li>
+            </ul>
+        </li>
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">Insert</a>
+            <ul id="insert_menu" class="dropdown-menu">
+                <li id="insert_cell_above" title="Insert an empty Code cell above the currently active cell">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Insert Cell Above</a></li>
+                <li id="insert_cell_below" title="Insert an empty Code cell below the currently active cell">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Insert Cell Below</a></li>
+            </ul>
+        </li>
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">Cell</a>
+            <ul id="cell_menu" class="dropdown-menu">
+                <li id="run_cell" title="Run this cell, and move cursor to the next one">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Run</a></li>
+                <li id="run_cell_select_below" title="Run this cell, select below">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Run and Select Below</a></li>
+                <li id="run_cell_insert_below" title="Run this cell, insert below">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Run and Insert Below</a></li>
+                <li id="run_all_cells" title="Run all cells in the notebook">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Run All</a></li>
+                <li id="run_all_cells_above" title="Run all cells above (but not including) this cell">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Run All Above</a></li>
+                <li id="run_all_cells_below" title="Run this cell and all cells below it">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Run All Below</a></li>
+                <li class="divider"></li>
+                <li id="change_cell_type" class="dropdown-submenu" title="All cells in the notebook have a cell type. By default, new cells are created as &#39;Code&#39; cells">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Cell Type</a>
+                    <ul class="dropdown-menu">
+                      <li id="to_code" title="Contents will be sent to the kernel for execution, and output will display in the footer of cell">
+                          <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Code</a></li>
+                      <li id="to_markdown" title="Contents will be rendered as HTML and serve as explanatory text">
+                          <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Markdown</a></li>
+                      <li id="to_raw" title="Contents will pass through nbconvert unmodified">
+                          <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Raw NBConvert</a></li>
+                      <li id="to_heading1"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Heading 1</a></li>
+                      <li id="to_heading2"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Heading 2</a></li>
+                      <li id="to_heading3"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Heading 3</a></li>
+                      <li id="to_heading4"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Heading 4</a></li>
+                      <li id="to_heading5"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Heading 5</a></li>
+                      <li id="to_heading6"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Heading 6</a></li>
+                    </ul>
+                </li>
+                <li class="divider"></li>
+                <li id="current_outputs" class="dropdown-submenu"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Current Output</a>
+                    <ul class="dropdown-menu">
+                        <li id="toggle_current_output" title="Hide/Show the output of the current cell">
+                            <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Toggle</a>
+                        </li>
+                        <li id="toggle_current_output_scroll" title="Scroll the output of the current cell">
+                            <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Toggle Scrolling</a>
+                        </li>
+                        <li id="clear_current_output" title="Clear the output of the current cell">
+                            <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Clear</a>
+                        </li>
+                    </ul>
+                </li>
+                <li id="all_outputs" class="dropdown-submenu"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">All Output</a>
+                    <ul class="dropdown-menu">
+                        <li id="toggle_all_output" title="Hide/Show the output of all cells">
+                            <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Toggle</a>
+                        </li>
+                        <li id="toggle_all_output_scroll" title="Scroll the output of all cells">
+                            <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Toggle Scrolling</a>
+                        </li>
+                        <li id="clear_all_output" title="Clear the output of all cells">
+                            <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Clear</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">Kernel</a>
+            <ul id="kernel_menu" class="dropdown-menu">
+                <li id="int_kernel" title="Send KeyboardInterrupt (CTRL-C) to the Kernel">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Interrupt</a></li>
+                <li id="restart_kernel" title="Restart the Kernel">
+                    <a href="./Sampling_Funcs_files/Sampling_Funcs.html">Restart</a></li>
+            </ul>
+        </li>
+        <li class="dropdown"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="dropdown-toggle" data-toggle="dropdown">Help</a>
+            <ul id="help_menu" class="dropdown-menu">
+                <li id="keyboard_shortcuts" title="Opens a tooltip with all keyboard shortcuts"><a href="./Sampling_Funcs_files/Sampling_Funcs.html">Keyboard Shortcuts</a></li>
+                <li class="divider"></li>
+                
+
+                
+                    
+                        <li><a href="http://ipython.org/documentation.html" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        IPython Help
+                        </a></li>
+                    
+                        <li><a href="http://nbviewer.ipython.org/github/ipython/ipython/tree/master/examples/notebooks/" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        Notebook Examples
+                        </a></li>
+                    
+                        <li><a href="http://ipython.org/ipython-doc/stable/interactive/notebook.html" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        Notebook Help
+                        </a></li>
+                    
+                        <li><a href="http://ipython.org/ipython-doc/dev/interactive/cm_keyboard.html" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        Editor Shortcuts
+                        </a></li>
+                    
+                    
+                        <li class="divider"></li>
+                    
+                
+                    
+                        <li><a href="http://docs.python.org/" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        Python
+                        </a></li>
+                    
+                        <li><a href="http://docs.scipy.org/doc/numpy/reference/" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        NumPy
+                        </a></li>
+                    
+                        <li><a href="http://docs.scipy.org/doc/scipy/reference/" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        SciPy
+                        </a></li>
+                    
+                        <li><a href="http://matplotlib.org/contents.html" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        Matplotlib
+                        </a></li>
+                    
+                        <li><a href="http://docs.sympy.org/dev/index.html" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        SymPy
+                        </a></li>
+                    
+                        <li><a href="http://pandas.pydata.org/pandas-docs/stable/" target="_blank" title="Opens in a new window">
+                        <i class="icon-external-link menu-icon pull-right"></i>
+                        pandas
+                        </a></li>
+                    
+                    
+                
+                
+            </ul>
+        </li>
+    </ul>
+    <div id="kernel_indicator" class="indicator_area pull-right">
+       <i id="kernel_indicator_icon"></i>
+    </div>
+    <div id="modal_indicator" class="indicator_area pull-right">
+       <i id="modal_indicator_icon" class="" title="Command Mode"></i>
+    </div>
+    <div id="notification_area"><div id="notification_kernel" class="notification_widget pull-right border-box-sizing" style="display: none;"><span></span></div><div id="notification_notebook" class="notification_widget pull-right border-box-sizing" style="display: none;"><span></span></div></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="maintoolbar" class="navbar">
+  <div class="toolbar-inner navbar-inner navbar-nobg">
+    <div id="maintoolbar-container" class="container border-box-sizing toolbar"><div class="btn-group"><button class="btn" title="Save and Checkpoint" id="save_b"><i class="icon-save"></i></button></div><div class="btn-group" id="insert_above_below"><button class="btn" title="Insert Cell Below" id="insert_below_b"><i class="icon-plus-sign"></i></button></div><div class="btn-group" id="cut_copy_paste"><button class="btn" title="Cut Cell" id="cut_b"><i class="icon-cut"></i></button><button class="btn" title="Copy Cell" id="copy_b"><i class="icon-copy"></i></button><button class="btn" title="Paste Cell Below" id="paste_b"><i class="icon-paste"></i></button></div><div class="btn-group" id="move_up_down"><button class="btn" title="Move Cell Up" id="move_up_b"><i class="icon-arrow-up"></i></button><button class="btn" title="Move Cell Down" id="move_down_b"><i class="icon-arrow-down"></i></button></div><div class="btn-group" id="run_int"><button class="btn" title="Run Cell" id="run_b"><i class="icon-play"></i></button><button class="btn" title="Interrupt" id="interrupt_b"><i class="icon-stop"></i></button><button class="btn" title="Restart Kernel" id="repeat_b"><i class="icon-repeat"></i></button></div><select id="cell_type"><option value="code">Code</option><option value="markdown">Markdown</option><option value="raw">Raw NBConvert</option><option value="heading1">Heading 1</option><option value="heading2">Heading 2</option><option value="heading3">Heading 3</option><option value="heading4">Heading 4</option><option value="heading5">Heading 5</option><option value="heading6">Heading 6</option></select><span class="navbar-text">Cell Toolbar:</span><select id="ctb_select"><option value="">None</option><option value="Edit Metadata">Edit Metadata</option><option value="Raw Cell Format">Raw Cell Format</option><option value="Slideshow">Slideshow</option></select></div>
+  </div>
+</div>
+</div>
+
+<div id="ipython-main-app" class="border-box-sizing" style="height: 525px;">
+
+    <div id="notebook_panel" class="border-box-sizing">
+        <div id="notebook" class="border-box-sizing" tabindex="-1" style="height: 517px;"><div class="container" id="notebook-container"><div class="cell border-box-sizing code_cell command_mode rendered selected" tabindex="2"><div class="input"><div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div><div class="inner_cell"><div class="ctb_hideshow ctb_show"><div class="celltoolbar"></div></div><div class="input_area"><div class="CodeMirror cm-s-ipython"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 5.71875px; left: 5.71875px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; padding: 0px; width: 1000px; height: 1em; outline: none; font-size: 4px;"></textarea></div><div class="CodeMirror-hscrollbar" style="left: 0px; min-height: 18px; pointer-events: none;"><div style="height: 1px; width: 0px;"></div></div><div class="CodeMirror-vscrollbar" style="min-width: 18px; pointer-events: none;"><div style="width: 1px; height: 0px;"></div></div><div class="CodeMirror-scrollbar-filler"></div><div class="CodeMirror-gutter-filler"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="min-width: 436.32568359375px; margin-left: 0px; min-height: 113px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines"><div style="position: relative; outline: none;"><div class="CodeMirror-measure"><div style="width: 50px; height: 50px; overflow-x: scroll;"></div></div><div style="position: relative; z-index: 1; display: none;"></div><div class="CodeMirror-code"><pre><span class="cm-keyword">import</span> <span class="cm-variable">numpy</span> <span class="cm-keyword">as</span> <span class="cm-variable">np</span></pre><pre><span class="cm-keyword">from</span> <span class="cm-variable">numpy</span> <span class="cm-keyword">import</span> <span class="cm-variable">zeros</span>, <span class="cm-variable">random</span>, <span class="cm-variable">prod</span>, <span class="cm-variable">exp</span>, <span class="cm-variable">log</span></pre><pre><span class="cm-keyword">from</span> <span class="cm-variable">scipy</span>.<span class="cm-variable">linalg</span> <span class="cm-keyword">import</span> <span class="cm-variable">svdvals</span>, <span class="cm-variable">svd</span></pre><pre><span class="cm-keyword">from</span> <span class="cm-variable">scipy</span>.<span class="cm-variable">optimize</span> <span class="cm-keyword">import</span> <span class="cm-variable">leastsq</span></pre><pre><span class="cm-keyword">import</span> <span class="cm-variable">scipy</span></pre><pre><span class="cm-keyword">import</span> <span class="cm-variable">math</span></pre></div><div class="CodeMirror-cursor" style="left: 0px; top: 0px; height: 17px;">&nbsp;</div><div class="CodeMirror-cursor CodeMirror-secondarycursor" style="display: none;">&nbsp;</div></div></div></div></div><div style="position: absolute; height: 30px; width: 1px; top: 113px;"></div><div class="CodeMirror-gutters" style="display: none; height: 113px;"></div></div></div></div></div></div><div class="widget-area" style="display: none;"><div class="prompt"><button class="close">×</button></div><div class="widget-subarea"></div></div><div class="output_wrapper"><div class="out_prompt_overlay prompt" title="click to scroll output; double click to hide" style=""></div><div class="output" style=""></div><div class="btn output_collapsed" title="click to expand output" style="display: none;">. . .</div></div></div><div class="cell text_cell border-box-sizing command_mode rendered unselected" tabindex="2"><div class="prompt input_prompt"></div><div class="inner_cell"><div class="ctb_hideshow ctb_show"><div class="celltoolbar"></div></div><div class="text_cell_input border-box-sizing" style="display: none;"><div class="CodeMirror cm-s-default CodeMirror-wrap"><div style="overflow: hidden; position: relative; width: 3px; height: 0px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; padding: 0px; width: 1000px; height: 1em; outline: none; font-size: 4px;"></textarea></div><div class="CodeMirror-hscrollbar"><div style="height: 1px;"></div></div><div class="CodeMirror-vscrollbar"><div style="width: 1px;"></div></div><div class="CodeMirror-scrollbar-filler"></div><div class="CodeMirror-gutter-filler"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer"><div style="position: relative;"><div class="CodeMirror-lines"><div style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>x</span></pre></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code"></div><div class="CodeMirror-cursor">&nbsp;</div><div class="CodeMirror-cursor CodeMirror-secondarycursor">&nbsp;</div></div></div></div></div><div style="position: absolute; height: 30px; width: 1px;"></div><div class="CodeMirror-gutters" style="display: none;"></div></div></div></div><div class="text_cell_render border-box-sizing rendered_html" tabindex="-1"><h2 id="this-portion-has-the-functions-for-sampling-the-full-manifold">This portion has the functions for sampling the full manifold</h2></div></div></div><div class="cell border-box-sizing code_cell command_mode rendered unselected" tabindex="2"><div class="input"><div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div><div class="inner_cell"><div class="ctb_hideshow ctb_show"><div class="celltoolbar"></div></div><div class="input_area"><div class="CodeMirror cm-s-ipython"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 5.71875px; left: 5.71875px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; padding: 0px; width: 1000px; height: 1em; outline: none; font-size: 4px;"></textarea></div><div class="CodeMirror-hscrollbar" style="left: 0px; min-height: 18px; pointer-events: none;"><div style="height: 1px; width: 0px;"></div></div><div class="CodeMirror-vscrollbar" style="min-width: 18px; pointer-events: none;"><div style="width: 1px; height: 0px;"></div></div><div class="CodeMirror-scrollbar-filler"></div><div class="CodeMirror-gutter-filler"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="min-width: 951.20947265625px; margin-left: 0px; min-height: 963px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines"><div style="position: relative; outline: none;"><div class="CodeMirror-measure"><div style="width: 50px; height: 50px; overflow-x: scroll;"></div></div><div style="position: relative; z-index: 1; display: none;"></div><div class="CodeMirror-code"><pre><span class="cm-comment">#### SAMPLING FUNCTIONS ####</span></pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">initiate_full_sampling</span>(<span class="cm-variable">starting_points</span>, <span class="cm-variable">make_jac</span>, <span class="cm-variable">layer_num</span>, <span class="cm-variable">step_size</span>, <span class="cm-variable">num_steps</span>=<span class="cm-builtin">None</span>, <span class="cm-variable">verbose</span>=<span class="cm-builtin">False</span>):</pre><pre>    <span class="cm-string">"""</span></pre><pre><span class="cm-string">    inputs: starting_points - points to start walkers from</span></pre><pre><span class="cm-string">            sampling_func_down - mapping function from parameter to data space</span></pre><pre><span class="cm-string">            make_jacobian - makes jacobian to find probability of a step</span></pre><pre><span class="cm-string">            layer_num - layer to sample from (specific to neural network)</span></pre><pre><span class="cm-string">            num_steps - num of steps to attempt</span></pre><pre><span class="cm-string">            step_size - size of gaussian steps</span></pre><pre><span class="cm-string">            </span></pre><pre><span class="cm-string">    outputs: new_manifold - array of shape (num_walkers, num_steps, top_layer_size) with all steps</span></pre><pre><span class="cm-string">    </span></pre><pre><span class="cm-string">    """</span></pre><pre>    <span class="cm-variable">num_walkers</span>=<span class="cm-builtin">len</span>(<span class="cm-variable">starting_points</span>)</pre><pre>    <span class="cm-keyword">if</span> <span class="cm-variable">num_steps</span><span class="cm-operator">==</span><span class="cm-builtin">None</span>:</pre><pre>        <span class="cm-variable">num_steps</span>=<span class="cm-builtin">int</span>(<span class="cm-variable">math</span>.<span class="cm-variable">floor</span>(<span class="cm-number">10.</span><span class="cm-operator">**</span><span class="cm-number">6</span><span class="cm-operator">/</span><span class="cm-variable">num_walkers</span>)) </pre><pre>        <span class="cm-keyword">if</span> <span class="cm-variable">verbose</span>:</pre><pre>            <span class="cm-keyword">print</span> <span class="cm-string">"Taking "</span><span class="cm-operator">+</span><span class="cm-builtin">str</span>(<span class="cm-variable">num_steps</span>)<span class="cm-operator">+</span><span class="cm-string">" steps."</span></pre><pre>    <span class="cm-variable">top_layer_size</span>=<span class="cm-variable">starting_points</span>.<span class="cm-variable">shape</span>[<span class="cm-number">1</span>]</pre><pre>    <span class="cm-variable">manifold_new</span>=<span class="cm-variable">zeros</span>((<span class="cm-variable">num_walkers</span>,<span class="cm-variable">num_steps</span>,<span class="cm-variable">top_layer_size</span>))</pre><pre>    <span class="cm-variable">h_pts</span>=<span class="cm-variable">starting_points</span>.<span class="cm-variable">copy</span>()</pre><pre>    <span class="cm-variable">p</span>=<span class="cm-variable">find_prob</span>(<span class="cm-variable">make_jac</span>, <span class="cm-variable">h_pts</span>, <span class="cm-variable">layer_num</span>)</pre><pre>    <span class="cm-variable">accepted</span>=<span class="cm-number">0</span></pre><pre>    <span class="cm-variable">acceptances</span>=<span class="cm-variable">zeros</span>(<span class="cm-variable">num_walkers</span>,<span class="cm-variable">dtype</span>=<span class="cm-string">'int'</span>)</pre><pre>&nbsp;</pre><pre>    <span class="cm-keyword">for</span> <span class="cm-variable">k</span> <span class="cm-operator">in</span> <span class="cm-builtin">range</span>(<span class="cm-variable">num_steps</span>):</pre><pre>        <span class="cm-comment">#take a step</span></pre><pre>        <span class="cm-variable">new_h</span>=<span class="cm-variable">h_pts</span> <span class="cm-operator">+</span> <span class="cm-variable">make_delta</span>(<span class="cm-variable">step_size</span>, <span class="cm-variable">top_layer_size</span>) </pre><pre>        <span class="cm-comment">#accept if new probability is greater or with probability=new_p</span></pre><pre>        <span class="cm-variable">new_p</span>=<span class="cm-variable">find_prob</span>(<span class="cm-variable">make_jac</span>, <span class="cm-variable">new_h</span>, <span class="cm-variable">layer_num</span>)</pre><pre>        <span class="cm-variable">qual1</span> = <span class="cm-variable">new_p</span><span class="cm-operator">&gt;</span><span class="cm-variable">p</span></pre><pre>        <span class="cm-variable">qual2</span>=(<span class="cm-variable">new_p</span><span class="cm-operator">/</span><span class="cm-variable">p</span>)<span class="cm-operator">&gt;</span>[<span class="cm-variable">random</span>.<span class="cm-variable">random</span>() <span class="cm-keyword">for</span> <span class="cm-variable">_</span> <span class="cm-operator">in</span> <span class="cm-builtin">xrange</span>(<span class="cm-variable">num_walkers</span>)]</pre><pre>        <span class="cm-variable">accepted</span>=(<span class="cm-variable">qual1</span><span class="cm-operator">|</span><span class="cm-variable">qual2</span>)</pre><pre>        <span class="cm-variable">acceptances</span>+=<span class="cm-number">1</span><span class="cm-operator">*</span><span class="cm-variable">accepted</span></pre><pre>        <span class="cm-comment">#add the new points, or the same point again if the move was not accepted</span></pre><pre>        <span class="cm-variable">h_pts</span>=<span class="cm-variable">accepted</span>[:,<span class="cm-builtin">None</span>]<span class="cm-operator">*</span>(<span class="cm-variable">new_h</span> <span class="cm-operator">-</span> <span class="cm-variable">h_pts</span>) <span class="cm-operator">+</span> <span class="cm-variable">h_pts</span></pre><pre>        <span class="cm-variable">p</span>=<span class="cm-variable">accepted</span>[:]<span class="cm-operator">*</span>(<span class="cm-variable">new_p</span> <span class="cm-operator">-</span> <span class="cm-variable">p</span>) <span class="cm-operator">+</span> <span class="cm-variable">p</span></pre><pre>        <span class="cm-variable">manifold_new</span>[:,<span class="cm-variable">k</span>]=<span class="cm-variable">h_pts</span></pre><pre>    <span class="cm-keyword">if</span> <span class="cm-variable">verbose</span>:       </pre><pre>        <span class="cm-keyword">print</span> <span class="cm-builtin">str</span>(<span class="cm-variable">np</span>.<span class="cm-builtin">sum</span>(<span class="cm-variable">acceptances</span>)<span class="cm-operator">*</span><span class="cm-number">100.</span><span class="cm-operator">/</span>(<span class="cm-variable">num_walkers</span><span class="cm-operator">*</span><span class="cm-variable">num_steps</span>))<span class="cm-operator">+</span><span class="cm-string">"% acceptance"</span></pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">manifold_new</span></pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">find_prob</span>(<span class="cm-variable">make_jac</span>, <span class="cm-variable">h_pts</span>, <span class="cm-variable">layer_num</span>):</pre><pre>    <span class="cm-string">"""find the probabilities of a list of points, h_pts"""</span></pre><pre>    <span class="cm-comment">#Calculates Jeffrey's Prior (i.e. p = product of the singular values of J)</span></pre><pre>    <span class="cm-variable">prob_vector</span>=<span class="cm-variable">zeros</span>(<span class="cm-builtin">len</span>(<span class="cm-variable">h_pts</span>))</pre><pre>    <span class="cm-keyword">for</span> <span class="cm-variable">i</span> , <span class="cm-variable">h</span> <span class="cm-operator">in</span> <span class="cm-builtin">enumerate</span>(<span class="cm-variable">h_pts</span>):</pre><pre>        <span class="cm-variable">J</span>=<span class="cm-variable">make_jac</span>(<span class="cm-variable">h</span>, <span class="cm-variable">layer_num</span>)</pre><pre>        <span class="cm-variable">prob_vector</span>[<span class="cm-variable">i</span>]=<span class="cm-variable">prod</span>(<span class="cm-variable">svdvals</span>(<span class="cm-variable">J</span>))</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">prob_vector</span></pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">make_delta</span>(<span class="cm-variable">step_size</span>, <span class="cm-variable">top_layer_size</span>):</pre><pre>    <span class="cm-string">"""make delta_h for MC step"""</span></pre><pre>    <span class="cm-variable">delta_h</span>=<span class="cm-variable">step_size</span><span class="cm-operator">*</span><span class="cm-variable">random</span>.<span class="cm-variable">randn</span>(<span class="cm-variable">top_layer_size</span>)</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">delta_h</span></pre></div><div class="CodeMirror-cursor" style="left: 0px; top: 0px; height: 17px;">&nbsp;</div><div class="CodeMirror-cursor CodeMirror-secondarycursor" style="display: none;">&nbsp;</div></div></div></div></div><div style="position: absolute; height: 30px; width: 1px; top: 963px;"></div><div class="CodeMirror-gutters" style="display: none; height: 963px;"></div></div></div></div></div></div><div class="widget-area" style="display: none;"><div class="prompt"><button class="close">×</button></div><div class="widget-subarea"></div></div><div class="output_wrapper"><div class="out_prompt_overlay prompt" title="click to scroll output; double click to hide" style=""></div><div class="output" style=""></div><div class="btn output_collapsed" title="click to expand output" style="display: none;">. . .</div></div></div><div class="cell text_cell border-box-sizing command_mode rendered unselected" tabindex="2"><div class="prompt input_prompt"></div><div class="inner_cell"><div class="ctb_hideshow ctb_show"><div class="celltoolbar"></div></div><div class="text_cell_input border-box-sizing" style="display: none;"><div class="CodeMirror cm-s-default CodeMirror-wrap"><div style="overflow: hidden; position: relative; width: 3px; height: 0px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; padding: 0px; width: 1000px; height: 1em; outline: none; font-size: 4px;"></textarea></div><div class="CodeMirror-hscrollbar"><div style="height: 1px;"></div></div><div class="CodeMirror-vscrollbar"><div style="width: 1px;"></div></div><div class="CodeMirror-scrollbar-filler"></div><div class="CodeMirror-gutter-filler"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer"><div style="position: relative;"><div class="CodeMirror-lines"><div style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre><span>x</span></pre></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code"></div><div class="CodeMirror-cursor">&nbsp;</div><div class="CodeMirror-cursor CodeMirror-secondarycursor">&nbsp;</div></div></div></div></div><div style="position: absolute; height: 30px; width: 1px;"></div><div class="CodeMirror-gutters" style="display: none;"></div></div></div></div><div class="text_cell_render border-box-sizing rendered_html" tabindex="-1"><h2 id="this-portion-uses-the-above-code-to-optimize-the-step-size-s-t-r-2-vs-t-ie-diffusion-is-maximal">This portion uses the above code to optimize the step size s.t. r**2 vs t (ie diffusion) is maximal</h2></div></div></div><div class="cell border-box-sizing code_cell rendered command_mode unselected" tabindex="2"><div class="input"><div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div><div class="inner_cell"><div class="ctb_hideshow ctb_show"><div class="celltoolbar"></div></div><div class="input_area"><div class="CodeMirror cm-s-ipython"><div style="overflow: hidden; position: relative; width: 3px; height: 0px; top: 940.71875px; left: 5.71875px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" tabindex="0" style="position: absolute; padding: 0px; width: 1000px; height: 1em; outline: none; font-size: 4px;"></textarea></div><div class="CodeMirror-hscrollbar" style="left: 0px; min-height: 18px; pointer-events: none;"><div style="height: 1px; width: 0px;"></div></div><div class="CodeMirror-vscrollbar" style="min-width: 18px; pointer-events: none;"><div style="width: 1px; height: 0px;"></div></div><div class="CodeMirror-scrollbar-filler"></div><div class="CodeMirror-gutter-filler"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="min-width: 1088.51184082031px; margin-left: 0px; min-height: 963px;"><div style="position: relative; top: 0px;"><div class="CodeMirror-lines"><div style="position: relative; outline: none;"><div class="CodeMirror-measure"><div style="width: 50px; height: 50px; overflow-x: scroll;"></div></div><div style="position: relative; z-index: 1; display: none;"></div><div class="CodeMirror-code"><pre><span class="cm-comment">#### DEFINE THE STEP OPTIMIZING FUNCTIONS ####</span></pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">find_step_size</span>(<span class="cm-variable">starting_points</span>, <span class="cm-variable">SdA</span>, <span class="cm-variable">layer_num</span>, <span class="cm-variable">num_steps</span>, <span class="cm-variable">x_verbose</span>=<span class="cm-builtin">False</span>, <span class="cm-variable">test_step_sizes</span>=<span class="cm-builtin">None</span>):</pre><pre>    <span class="cm-string">"""find the optimum step size for taking a given slice"""</span></pre><pre>    <span class="cm-keyword">if</span> <span class="cm-variable">test_step_sizes</span><span class="cm-operator">==</span><span class="cm-builtin">None</span>:</pre><pre>        <span class="cm-variable">test_step_sizes</span>=(<span class="cm-variable">np</span>.<span class="cm-variable">arange</span>(<span class="cm-number">5</span>)<span class="cm-operator">+</span><span class="cm-number">1.</span>)</pre><pre>    <span class="cm-variable">val</span>=<span class="cm-builtin">False</span></pre><pre>    <span class="cm-keyword">while</span> <span class="cm-variable">val</span><span class="cm-operator">==</span><span class="cm-builtin">False</span>:</pre><pre>        <span class="cm-variable">slopes</span>=<span class="cm-variable">get_slopes</span>(<span class="cm-variable">starting_points</span>, <span class="cm-variable">SdA</span>, <span class="cm-variable">layer_num</span>, <span class="cm-variable">num_steps</span>, <span class="cm-variable">test_step_sizes</span>, <span class="cm-variable">x_verbose</span>)</pre><pre>        <span class="cm-keyword">if</span> <span class="cm-variable">slopes</span>.<span class="cm-variable">argmax</span>()<span class="cm-operator">==</span><span class="cm-number">0</span>:</pre><pre>            <span class="cm-variable">test_step_sizes</span>=<span class="cm-variable">test_step_sizes</span><span class="cm-operator">/</span><span class="cm-number">2</span></pre><pre>        <span class="cm-keyword">elif</span> <span class="cm-variable">slopes</span>.<span class="cm-variable">argmax</span>()<span class="cm-operator">==</span><span class="cm-number">4</span>:</pre><pre>            <span class="cm-variable">test_step_sizes</span>=<span class="cm-variable">test_step_sizes</span><span class="cm-operator">*</span><span class="cm-number">2</span></pre><pre>        <span class="cm-keyword">else</span>:</pre><pre>            <span class="cm-variable">best_step_size</span>=<span class="cm-variable">fit_slopes</span>(<span class="cm-variable">test_step_sizes</span>,<span class="cm-variable">slopes</span>).<span class="cm-variable">item</span>(<span class="cm-number">0</span>)</pre><pre>            <span class="cm-variable">val</span>=<span class="cm-builtin">True</span></pre><pre>            <span class="cm-variable">D</span>=<span class="cm-variable">slopes</span>.<span class="cm-builtin">max</span>()</pre><pre>    <span class="cm-keyword">if</span> <span class="cm-variable">x_verbose</span>:</pre><pre>        <span class="cm-keyword">print</span> <span class="cm-string">"The diffusion constant is: "</span><span class="cm-operator">+</span><span class="cm-builtin">str</span>(<span class="cm-variable">D</span>)</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">best_step_size</span>    </pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">get_slopes</span>(<span class="cm-variable">starting_points</span>, <span class="cm-variable">SdA</span>, <span class="cm-variable">layer_num</span>, <span class="cm-variable">num_steps</span>, <span class="cm-variable">test_step_sizes</span>, <span class="cm-variable">x_verbose</span>=<span class="cm-builtin">False</span>):</pre><pre>    <span class="cm-string">"""find the slopes for different test step sizes"""</span></pre><pre>    <span class="cm-variable">slope_list</span>=[]</pre><pre>    <span class="cm-keyword">for</span> <span class="cm-variable">a_step_size</span> <span class="cm-operator">in</span> <span class="cm-variable">test_step_sizes</span>:</pre><pre>        <span class="cm-variable">manifold_h</span>=<span class="cm-variable">initiate_full_sampling</span>(<span class="cm-variable">starting_points</span>, <span class="cm-variable">SdA</span>.<span class="cm-variable">make_jacobian</span>, <span class="cm-variable">layer_num</span>, <span class="cm-variable">a_step_size</span>, <span class="cm-variable">num_steps</span>, <span class="cm-variable">x_verbose</span>)</pre><pre>        <span class="cm-variable">manifold</span>=<span class="cm-variable">SdA</span>.<span class="cm-variable">sampling_map_down</span>(<span class="cm-variable">manifold_h</span>, <span class="cm-variable">layer_num</span>)</pre><pre>        <span class="cm-variable">distance_pts</span>=[<span class="cm-variable">rsqrd_vs_t</span>(<span class="cm-variable">manifold</span>,<span class="cm-variable">i</span><span class="cm-operator">+</span><span class="cm-number">1</span>) <span class="cm-keyword">for</span> <span class="cm-variable">i</span> <span class="cm-operator">in</span> <span class="cm-builtin">xrange</span>(<span class="cm-builtin">len</span>(<span class="cm-variable">manifold</span>[<span class="cm-number">0</span>])<span class="cm-operator">-</span><span class="cm-number">1</span>)]</pre><pre>        <span class="cm-variable">slope</span>=<span class="cm-variable">get_fit_linear</span>(<span class="cm-variable">distance_pts</span>)</pre><pre>        <span class="cm-variable">slope_list</span>.<span class="cm-variable">append</span>(<span class="cm-variable">slope</span>)</pre><pre>    <span class="cm-variable">slope_list</span>=<span class="cm-variable">np</span>.<span class="cm-variable">asarray</span>(<span class="cm-variable">slope_list</span>)</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">slope_list</span></pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">rsqrd_vs_t</span>(<span class="cm-variable">walks</span>,<span class="cm-variable">t</span>):</pre><pre>    <span class="cm-string">"""makes an array of r**2 distance vs time for various recorded walks"""</span></pre><pre>    <span class="cm-variable">totalsum</span>=<span class="cm-number">0</span></pre><pre>    <span class="cm-keyword">for</span> <span class="cm-variable">rlist</span> <span class="cm-operator">in</span> <span class="cm-variable">walks</span>:</pre><pre>        <span class="cm-variable">RL</span>=<span class="cm-variable">rlist</span>[<span class="cm-variable">t</span>:]<span class="cm-operator">-</span><span class="cm-variable">rlist</span>[:<span class="cm-operator">-</span><span class="cm-variable">t</span>]</pre><pre>        <span class="cm-variable">totalsum</span>+=<span class="cm-builtin">sum</span>((<span class="cm-variable">RL</span><span class="cm-operator">*</span><span class="cm-variable">RL</span>).<span class="cm-builtin">sum</span>(<span class="cm-variable">axis</span>=<span class="cm-number">1</span>))<span class="cm-operator">/</span>(<span class="cm-builtin">len</span>(<span class="cm-variable">rlist</span>)<span class="cm-operator">-</span><span class="cm-variable">t</span>)</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">totalsum</span><span class="cm-operator">/</span><span class="cm-builtin">len</span>(<span class="cm-variable">walks</span>)</pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">get_fit_linear</span>(<span class="cm-variable">distance_pts</span>):</pre><pre>    <span class="cm-string">"""Find the slope of the r**2 vs t of a walk"""</span></pre><pre>    <span class="cm-variable">t</span>=<span class="cm-variable">np</span>.<span class="cm-variable">arange</span>(<span class="cm-builtin">len</span>(<span class="cm-variable">distance_pts</span>))</pre><pre>    <span class="cm-variable">fitfunc</span> = <span class="cm-keyword">lambda</span> <span class="cm-variable">params</span>, <span class="cm-variable">t</span>: <span class="cm-variable">params</span>[<span class="cm-number">0</span>] <span class="cm-operator">*</span> <span class="cm-variable">t</span> </pre><pre>    <span class="cm-variable">errfunc</span> = <span class="cm-keyword">lambda</span> <span class="cm-variable">p</span>, <span class="cm-variable">t</span>, <span class="cm-variable">distance_pts</span>: <span class="cm-variable">fitfunc</span>(<span class="cm-variable">p</span>, <span class="cm-variable">t</span>) <span class="cm-operator">-</span> <span class="cm-variable">distance_pts</span> </pre><pre>&nbsp;</pre><pre>    <span class="cm-variable">p1</span>, <span class="cm-variable">success</span> = <span class="cm-variable">leastsq</span>(<span class="cm-variable">errfunc</span>, <span class="cm-number">0.5</span>, <span class="cm-variable">args</span> = (<span class="cm-variable">t</span>, <span class="cm-variable">distance_pts</span>))</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-variable">p1</span>  </pre><pre>&nbsp;</pre><pre><span class="cm-keyword">def</span> <span class="cm-def">fit_slopes</span>(<span class="cm-variable">t</span>, <span class="cm-variable">slopes</span>):</pre><pre>    <span class="cm-string">"""fit list of slopes to a parabola to find optimum"""</span></pre><pre>    <span class="cm-variable">fit</span> = <span class="cm-variable">scipy</span>.<span class="cm-variable">polyfit</span>(<span class="cm-variable">t</span>, <span class="cm-variable">slopes</span>, <span class="cm-number">2</span>)</pre><pre>    <span class="cm-keyword">return</span> <span class="cm-operator">-</span><span class="cm-variable">fit</span>[<span class="cm-number">1</span>]<span class="cm-operator">/</span>(<span class="cm-number">2</span><span class="cm-operator">*</span><span class="cm-variable">fit</span>[<span class="cm-number">0</span>])</pre><pre>&nbsp;</pre><pre>&nbsp;</pre></div><div class="CodeMirror-cursor" style="left: 0px; top: 935px; height: 17px; visibility: hidden;">&nbsp;</div><div class="CodeMirror-cursor CodeMirror-secondarycursor" style="display: none; visibility: hidden;">&nbsp;</div></div></div></div></div><div style="position: absolute; height: 30px; width: 1px; top: 963px;"></div><div class="CodeMirror-gutters" style="display: none; height: 963px;"></div></div></div></div></div></div><div class="widget-area" style="display: none;"><div class="prompt"><button class="close">×</button></div><div class="widget-subarea"></div></div><div class="output_wrapper"><div class="out_prompt_overlay prompt" title="click to scroll output; double click to hide" style=""></div><div class="output" style=""></div><div class="btn output_collapsed" title="click to expand output" style="display: none;">. . .</div></div></div><div class="end_space"></div></div></div>
+        <div id="pager_splitter" class="ui-draggable border-box-sizing ui-widget ui-state-default" title="Click to Show/Hide pager area, drag to Resize"></div>
+        <div id="pager" class="border-box-sizing" style="height: 210px;">
+            <div id="pager_button_area">
+            <a role="button" title="Open the pager in an external window" class="ui-button" style="position: absolute; right: 20px;"><span class="ui-icon ui-icon-extlink"></span></a><a role="button" title="Close the pager" class="ui-button" style="position: absolute; right: 5px;"><span class="ui-icon ui-icon-close"></span></a></div>
+            <div id="pager-container" class="container border-box-sizing"></div>
+        </div>
+    </div>
+
+</div>
+<div id="tooltip" class="ipython_tooltip" style="display:none"><div class="tooltipbuttons"><a href="./Sampling_Funcs_files/Sampling_Funcs.html" role="button" class="ui-button"><span class="ui-icon ui-icon-close">Close</span></a><a href="./Sampling_Funcs_files/Sampling_Funcs.html" class="ui-corner-all" role="button" id="expanbutton" title="Grow the tooltip vertically (press tab 2 times)"><span class="ui-icon ui-icon-plus">Expand</span></a><a href="./Sampling_Funcs_files/Sampling_Funcs.html" role="button" class="ui-button" title="show the current docstring in pager (press tab 4 times)"><span class="ui-icon ui-icon-arrowstop-l-n">Open in Pager</span></a><a href="./Sampling_Funcs_files/Sampling_Funcs.html" role="button" class="ui-button" title="Tootip is not dismissed while typing for 10 seconds" style="display: none;"><span class="ui-icon ui-icon-clock">Close</span></a></div><div class="pretooltiparrow"></div><div class="tooltiptext smalltooltip"></div></div>
+
+
+
+</div>
+
+<script src="./Sampling_Funcs_files/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/namespace.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/page.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/loginwidget.js" type="text/javascript" charset="utf-8"></script>
+
+
+
+
+
+
+<script src="./Sampling_Funcs_files/codemirror.js" charset="utf-8"></script>
+<script type="text/javascript">
+    CodeMirror.modeURL = "/static/components/codemirror/mode/%N/%N.js";
+</script>
+<script src="./Sampling_Funcs_files/loadmode.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/multiplex.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/overlay.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/matchbrackets.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/comment.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/htmlmixed.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/xml.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/javascript.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/css.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/rst.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/markdown.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/gfm.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/python.js" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/codemirror-ipython.js" charset="utf-8"></script>
+
+<script src="./Sampling_Funcs_files/highlight.pack.js" charset="utf-8"></script>
+
+<script src="./Sampling_Funcs_files/date.format.js" charset="utf-8"></script>
+
+<script src="./Sampling_Funcs_files/events.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/utils.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/dialog.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/kernel.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/comm.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/session.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/layoutmanager.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/mathjaxutils.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/outputarea.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/cell.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/celltoolbar.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/codecell.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/completer.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/textcell.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/savewidget.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/quickhelp.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/pager.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/menubar.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/toolbar.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/maintoolbar.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/notebook.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/keyboardmanager.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/notificationwidget.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/notificationarea.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/tooltip.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/config.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/main.js" type="text/javascript" charset="utf-8"></script>
+
+<script src="./Sampling_Funcs_files/contexthint.js" charset="utf-8"></script>
+
+<script src="./Sampling_Funcs_files/default.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/rawcell.js" type="text/javascript" charset="utf-8"></script>
+<script src="./Sampling_Funcs_files/slideshow.js" type="text/javascript" charset="utf-8"></script>
+
+
+
+<script src="./Sampling_Funcs_files/custom.js" type="text/javascript" charset="utf-8"></script>
+
+
+
+<div id="diigo-chrome-installed" style="display: none;"></div><div class="diigolet notice" id="diigolet-notice" style="display: none;"><div><b>&nbsp;</b><p>Ok, done!</p><span id="close"></span></div></div><div id="diigolet-dlg-sticky" style="position: absolute; left: 100px; top: 100px; display: none;" class="diigolet diigoletFN yellow"><div id="diigolet-dlg-sticky-top" class="_dragHandle" style="cursor: move;"><span id="diigolet-dlg-sticky-close"></span><span id="diigolet-dlg-sticky-color"><div id="diigolet-dlg-sticky-currentColor" title="change color"></div><div id="diigolet-dlg-sticky-colorPicker" style="display: none;"><b color="yellow" id="diigolet-dlg-yellow" class="dlg-colorItem colorchecked"><b></b></b><b color="blue" id="diigolet-dlg-blue" class="dlg-colorItem"><b></b></b><b color="green" id="diigolet-dlg-green" class="dlg-colorItem"><b></b></b><b color="pink" id="diigolet-dlg-pink" class="dlg-colorItem"><b></b></b></div></span><span id="diigolet-dlg-sticky-addTab"></span></div><div id="diigolet-dlg-sticky-content" class="private"><div id="diigolet-dlg-sticky-switcher"><span class="FN-switcher" id="FN-switcher-private"><b></b>Private</span><span class="FN-switcher" id="FN-switcher-group"><b></b>Group</span></div><div class="FN-content-wrapper private"><textarea id="FN-private-editor" placeholder="Input here..."></textarea><div id="FN-content-footer"><div id="editDone"><span id="FN-private-delete"><b></b></span><span id="FN-private-datetime"></span></div><div id="editing"><a href="javascript:void(0)" id="FN-private-saveBtn">Save</a><a href="javascript:void(0)" id="FN-private-cancelBtn">Cancel</a></div></div></div><div class="FN-content-wrapper group"><div><div id="FN-group-content-nav"><span id="FN-current-group"><span>+Share to a new group</span><b></b></span><div id="FN-group-menu" style="display: none;"><ul id="FN-group-ul"></ul><ul id="FN-group-share-new-ul"><li id="FN-group-share-new">+Share to a new group</li></ul></div></div><div id="FN-post-form" class=""><div><textarea id="FN-group-post" placeholder="write a comment..."></textarea></div><div><select id="FN-group-share"></select><button><span class="button-label">Post</span><span class="button-spinner"></span></button><a href="javascript:void(0)">Cancel</a></div></div><div id="FN-group-content"><div id="FN-group-content-container"></div><div id="FN-group-content-postform"><textarea placeholder="Write a comment..."></textarea><div class="post-action"><button><span class="button-label">Post</span><span class="button-spinner"></span></button><a href="javascript:void(0)">Cancel</a></div></div></div></div></div></div></div><div id="diigolet-csm" style="position: absolute; display: none;" class="yellow"><div id="diigolet-csm-research-mode"></div><div id="diigolet-csm-highlight-wrapper" class="csm-btn"><a id="diigolet-csm-highlight" class="csm-action" href="javascript:void(0);"></a><div class="diigolet-csm-color small hidden" style="height: 0px;"><a class="diigolet-csm-coloritem yellow" data-color="yellow" style="height: 0px;"></a><a class="diigolet-csm-coloritem blue" data-color="blue" style="height: 0px;"></a><a class="diigolet-csm-coloritem green" data-color="green" style="height: 0px;"></a><a class="diigolet-csm-coloritem pink" data-color="pink" style="height: 0px;"></a></div></div><div id="diigolet-csm-highlightAndComment-wrapper" class="csm-btn"><a id="diigolet-csm-highlightAndComment" class="csm-action" href="javascript:void(0);"></a><div class="diigolet-csm-color small hidden" style="height: 0px;"><a class="diigolet-csm-coloritem yellow" data-color="yellow" style="height: 0px;"></a><a class="diigolet-csm-coloritem blue" data-color="blue" style="height: 0px;"></a><a class="diigolet-csm-coloritem green" data-color="green" style="height: 0px;"></a><a class="diigolet-csm-coloritem pink" data-color="pink" style="height: 0px;"></a></div></div><a id="diigolet-csm-search" class="csm-action" href="javascript:void(0);"></a></div><div style="position: absolute; width: 0px; height: 0px; overflow: hidden; padding: 0px; border: 0px; margin: 0px;"><div id="MathJax_Font_Test" style="position: absolute; visibility: hidden; top: 0px; left: 0px; width: auto; padding: 0px; border: 0px; margin: 0px; white-space: nowrap; text-align: left; text-indent: 0px; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; font-size: 40px; font-weight: normal; font-style: normal; font-family: STIXSizeOneSym, sans-serif;"></div></div></body></html>
