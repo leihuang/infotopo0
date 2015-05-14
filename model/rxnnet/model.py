@@ -232,6 +232,18 @@ class Network(Network0):
         self.addReaction(rxnid, stoichiometry=stoich, kineticLaw=ratelaw)
 
 
+    def add_reaction_eq(self, rxnid, stoich_or_eqn, KE):
+        """
+        Add a reaction that is assumed to be always at equilibrium.
+        """
+        self.add_reaction(rxnid=rxnid, stoich_or_eqn=stoich_or_eqn, 
+                          p={'KE_'+rxnid:KE}, ratelaw='0')
+        # add algebraic rules
+        
+
+        
+        
+    
     def add_reaction_mm_qe(self, rxnid, stoich_or_eqn, 
                            pM, pI=None, pA=None, 
                            reversible=True, haldane='Vf', 
@@ -631,8 +643,11 @@ class Network(Network0):
             rxn2 = copy.deepcopy(rxn)
             rxn2.id = f(rxn.id)
             rxn2.stoichiometry = butil.chkeys(rxn.stoichiometry, f)
-            rxn2.reactant_stoichiometry = butil.chkeys(rxn.reactant_stoichiometry, f)
-            rxn2.product_stoichiometry = butil.chkeys(rxn.product_stoichiometry, f)
+            try:
+                rxn2.reactant_stoichiometry = butil.chkeys(rxn.reactant_stoichiometry, f)
+                rxn2.product_stoichiometry = butil.chkeys(rxn.product_stoichiometry, f)
+            except AttributeError:  # some reactions have no reactant/product stoich
+                pass
             rxn2.kineticLaw = expr.sub_for_var(rxn.kineticLaw, vid, vid2)
             rxns2.set(rxn2.id, rxn2)
         net2.reactions = rxns2
@@ -646,7 +661,7 @@ class Network(Network0):
         
         alrules2 = KeyedList()  # algebraic rules
         for varid, rule in self.algebraicRules.items():
-            varid2 = f(varid)
+            varid2 = expr.sub_for_var(varid, vid, vid2)
             rule2 = expr.sub_for_var(rule, vid, vid2)
             alrules2.set(varid2, rule2)
         net2.algebraicRules = alrules2

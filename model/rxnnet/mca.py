@@ -161,6 +161,8 @@ def get_reordered_net(net):
     reordered so that dependent dynamic variables come last. It should be
     called before calling any of the following functions in this module. 
     """
+    
+    """
     N = get_stoich_mat(net)
     if N.rank() == N.shape[0]: 
         # rank of N equals the number of rows
@@ -196,7 +198,8 @@ def get_reordered_net(net):
         net2.reordered = True
         net2.ddynvarids = ddynvarids
         return net2
-
+    """
+    pass
 
 def is_ss(net, tol=1e-6):
     """
