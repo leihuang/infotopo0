@@ -2,10 +2,11 @@
 """
 
 from __future__ import division
+from collections import OrderedDict as OD
 import copy
 import re
 import itertools
-from collections import OrderedDict as OD
+import os
 
 import numpy as np
 import pandas as pd
@@ -16,7 +17,8 @@ from SloppyCell import ExprManip as expr
 from util import butil
 reload(butil)
 
-import predict  ##?
+import parameter, predict  ##?
+reload(parameter)
 reload(predict)
 
 import trajectory
@@ -51,8 +53,8 @@ class Network(Network0):
     
     @property
     def p(self):
-        return pd.Series([v.value for v in self.optimizableVars],
-                         index=self.pids)
+        return parameter.Parameter([v.value for v in self.optimizableVars],
+                                   pids=self.pids)
     
     
     @property
@@ -90,6 +92,22 @@ class Network(Network0):
         return pd.Series([self.evaluate_expr(rateid) for rateid in self.rateids],
                          index=self.rateids)
     v = rates
+    
+    
+    @property
+    def assignment_rules(self):
+        return pd.Series(OD(self.assignmentRules.items()))
+    asgrules = assignment_rules
+    """
+    algrules = algebraic_rules
+    raterules = rate_rules
+    funcdefs = function_definitions
+    asgvars = assigned_vars
+    algvars = algebraic_vars
+    convars = constant_vars
+    dynvars = dynamic_vars
+    optvars = optimizable_vars
+    """
     
     
     def copy(self):
@@ -620,7 +638,7 @@ class Network(Network0):
         pass
     
     
-    def change_varid(self, varid_old, varid_new):
+    def replace_varid(self, varid_old, varid_new):
         """
         Change id of rxn, species, or parameter.
         Ratelaws, assignmentRules, rateRules
@@ -693,16 +711,40 @@ class Network(Network0):
         return net2
     
     
-    def change_varids(self, varidmap):
+    def replace_varids(self, varidmap):
         """
         Input:
             varidmap: a mapping from old varids to new varids 
         """
         net = self.copy()
         for vid, vid2 in varidmap.items():
-            net = net.change_varid(vid, vid2)
+            net = net.replace_varid(vid, vid2)
         return net
     
+    
+    def remove_function_definitions(self):
+        """
+        Only replace ratelaws of reactions so far...
+        """
+        net2 = self.copy()
+        for fid, f in self.functionDefinitions.items():
+            for rxnid, rxn in self.reactions.items():
+                ratelaw = rxn.kineticLaw
+                fids_rxn = [_[0] for _ in expr.extract_funcs(ratelaw)] 
+                if fid in fids_rxn:
+                    # an example of fstr: 'function_1(Vf_R1,KM_R1_X1,X1)'
+                    fstr = re.search('%s\(.*?\)'%fid, ratelaw).group()
+                    # an example of varids2: ['Vf_R1','KM_R1_X1','X1']
+                    varids2 = [_.strip() for _ in 
+                               re.search('(?<=\().*(?=\))', fstr).group().split(',')]
+                    # an example of fstr2: 'Vf_R1*X1/(KM_R1_X1+X1)'
+                    fstr2 = expr.sub_for_vars(f.math, 
+                                              dict(zip(f.variables, varids2)))
+                    ratelaw2 = ratelaw.replace(fstr, '(%s)'%fstr2)
+                    net2.reactions.get(rxnid).kineticLaw = ratelaw2
+        net2.functionDefinitions = KeyedList()
+        return net2
+        
     
     def perturb(self, condition):
         """
@@ -1282,3 +1324,86 @@ def _format(varid):
         varid2 = '_' + varid2
     return varid2
 
+
+def cmp_p(nets, only_common=False):
+    """
+    Input:
+        nets: a list of nets
+        only_common: if True, only outputs the intersection of parameter sets 
+        
+    Output:
+        a pd.DataFrame
+    """
+    
+    # not using set.intersection to preserve the order
+    pids_common = [pid for pid in nets[0].pids 
+                   if all([pid in net.pids for net in nets])]
+    ps = pd.DataFrame([net.p[pids_common] for net in nets], 
+                      index=[net.id for net in nets], columns=pids_common).T
+    if not only_common:
+        for net in nets:
+            p_net = pd.DataFrame({net.id: net.p[~net.p.index.isin(pids_common)]})
+            ps = pd.concat((ps, p_net))
+        
+    return ps
+    
+    
+def cmp_ratelaw(nets, only_common=False, filepath='', landscape=True):
+    """
+    Input:
+        nets:
+        
+    Output:
+        
+    """
+    rateids_common = [rateid for rateid in nets[0].rateids 
+                      if all([rateid in net.rateids for net in nets])]
+    ratelaws = pd.DataFrame([net.asgrules[rateids_common] for net in nets],
+                            index=[net.id for net in nets], 
+                            columns=rateids_common).T
+    if not only_common:
+        for net in nets:
+            rateids_net = [_ for _ in net.rateids if _ not in rateids_common]
+            ratelaws_net = pd.DataFrame({net.id: net.asgrules[rateids_net]})
+            ratelaws = pd.concat((ratelaws, ratelaws_net))
+            
+    if filepath:
+        # tex things up...
+        xratelaws = ratelaws.applymap(lambda s: expr.expr2TeX(s).replace('_','\_'))         
+        
+        lines = []
+        lines.append(r'\documentclass{article}') 
+        lines.append(r'\usepackage{amsmath,fullpage,longtable,array}') 
+        if landscape == True:
+            lines.append(r'\usepackage[a4paper,landscape,margin=1in]{geometry}')
+        else:
+            lines.append(r'\usepackage[a4paper,margin=1in]{geometry}')
+        ## to be customized
+        lines[-1] = r'\usepackage[paperheight=19in,paperwidth=12in,landscape,margin=0.2in]{geometry}'
+        
+        lines.append(r'\begin{document}') 
+        lines.append(r'\begin{center}')
+        ## to be customized
+        ## \arraybackslash is often messed up
+        lines.append(r'\begin{tabular}{|>{\centering\arraybackslash}m{0.5in}'+\
+                      '|>{\centering\arraybackslash}m{8in}'+\
+                      '|>{\centering\arraybackslash}m{9.5in}'+\
+                      '|'+'}')
+        lines.append(r'\hline')
+        lines.append(r'rate & '+\
+                     ' & '.join(['\\textbf{%s}'%netid for netid in ratelaws.columns])+\
+                     ' \\\\ [3ex] \hline')
+        for rateid, xratelaws_rxn in xratelaws.iterrows():
+            ## to be customized
+            lines.append(r'%s & $'%rateid.lstrip('v_')+\
+                          ' $ & $ '.join(xratelaws_rxn)+\
+                          ' $ \\\\ [5ex] \hline')
+        lines.append(r'\end{tabular}')
+        lines.append(r'\end{center}')
+        lines.append(r'\end{document}') 
+
+        fh = file(filepath, 'w') 
+        fh.write(os.linesep.join(lines)) 
+        fh.close()        
+    
+    return ratelaws

@@ -22,6 +22,8 @@ Terminology:
     z: predict
 """
 
+import pandas as pd
+
 import residual
 reload(residual)
 
