@@ -20,9 +20,25 @@ Terminology:
     pred: predict
     y: data
     z: predict
+    
+    
+Compare: 
+    structure: 
+        - FIXME **: migrate functions in rxnnet.model to here
+        - FIXME **: in this case, can allow dexpts and pexpts to be None
+        p: 
+        custom object: eg, ratelaws (latex)
+    behavior:
+        fit: ensemble (sampling)
+        prediction: ensemble (sampling)
+    
 """
 
+from collections import OrderedDict as OD
+
 import pandas as pd
+
+from util import butil
 
 import residual
 reload(residual)
@@ -37,7 +53,7 @@ class Comparison(object):
             mod: reference/true model
             mod2: approximating model
             dexpts:
-            dexpts2: sometimes different from dexpts in 'conditions'
+            dexpts2: sometimes different from dexpts in 'conditions'; indices have to match
             pexpts: 
         """
         self.mod = mod
@@ -46,7 +62,9 @@ class Comparison(object):
         self.dexpts2 = dexpts2
         self.dpred = mod.get_predict(dexpts)
         if dexpts2 is None:
-            dexpts2 = dexpts
+            dexpts2 = self.dpred.expts
+        else:
+            dexpts2 = dexpts2.loc[self.dpred.expts.index]
         self.dpred2 = mod2.get_predict(dexpts2)
         if pexpts:
             self.pexpt = pexpts
@@ -59,19 +77,34 @@ class Comparison(object):
         return Comparison(self.mod2, self.mod, self.dexpts2, self.dexpts, pexpts)
     
     
-    def get_residual2(self, p, **kwargs_dat):
+    def get_residual2(self, p=None, **kwargs_dat):
         """
+        
         """
-        dat = self.dpred.make_dat(p, **kwargs_dat)
+        dat = self.dpred.make_dat(p=p, **kwargs_dat)
         # conditions may have different names
         dat2 = dat.rename(dict(zip(self.dpred.dids, self.dpred2.dids)))
         res2 = residual.Residual(self.dpred2, dat2)
         return res2
     
     
-    def sampling(self, p, nstep, **kwargs):
+    def fit(self, p=None, **kwargs):
         """
         Input:
+            kwargs: kwargs for predict.Predict.make_dat & residual.Residual.fit; 
+                    usually include the following:
+                        p0: initial guess for fitting dat to dpred2
+        """
+        res2 = self.get_residual2(p=p, **kwargs)
+        cost2, p2 = res2.fit(**kwargs)
+        return cost2, p2
+    
+    
+    def sampling(self, nstep, p=None, **kwargs):
+        """
+        
+        Input:
+            nstep: 
             kwargs: kwargs for predict.Predict.make_dat, 
                                residual.Residual.fit,
                                residual.Residual.sampling.
@@ -82,19 +115,6 @@ class Comparison(object):
             del kwargs['p0']
         ens2 = res2.sampling(p0=p2, nstep=nstep, **kwargs)
         return ens2
-    
-    
-    def fit(self, p, **kwargs):
-        """
-        Input:
-            kwargs: kwargs for predict.Predict.make_dat, &
-                               residual.Residual.fit; 
-                    usually include the following:
-                        p0: initial guess for fitting dat to dpred2
-        """
-        res2 = self.get_residual2(p, **kwargs)
-        cost2, p2 = res2.fit(**kwargs)
-        return cost2, p2
     
     
     def cmp_prediction(self, p, ens=False, **kwargs):
@@ -122,4 +142,24 @@ class Comparison(object):
         pass
         
         
+    
+    def cmp_p(self):
+        pass
+    
+    
+    def cmp(self, func, varids=None, to_table=False, tex=True, filepath='', **kwargs_tex):
+        """
+        FIXME ***
         
+        Input:
+            func: a function that takes a model and outputs something to be
+                compared
+            varids: a list
+            to_table: if True...
+            kwargs_tex: margin... 
+        """
+        df = butil.DF(OD([(self.mod.id, func(self.mod)), 
+                          (self.mod2.id, func(self.mod2))]), index=varids)
+        return df
+
+

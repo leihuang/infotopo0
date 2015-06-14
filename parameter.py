@@ -1,5 +1,13 @@
 """
+FIXME: ****
+Make it more general: Parameter->Variables
+Subclass pd.Series
+mutate->perturb
+Apply it to all model.Network shorthands, eg, dynvars
+???dynvars, dynvarids, dynvarvals??? 
 """
+
+from collections import OrderedDict as OD
 
 import pandas as pd
 import numpy as np
@@ -9,19 +17,35 @@ class Parameter(object):
     """
     """
     
-    def __init__(self, vals=None, pids=None, p=None):
-        if p is not None:
-            vals, pids = p.values, p.pids
+    def __init__(self, vals=None, pids=None):
+        """
+        vals: four possibilities: sequence, mapping, series, a Parameter instance
+        """
+        if hasattr(vals, 'items'):
+            pids = vals.keys()
+            vals = vals.values()
+            
+        if isinstance(vals, pd.Series):
+            pids = vals.index.tolist()
+            vals = vals.values
+            
+        if hasattr(vals, '_'):
+            pids = vals._.index.tolist()
+            vals = vals._.values
             
         if pids is None:
-            if isinstance(vals, pd.Series):
-                pids = vals.index.tolist()
-            else:
-                pids = ['theta%d'%i for i in range(1, len(vals)+1)]
-        p = pd.Series(vals, index=pids)
-        self._ = p
-        self.pids = pids
-        self.logpids = ['log_'+pid for pid in pids]
+            raise ValueError("pids are not given.")
+
+        
+        self._ = pd.Series(vals, index=pids) 
+
+    @property
+    def pids(self):
+        return self._.index.tolist()
+    
+    @property
+    def logpids(self):
+        return ['log_'+pid for pid in self.pids]
         
         
     def __getattr__(self, attr):
@@ -61,4 +85,5 @@ class Parameter(object):
         if seed:
             np.random.seed(seed)
         
-        
+    def to_od(self):
+        return OD(self._)

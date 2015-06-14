@@ -7,11 +7,12 @@ from collections import OrderedDict as OD
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
-from mpl_toolkits.mplot3d import proj3d
+#import mpl_toolkits.mplot3d.axes3d as p3
+#from mpl_toolkits.mplot3d import proj3d
 
 import parameter
-import geodesic
+import residual, geodesic
+reload(residual)
 reload(parameter)
 reload(geodesic)
 
@@ -22,7 +23,7 @@ class Predict(object):
     - Make output of f a pd.Series and Df a pd.DataFrame?  Yes
     """
     
-    def __init__(self, f, pids, dids, p0, Df=None, domain=None, prior=None):
+    def __init__(self, f, pids, dids, p0, Df=None, domain=None, prior=None, **kwargs):
         """
         Input:
             f: 
@@ -63,6 +64,9 @@ class Predict(object):
         # domain and prior: necessary?
         self.domain = domain
         self.prior = prior
+        
+        for kw, arg in kwargs.items():
+            setattr(self, kw, arg)
         
 
     # necessary??    
@@ -176,7 +180,9 @@ class Predict(object):
                  **kwargs):
         """
         Input:
-            scheme: 
+            scheme: 'sigma': constant sigma
+                    'cv': proportional to dat by cv
+                    'mixed': the max of scheme 'sigma' and 'cv'
             kwargs: a placeholder
         """
         y = self(p)
@@ -209,8 +215,17 @@ class Predict(object):
         return geqn
     
     
-    def to_residual(self, dat):
-        pass
+    def to_residual(self, dat=None, **kwargs_dat):
+        """
+        Input:
+            dat:
+            kwargs_dat: kwargs for 
+                self.make_dat(p=None, scheme='sigma', cv=0.2, sigma0=1, 
+                              sigma_min=1)
+        """
+        if dat is None:
+            dat = self.make_dat(**kwargs_dat)
+        return residual.Residual(pred=self, dat=dat)
     
     
     def get_dresdp(self, dat):
@@ -383,3 +398,20 @@ class Predict(object):
         plt.close()
         
         
+    def currying(self, ):
+        """
+        Fix part of the arguments
+        
+        https://en.wikipedia.org/wiki/Currying 
+        """
+        pass
+    
+    
+    def __add__(self, other):
+        """
+        Concatenate the output:
+        (f+g)(p) = (f(p),g(p))
+        """
+        pass
+    
+    

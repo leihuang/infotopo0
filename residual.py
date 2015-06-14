@@ -11,8 +11,8 @@ import pandas as pd
 
 from SloppyCell import lmopt
 
-import butil
-reload(butil)
+from util import butil
+#reload(butil)
  
 import parameter
 import ensemble
@@ -120,8 +120,8 @@ class Residual(object):
         self.dat = dat
         
     
-    def __call__(self, p):
-        return self.r(p)
+    def __call__(self, p=None):
+        return self.r(p=p)
     
     
     def __repr__(self):
