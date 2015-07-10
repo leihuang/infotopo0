@@ -4,6 +4,9 @@ FIXME ***:
 try to convert functions in modules into methods by binding the functions to the class? 
 modules: structure and mca...
 
+
+
+
 """
 
 from __future__ import division
@@ -17,22 +20,26 @@ import logging
 import numpy as np
 import pandas as pd
 
-from SloppyCell.ReactionNetworks import Network as Network0, Dynamics, IO, KeyedList
+from SloppyCell.ReactionNetworks import Network as Network0,\
+    Dynamics, IO, KeyedList
 from SloppyCell import ExprManip as exprmanip
 
 # FIXME ****
 from util import butil
-reload(butil)
+Series, DF = butil.Series, butil.DF
+#reload(butil)
 #from butil import Series, DF
-#from util.butil import Series, DF
+#from util2.butil import Series, DF
+
+from matrix import Matrix
 
 import predict
 reload(predict)
 
 import trajectory, structure as struct, mca  # FIXME **: struct is a module in the standard library
 reload(trajectory)
-reload(struct)
-reload(mca)
+#reload(struct)
+#reload(mca)
 
 
 
@@ -62,43 +69,43 @@ class Network(Network0):
     
     @property
     def vars(self):
-        return butil.Series(OD(self.variables.items()))
+        return Series(OD(self.variables.items()))
 
 
     @property
     def p(self):
-        return butil.Series(OD([(var.id, var.value) for var 
+        return Series(OD([(var.id, var.value) for var 
                             in self.optimizableVars]))
         
     
     @property
     def dynvars(self):
-        return butil.Series(OD(self.dynamicVars.items()))
+        return Series(OD(self.dynamicVars.items()))
     
     
     @property
     def asgvars(self):
-        return butil.Series(OD(self.assignedVars.items()))
+        return Series(OD(self.assignedVars.items()))
     
     
     @property
     def rxns(self):
-        return butil.Series(OD(self.reactions.items()))
+        return Series(OD(self.reactions.items()))
     
 
     @property
     def asgrules(self):
-        return butil.Series(OD(self.assignmentRules.items()))
+        return Series(OD(self.assignmentRules.items()))
     
     
     @property
     def algrules(self):
-        return butil.Series(OD(self.algebraicRules.items()))
+        return Series(OD(self.algebraicRules.items()))
 
 
     @property
     def raterules(self):
-        return butil.Series(OD(self.rateRules.items()))
+        return Series(OD(self.rateRules.items()))
     
     
     """
@@ -156,21 +163,21 @@ class Network(Network0):
     
     @property
     def ratelaws(self):
-        return butil.Series(OD([(rxn.id, rxn.kineticLaw) for rxn in self.rxns]))
+        return Series(OD([(rxn.id, rxn.kineticLaw) for rxn in self.rxns]))
     
     
     @property
     def varvals(self):
-        return butil.Series(OD([(var.id, var.value) for var in self.variables]))
+        return Series(OD([(var.id, var.value) for var in self.variables]))
     
     @property
     def dynvarvals(self):
-        return butil.Series(OD([(var.id, var.value) for var in self.dynamicVars]))
+        return Series(OD([(var.id, var.value) for var in self.dynamicVars]))
     x = dynvarvals
 
     @property
     def dynvarvals_init(self):
-        return butil.Series(OD([(var.id, var.initialValue) for var in self.dynamicVars]))
+        return Series(OD([(var.id, var.initialValue) for var in self.dynamicVars]))
     x0 = dynvarvals_init
     
 
@@ -184,12 +191,12 @@ class Network(Network0):
     # when cmp, we should compare theta. 
     @property
     def constvarvals(self):
-        return butil.Series(OD([(var.id, var.value) for var in self.constantVars]))
+        return Series(OD([(var.id, var.value) for var in self.constantVars]))
     
     
     @property
     def rates(self):
-        return butil.Series([self.evaluate_expr(rateid) for rateid in self.rateids],
+        return Series([self.evaluate_expr(rateid) for rateid in self.rateids],
                          index=self.rateids)
     v = rates
     
@@ -1006,8 +1013,9 @@ class Network(Network0):
     def perturb(self, condition):
         """
         """
+        net = self.copy() 
         if condition == ():
-            net = self.copy() 
+            return net
         else:
             if len(condition) == 2:
                 pid, mode = condition[0], '*'  # default
@@ -1020,15 +1028,15 @@ class Network(Network0):
                 #net.add_parameter(pid2, is_optimizable=False)
                 pid2 = '(%s%s%s)'%(pid, mode, change)
                 # ratelaw, assignmentrules, raterules
-                net = self.replace_varid(pid, pid2, only_expr=True)  
+                net = net.replace_varid(pid, pid2, only_expr=True)  
                 #net.add_assignment_rule(pid2, '%s%s%s'%(pid, mode, str(change)), 0)
             if mode == '=':
                 pval_new = condition[-1]
-                net = self.set_var_val(pid, pval_new)  # need to verify...
+                net.set_var_val(pid, pval_new)  # need to verify...
         return net
         
         
-    def measure(self, msrmts):
+    def measure(self, msrmts, to_ser=False):
         """
         Input:
             msrmts: measurements, a list of (varid, time)
@@ -1041,11 +1049,12 @@ class Network(Network0):
         y = []
         for varid, time in msrmts:
             y.append(traj[varid].loc[time])
-        y = butil.Series(y, index=msrmts)
+        if to_ser:
+            y = Series(y, index=msrmts)
         return y    
         
     
-    def get_parameter_sensitivities(self, msrmts):
+    def get_parameter_sensitivities(self, msrmts, to_mat=True):
         """
         Get the _parameter_ sensitivities of the quantities in measurements 
         (msrmts). 
@@ -1066,13 +1075,14 @@ class Network(Network0):
         jac = []
         for varid0, time in msrmts:
             jac.append(traj.loc[time, [(varid0,pid) for pid in self.pids]].tolist())
-        jac = butil.DF(jac, index=msrmts, columns=self.pids)
+        if to_mat:
+            jac = Matrix(jac, rowvarids=msrmts, colvarids=self.pids)
         return jac
     
     get_psens = get_parameter_sensitivities
     
     
-    def get_predict(self, expts):
+    def get_predict(self, expts, **kwargs_prior):
         """
         Returns a predict object, essentially f = X*M, where M is the model and
         X is the design variable.
@@ -1105,28 +1115,30 @@ class Network(Network0):
         cond2net = butil.chvals(condmap, lambda tu: tu[0])
             
         pids = self.pids
-        dids = expts_worked.to_dids()
+        yids = expts_worked.to_yids()
         
         def f(p):
             y = []
             for net, msrmts in condmap.values():
                 net.update(p)
-                y_cond = net.measure(msrmts)  # a series
-                y.extend(y_cond.tolist())
-            y = butil.Series(y, index=dids)
+                y_cond = net.measure(msrmts, to_ser=False)
+                y.extend(y_cond)
+            y = Series(y, index=yids)
             return y
         
         def Df(p):
             jac = []
             for net, msrmts in condmap.values():
                 net.update(p)
-                jac_cond = net.get_psens(msrmts)  # a df
-                jac.extend(jac_cond.values.tolist())
-            jac = butil.DF(jac, index=dids, columns=pids)
+                jac_cond = net.get_psens(msrmts, to_mat=False)
+                jac.extend(jac_cond)
+            jac = Matrix(jac, rowvarids=yids, colvarids=pids)
             return jac
-
-        pred = predict.Predict(f=f, Df=Df, p0=self.p, pids=pids, dids=dids,
-                               expts=expts_worked, cond2net=cond2net)        
+                
+        pred = predict.Predict(f=f, Df=Df, p0=self.p, pids=pids, yids=yids,
+                               expts=expts_worked, cond2net=cond2net)
+        if kwargs_prior:
+            pred.set_prior(**kwargs_prior)
         return pred
         
 
@@ -1187,7 +1199,7 @@ class Network(Network0):
                         logging.warn("...")
                     else:
                         raise
-            #jac = butil.DF(jac, index=expts.dids, columns=self.pids)
+            #jac = DF(jac, index=expts.dids, columns=self.pids)
             return jac
 
         pred = predict.Predict(f=f, Df=Df, p0=self.p, pids=self.pids, 
@@ -1413,7 +1425,7 @@ class Network(Network0):
         # >>> net.set_var_val('p1', 100)
         # >>> print net.constantVarValues
         vels = self.res_function(t, x, np.zeros(len(x)), self.constvarvals)
-        vels = butil.Series(vels, index=self.dynvarids)
+        vels = Series(vels, index=self.dynvarids)
         return vels
     
     
@@ -1519,7 +1531,7 @@ class Network(Network0):
                 else:
                     raise ValueError("Unrecognized value of varid: %s"%str(varid))
                 
-        ssvals = butil.Series(varid2val).loc[varids]
+        ssvals = Series(varid2val).loc[varids]
         
         if ssvals.isnull().any():
             raise ValueError("ssvals has nan:\n%s"%str(ssvals))
@@ -1656,7 +1668,7 @@ class Network(Network0):
             thetas: kwargs for individual parameter values, eg, Vf_R1=2
         """
         if p is not None:
-            self.update_optimizable_vars(p[self.pids])
+            self.update_optimizable_vars(p)
         if thetas:
             self.update_optimizable_vars(thetas)
         if t is not None:
@@ -1872,7 +1884,7 @@ def from_smod(filepath):
         rxnid = format(rxn.split(':')[0])
         # re: get what comes after the first ':'
         eqn, rate, pstr = re.split('^.*?:', rxn)[1].split(';')
-        p = butil.Series()
+        p = Series()
         for _ in pstr.split(','):
             pid, pval = _.split('=')
             p[format(pid)] = float(pval)
@@ -2026,11 +2038,11 @@ def cmp_p(nets, only_common=False, only_diff=False, eps=1e-3):
     # not using set.intersection to preserve the order
     pids_common = [pid for pid in nets[0].pids 
                    if all([pid in net.pids for net in nets])]
-    ps = butil.DF([net.p[pids_common] for net in nets], 
+    ps = DF([net.p[pids_common] for net in nets], 
               index=[net.id for net in nets], columns=pids_common).T
     if not only_common:
         for net in nets:
-            p_net = butil.DF({net.id: net.p[~net.p.index.isin(pids_common)]})
+            p_net = DF({net.id: net.p[~net.p.index.isin(pids_common)]})
             ps = pd.concat((ps, p_net))
             
     if only_diff:
@@ -2051,13 +2063,13 @@ def cmp_ratelaw(nets, only_common=False, filepath='', landscape=True,
     """
     rateids_common = [rateid for rateid in nets[0].rateids 
                       if all([rateid in net.rateids for net in nets])]
-    ratelaws = butil.DF([net.asgrules[rateids_common] for net in nets],
+    ratelaws = DF([net.asgrules[rateids_common] for net in nets],
                         index=[net.id for net in nets], 
                         columns=rateids_common).T
     if not only_common:
         for net in nets:
             rateids_net = [_ for _ in net.rateids if _ not in rateids_common]
-            ratelaws_net = butil.DF({net.id: net.asgrules[rateids_net]})
+            ratelaws_net = DF({net.id: net.asgrules[rateids_net]})
             ratelaws = pd.concat((ratelaws, ratelaws_net))
     # tex things up    
     if filepath:

@@ -13,13 +13,13 @@ import numpy as np
 #import scipy as sp
 from SloppyCell import ExprManip as expr
 
-#from util import butil
-#from util.sloppycell.mca import mcautil
+#from util2 import butil
+#from util2.sloppycell.mca import mcautil
 #reload(butil)
 #reload(mcautil)
 
-import matrix
-reload(matrix)
+#import matrix
+#reload(matrix)
 from matrix import Matrix
     
     
@@ -109,16 +109,19 @@ def get_E_strs(net):
         Ep.append(Ep_rxnid)
     Es_str = str(Es).replace("'","")     
     Ep_str = str(Ep).replace("'","")
-    net.Es_str = Es_str     
+    net.Es_str = Es_str
     net.Ep_str = Ep_str
+    #Es_str = compile(Es_str, "logfile.txt", "eval")
+    #Ep_str = compile(Ep_str, "logfile.txt", "eval")
     return Es_str, Ep_str
 
 
 def get_concn_elas_mat(net, p=None, normed=False):
     """
+    FIXME ***: compile or generate dynamic Python functions
     """
     net.update(p=p, t=np.inf)
-    ns = net.namespace
+    ns = net.namespace.copy()  # without copy, the namespace is contaminated
     ns.update(dict(net.varvals))
     if not hasattr(net, 'Es_str'):
         Es_str = get_E_strs(net)[0]
@@ -134,7 +137,7 @@ def get_param_elas_mat(net, p=None, normed=False):
     """
     """
     net.update(p=p, t=np.inf)      
-    ns = net.namespace
+    ns = net.namespace.copy()
     ns.update(dict(net.varvals))
     if not hasattr(net, 'Ep_str'):
         Ep_str = get_E_strs(net)[1]

@@ -21,10 +21,10 @@ import subprocess
 import numpy as np
 
 from util import butil
-reload(butil)
+#reload(butil)
 
-import matrix
-reload(matrix)
+#import matrix
+#reload(matrix)
 from matrix import Matrix
 
 
@@ -68,7 +68,7 @@ def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True,
                         # sometimes stoichcoefs are strings
                         if isinstance(stoichcoef, str):
                             stoichcoef = net.evaluate_expr(stoichcoef)
-                        N[spid, rxnid] = stoichcoef
+                        N.loc[spid, rxnid] = stoichcoef
                     except KeyError:
                         pass  # mat[i,j] remains zero
 
@@ -81,23 +81,22 @@ def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True,
                     spids.append(spid)
         N = Matrix(np.zeros((len(spids), len(rxnids))),
                    rowvarids=spids, colvarids=rxnids)
-        for i, spid in enumerate(spids):
-            for j, rxnid in enumerate(rxnids):
+        for spid in spids:
+            for rxnid in rxnids:
                 try:
-                    stoichcoef = rxnid2stoich[rxnid][spid]
-                    N[i,j] = stoichcoef
+                    N.loc[spid, rxnid] = rxnid2stoich[rxnid][spid]
                 except KeyError:
                     pass  # mat[i,j] remains zero
     
     # make all stoichcoefs integers by first expressing them in fractions
     if integerize: 
         for i in range(N.ncol):
-            col = N[:,i]
+            col = N.iloc[:,i]
             nonzeros = [num for num in butil.flatten(col) if num]
             denoms = [fractions.Fraction(str(round(nonzero,2))).denominator 
                       for nonzero in nonzeros]
             denom = np.prod(list(set(denoms)))
-            N[:,i] = col * denom
+            N.iloc[:,i] = col * denom
     
     if net is not None:
         net.stoich_mat = N
@@ -222,7 +221,8 @@ def get_ddynvarids(net):
     if P is None:
         ddynvarids = []    
     else:
-        ddynvarids = [P[i][P[i]!=0].index[-1] for i in reversed(range(P.nrow))]
+        ddynvarids = [P.iloc[i][P.iloc[i]!=0].index[-1] 
+                      for i in reversed(range(P.nrow))]
         if len(ddynvarids) != len(set(ddynvarids)):
             # eg, ATP can be part of both the adenylate and phosphate pools
             # in this case, it is easier to manually pick ddynvarids
@@ -244,7 +244,7 @@ def get_reduced_stoich_mat(net):
     """
     N = net.N
     idynvarids = net.idynvarids
-    Nr = N.slice(rowvarids=idynvarids)
+    Nr = N.loc[idynvarids]
     return Nr
 
 
@@ -253,10 +253,11 @@ def get_reduced_link_mat(net):
     
     L0: L = [I ]
             [L0]
+            
+    
     """
-    P = net.P
-    idynvarids, ddynvarids = net.idynvarids, net.ddynvarids
-    L0 = -P.slice(colvarids=idynvarids).ch_rowvarids(ddynvarids[::-1])[ddynvarids]
+    P, idynvarids, ddynvarids = net.P, net.idynvarids, net.ddynvarids
+    L0 = -P.loc[:,idynvarids].ch_rowvarids(ddynvarids[::-1]).loc[ddynvarids]
     #L0.rowvarids = ddynvarids
     #for i, ddynvarid in enumerate(ddynvarids):
         # in place modifications of L0: 

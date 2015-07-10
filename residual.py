@@ -3,98 +3,30 @@ Add Mark's geometry-accelerated LM algorithm?
 """
 
 from __future__ import division
-import time
-import copy
+from collections import OrderedDict as OD
 
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import leastsq
 
 from SloppyCell import lmopt
 
 from util import butil
-#reload(butil)
- 
-import parameter
-import ensemble
-reload(parameter)
-reload(ensemble)
+Series, DF = butil.Series, butil.DF
+
+from matrix import Matrix
+
+import sampling
+reload(sampling)
 
 
-"""
-class Fitting(object):
-
-    def __init__(self, pred, dat):
-        self.pred = pred
-        self.dat = dat
-        
-    
-    def get_best_fit(self, p0=None, in_logp=True, *args, **kwargs):
-
-        LM algorithm.
-        
-        Input:
-            in_logp: optimizing in log parameters
-            *args & **kwargs: additional parmeters to be passed to 
-                SloppyCell.lm_opt.fmin_lm, whose docstring is appended below: 
-        
-
-        if in_logp:
-            #f = lambda lp: self.pred(np.exp(lp))
-            #Df = lambda lp: self.pred.Df(np.exp(lp))*np.exp(lp)
-            #p0 = np.log(p0)
-            pred = self.pred.get_in_logp()
-        else:
-            #f = lambda p: self.pred(p)
-            #Df = lambda p: self.pred.Df(p)
-            pred = self.pred
-        
-        # divided by the uncertainties?
-        # Df has to change as well...
-        res = lambda p: pred(p) - self.dat  
-            
-        if p0 is None:
-            p0 = pred.p0
-        elif in_logp:
-            p0 = np.log(p0)
-        
-        p_opt = lmopt.fmin_lm(f=res, x0=p0, fprime=pred.Df, *args, **kwargs)
-         
-        if in_logp:
-            p_opt = np.exp(p_opt)
-        p_opt = pd.Series(p_opt, index=self.pred.pids)
-        
-        return p_opt 
-    
-    get_best_fit.__doc__ += lmopt.fmin_lm.__doc__     
-    
-    
-    def sampling(self, p0=None, hess=None, in_logp=True, 
-                 nstep=np.inf, max_run_hours=np.inf, 
-                 temperature=1.0, stepscale=1.0, 
-                 cutoff_singval=0, seed=None, 
-                 recalc_hess_alg = False, recalc_func=None, 
-                 save_hours=np.inf, save_to=None, 
-                 skip_elems = 0, log_params=True): 
-        
-        pass
-    
-    
-    def cost(self, p=None):
-
-        return np.linalg.norm(self.pred(p)-self.dat)/2
-"""
-    
-    
 class Residual(object):
-    def __init__(self, pred=None, dat=None, res=None, prior=None):
+    def __init__(self, pred=None, dat=None, prior=None):
         """
         Input:
             prior: if given, a function
         """
-        if res is not None:
-            pred, dat = res.pred, res.dat
-            
-        def r(p=None):
+        def _r(p=None):
             if p is None:
                 p = pred.p0
             y = pred(p)
@@ -102,7 +34,7 @@ class Residual(object):
             sigma = dat['sigma'][y.index]
             return (y-Y)/sigma
         
-        def Dr(p=None):
+        def _Dr(p=None):
             if p is None:
                 p = pred.p0
             jac = pred.Df(p)
@@ -110,10 +42,10 @@ class Residual(object):
             jac_r = jac.divide(sigma, axis=0)
             return jac_r
         
-        self.r = r
-        self.Dr = Dr
+        self.r = _r
+        self.Dr = _Dr
         self.pids = pred.pids
-        self.rids = pred.dids
+        self.rids = pred.yids
         self.p0 = pred.p0
         self.prior = prior
         self.pred = pred
@@ -125,7 +57,7 @@ class Residual(object):
     
     
     def __repr__(self):
-        return "Parameter ids: %s\nResidual ids: %s\np0:\n%s\nData:\n%s"%\
+        return "pids: %s\nrids: %s\np0:\n%s\ny:\n%s"%\
             (str(self.pids), str(self.rids), str(self.p0), str(self.dat))
     
     
@@ -137,8 +69,8 @@ class Residual(object):
         return Residual(pred_logp, dat)
     
     
-    def cost(self, p):
-        return np.linalg.norm(self(p))**2/2
+    def cost(self, p=None):
+        return _r2cost(self(p))
     
     
     def set_prior_gaussian(self, means, sigmas, log=True):
@@ -150,33 +82,72 @@ class Residual(object):
     
     
     def scale_prior_gaussian(self, k):
-        """
-        Scale prior distribution...
-        """
+        """Scale prior distribution."""
         pass 
     
     
     def scale_sigma(self, k):
-        """
-        Scale posterior distribution...
-        """
+        """Scale posterior distribution."""
         pass
     
     
-    def fit(self, p0=None, in_logp=True, *args, **kwargs):
+    def fit_scipy(self, p0=None, in_logp=True, *args, **kwargs):
         """
-        Get the best fit using LM algorithm.
-        
-        Input:
-            in_logp: optimizing in log parameters
-            *args and **kwargs: additional parmeters to be passed to 
-                SloppyCell.lm_opt.fmin_lm, whose docstring is appended below: 
-                
         """
         if p0 is None:
             p0 = self.p0
         else:
-            p0 = parameter.Parameter(p0, self.pids)
+            p0 = Series(p0, self.pids)
+            
+        if in_logp:
+            res = self.get_in_logp()
+            p0 = p0.log()
+        else:
+            res = self
+        
+        kwargs = butil.get_submapping(kwargs, keys=['full_output', 'col_deriv', 
+            'ftol', 'xtol', 'gtol', 'maxfev', 'epsfcn', 'factor', 'diag'])
+        kwargs_ls = kwargs.copy()
+        kwargs_ls['full_output'] = True
+
+        p, cov, infodict, mesg, ier = leastsq(res, p0, Dfun=res.Dr, 
+                                              **kwargs_ls)
+        
+        out = Series(OD([('p', Series(p, res.pids)),
+                         ('cost', np.linalg.norm(infodict['fvec'])**2/2),
+                         ('covmat', Matrix(cov, rowvarids=res.pids, colvarids=res.pids)), 
+                         ('nfev', infodict['nfev']),
+                         ('r', Series(infodict['fvec'], res.rids)), 
+                         ('mesg', mesg), ('ier', ier)]))
+        
+        if in_logp:
+            out['p'] = out.p.exp()
+            # out['covmat'] = 
+        
+        if not kwargs.get('full_output', True):
+            out = out[['p', 'ier']] 
+        
+        return out
+    fit_scipy.__doc__ += leastsq.__doc__
+                     
+    
+    
+    def fit_sloppycell(self, p0=None, in_logp=True, *args, **kwargs):
+        """Get the best fit using Levenberg-Marquardt algorithm.
+        
+        Input:
+            p0: initial guess
+            in_logp: optimizing in log parameters
+            *args and **kwargs: additional parmeters to be passed to 
+                SloppyCell.lm_opt.fmin_lm, whose docstring is appended below: 
+        
+        Output:
+            out: a Series
+        """
+        if p0 is None:
+            p0 = self.p0
+        else:
+            p0 = Series(p0, self.pids)
         
         if in_logp:
             res = self.get_in_logp()
@@ -186,33 +157,270 @@ class Residual(object):
         
         keys = ['args', 'avegtol', 'epsilon', 'maxiter', 'full_output', 'disp', 
                 'retall', 'lambdainit', 'jinit', 'trustradius']
-        kwargs = butil.get_submapping(kwargs, f_key=lambda key: key in keys) 
-        p_opt = lmopt.fmin_lm(f=res.r, x0=p0, fprime=res.Dr, *args, **kwargs)
+        kwargs_lm = butil.get_submapping(kwargs, f_key=lambda k: k in keys)
+        kwargs_lm['full_output'] = True
+        kwargs_lm['retall'] = True
+        p, cost, nfev, nDfev, convergence, lamb, Df, ps =\
+            lmopt.fmin_lm(f=res.r, x0=p0, fprime=res.Dr, *args, **kwargs_lm)
+            #lmopt.fmin_lm(f=res.r, x0=p0, fprime=None, *args, **kwargs_lm)
         
         if in_logp:
-            p_opt = np.exp(p_opt)
-        p_opt = parameter.Parameter(p_opt, self.pids)
-         
-        return self.cost(p_opt), p_opt
-    fit.__doc__ += lmopt.fmin_lm.__doc__     
+            p = np.exp(p)
+            ps = np.exp(np.array(ps))
+        
+        p = Series(p, self.pids)
+        ps = DF(ps, columns=self.pids)
+        ps.index.name = 'step'
+        
+        out = Series(OD([('p', p), ('cost', cost)]))
+        if kwargs.get('full_output', False):
+            out['nfev'] = nfev
+            out['nDfev'] = nDfev
+            out['convergence'] = convergence
+            out['lamb'] = lamb
+            out['Df'] = Df
+        if kwargs.get('retall', False):
+            out['ps'] = ps
+        return out
+    fit_sloppycell.__doc__ += lmopt.fmin_lm.__doc__    
+
+
+    def fit_custom(self, p0=None, in_logp=True,
+                   maxnstep=1000, ret_full=False, ret_steps=False, disp=False, 
+                   lamb0=0.001, tol=1e-6, k_up=10, k_down=10, ndone=5, **kwargs):
+        """
+        
+        Input:
+            k_up and k_down: parameters used in tuning lamb at each step;
+                in the traditional scheme, typically 
+                    k_up = k_down = 10;
+                in the delayed gratification scheme, typically 
+                    k_up = 2, k_down = 10 (see, [1])
+        
+        grad C = Jt * r
+        J = U * S * Vt
+         ______     ______  
+        |      |   |      |  ______   ______
+        |      |   |      | |      | |      |
+        |   J  | = |   U  | |   S  | |  Vt  |
+        |      |   |      | |______| |______|
+        |______|   |______|
+        
+        Vt * V = V * Vt = I
+        Ut* U = I =/= U * Ut
+        JtJ = (V * S * Ut) * (U * S * Vt) = V * S^2 * Vt
+        
+         ______     ____________   ______
+        |      |   |            | |      |  ______
+        |      |   |            | |      | |      |
+        |      | = |            | |      | |      |
+        |      |   |            | |      | |______|
+        |______|   |____________| |______|
+        
+        
+        
+        Gradient Descent step: 
+            delta p = - grad C   
+            
+        Gauss Newton step:
+            delta p = - (JtJ).I * grad C
+
+        Levenberg Marquardt step:
+            delta p = - (JtJ + lamb * I).inv * grad C
+                    = - (V * (S^2 + lamb * I) * Vt).inv * Jt * r
+                    = - (V * (S^2 + lamb * I).inv * Vt) * V * S * Ut * r
+                    = - V * (S^2 + lamb * I).inv * S * Ut * r
+        
+        References:
+        [1] Transtrum
+        [2] Numerical Recipes
+        """
+        if p0 is None:
+            p0 = self.p0
+        else:
+            p0 = Series(p0, self.pids)
+
+        if in_logp:
+            res = self.get_in_logp()
+            p0 = p0.log()
+        else:
+            res = self
+        
+        if maxnstep is None :
+            maxnstep = len(res.pids) * 100
+
+        nstep = 0
+        nfev = 0
+        nDfev = 0  
+
+        p = p0
+        lamb = lamb0
+        done = 0
+        accept = True
+        convergence = False
+        
+        r = res(p0)
+        cost = _r2cost(r)        
+        nfev += 1
+
+        if ret_steps:
+            ps = DF([p0], columns=res.pids)
+            deltaps = DF(columns=res.pids)
+            costs = Series([cost], name='cost')
+            lambs = Series([lamb], name='lamb')
+            ps.index.name = 'step'
+            costs.index.name = 'step'
+            lambs.index.name = 'step'
+        
+        while not convergence and nstep < maxnstep:
+            
+            if accept:
+                jac = res.Dr(p)
+                U, S, Vt = jac.svd(to_mat=True)
+                nDfev += 1            
+            
+            
+            deltap = - Vt.T * (S**2 + lamb * Matrix.eye(res.pids)).I * S * U.T * r
+            deltap = deltap[0]  # convert 1-d DF to series
+            p2 = p + deltap
+            nstep += 1
+            
+            r2 = res(p2)
+            cost2 = _r2cost(r2)
+            nfev += 1
+            
+            if np.abs(cost - cost2) < max(tol, cost * tol):
+                done += 1
+                
+            if cost2 < cost:
+                accept = True
+                lamb /= k_down
+                p = p2
+                r = r2
+                cost = cost2    
+            else:
+                accept = False
+                lamb *= k_up
+            
+            if ret_steps:
+                ps.loc[ps.nrow] = p
+                deltaps.loc[deltaps.nrow] = deltap
+                costs.loc[costs.size] = cost
+                lambs.loc[lambs.size] = lamb
+                
+            if done == ndone:
+                convergence = True
+                # lamb = 0
+                
+        if in_logp:
+            p = p.exp()
+            if ret_steps:
+                ps = np.exp(ps)
+                ps.columns = self.pids
+                
+            
+        out = Series(OD([('p', p), ('cost', cost)]))
+        if ret_full:
+            out['nfcall'] = nfev
+            out['nDfcall'] = nDfev
+            out['convergence'] = convergence
+            out['nstep'] = nstep
+        if ret_steps:
+            out['ps'] = ps
+            out['deltaps'] = deltaps
+            out['costs'] = costs
+            out['lambs'] = lambs
+
+        return out
+
+
+    fit = fit_scipy
     
+    
+    def sampling(self, p0=None, **kwargs):
+        """
+        Input:
+            p0: starting point of sampling, usually the best fit
+            
+        """
+        ens = sampling.sampling(self, p0=p0, **kwargs)
+        return ens
+    
+    
+    def plot_cost_contour(self, theta1s=None, theta2s=None, ndecade=4, npt=100, 
+                          show=True, filepath=''):
+        """
+        """
+        if theta1s is None:
+            theta1s = np.logspace(np.log10(self.p0[0])-ndecade/2, 
+                                  np.log10(self.p0[0])+ndecade/2, npt)
+        if theta2s is None:
+            theta2s = np.logspace(np.log10(self.p0[1])-ndecade/2, 
+                                  np.log10(self.p0[1])+ndecade/2, npt)
+         
+        theta1ss, theta2ss = np.meshgrid(theta1s, theta2s)
+        def _get_cost(*p):
+            return self.cost(p)
+        costss = _get_cost(theta1ss, theta2ss)
+        
+        print costss.min(), costss.max()
+        
+        fig = plt.figure()
+        #ax = fig.add_subplot(111)
+        plt.contourf(theta1ss, theta2ss, costss, levels=np.logspace(-8,1,20))
+        
+        if show:
+            plt.show()
+        if filepath:
+            plt.savefig(filepath)
+        plt.close()
+   
+def _r2cost(r):
+    """
+    """
+    return np.linalg.norm(r)**2 / 2
+        
+         
+    """
+                p_fit = np.exp([0]), np.exp(np.array(p_fit[1]))
+            else:
+                p_fit = np.exp([p_fit])
+        
+        
+        if kwargs.get('full_output', False):
+            p_fit, 
+        else:
+            p_fit = out
+        
+        if in_logp:
+            if kwargs.get('retall', False):
+                p_fit = np.exp(p_fit[0]), np.exp(np.array(p_fit[1]))
+            else:
+                p_fit = np.exp([p_fit])
+        p_fit = Series(p_fit, self.pids)
+        
+        if kwargs.get('full_output', False):
+            return cost, p_fit, nfcall, nDfcall, convg, lamb, Df
+        else:  
+            if 
+            return self.cost(p_fit), p_fit
     
     @staticmethod
     def _hess_to_sampling_mat(hess, cutoff_singval=0, temperature=1, 
                               stepscale=1):
-        """
+
         What is a sampling matrix?
-        """
+
         U, singvals, Vt = np.linalg.svd(0.5*hess) 
 
         singval_min = cutoff_singval * max(singvals) 
 
         D = 1.0 / np.maximum(singvals, singval_min) 
         
-        ## now fill in the ensemble matrix ("square root" of the Hessian) 
+        ## now fill in the sampling matrix ("square root" of the Hessian) 
         sampmat = Vt.T * np.sqrt(D) 
 
-        # Divide the ensemble matrix by an additional factor such 
+        # Divide the sampling matrix by an additional factor such 
         # that the expected quadratic increase in cost will be about 1.
         # LH: need to understand what is going on in the following block 
         cutoff_vals = np.compress(singvals < cutoff_singval, singvals) 
@@ -245,19 +453,19 @@ class Residual(object):
                  cutoff_singval=0, stepscale=1, 
                  interval_print_step=None, filepath='',
                  **kwargs):
-        """
-        Bayesian ensemble...
+        
+        Bayesian sampling...
         
         Explain sampling matrix...
         
         Input:
             p0: 
             nstep:
-            jtj0: either evaluated at the best fit or from pca of a preliminary ensemble
+            jtj0: either evaluated at the best fit or from pca of a preliminary sampling
             recalc_sampling_mat: if True...
             in_logp: do I want it?
             kwargs: a placeholder
-        """
+        
         #import ipdb
         #ipdb.set_trace()
 
@@ -283,7 +491,7 @@ class Residual(object):
             energy = nlprior + cost
             return nlprior, cost, energy
 
-        ens = ensemble.Ensemble(varids=res.pids+['nlprior','cost','energy'])
+        ens = sampling.Ensemble(varids=res.pids+['nlprior','cost','energy'])
         
         steps_accepted, steps_tried = 0, 0
         t0 = time.time()
@@ -346,7 +554,7 @@ class Residual(object):
         
         return ens
             
-    #    return ensemble.ensemble(p0=p0, get_prior=get_prior, get_cost=get_cost,
+    #    return sampling.sampling(p0=p0, get_prior=get_prior, get_cost=get_cost,
     #                             trialmove=trialmove, pids=self.pids,
     #                             nstep=nstep, seed=seed, 
     #                             interval_print_step=interval_print_step,
@@ -354,4 +562,4 @@ class Residual(object):
         
         
         
-    
+    """

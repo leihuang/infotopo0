@@ -6,7 +6,16 @@ import cPickle
 ## FIXME ***: 
 # what is happening here??
 
-from util import butil
+def f(p1, p2):
+    return p1 + p2
+
+p1s = [1,2,3]
+p2s = [10,20,30]
+p1ss, p2ss = np.meshgrid(p1s, p2s)
+
+a
+
+from util2 import butil
 reload(butil)
 Series, DF = butil.Series, butil.DF
 

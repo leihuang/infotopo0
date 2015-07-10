@@ -92,8 +92,7 @@ class Experiments0(object):
                     times = [times]
                 for did in itertools.product([condition], varids, times):
                     dids.append(tuple(did))
-        return dids
-    
+        return dids    
 
     def add(self, expt):
         """
@@ -174,22 +173,26 @@ def _wrap(f):
 
 
 
-class Experiments(pd.DataFrame):
+class Experiments(butil.DF):
     """
     """
-    def __init__(self, *args, **kwargs):
-        if len(args) >= 3:
-            args[2] = ['condition','varids','times']
-        kwargs.update({'columns':['condition','varids','times']})
-        super(Experiments, self).__init__(*args, **kwargs)
-        self.index.name = 'experiment'
-        
     
     @property
     def _constructor(self):
         return Experiments
     
     
+    def __init__(self, *args, **kwargs):
+        """
+        FIXME **: fix this constructor...
+        """
+        if len(args) >= 3:
+            args[2] = ['condition','varids','times']
+        kwargs.update({'columns':['condition','varids','times']})
+        super(Experiments, self).__init__(*args, **kwargs)
+        self.index.name = 'experiment'
+        
+        
     @property
     def size(self):
         return self.shape[0]
@@ -235,7 +238,13 @@ class Experiments(pd.DataFrame):
                 self.loc[self.size+1] = (condition, varids, times)
         else:
             self.loc[self.size+1] = (condition, varids, times)
-            
+    
+    to_yids = to_dids  # FIXME **
+    
+    @property
+    def yids(self):
+        return self.to_yids()
+      
     
     def delete(self, condition=None):
         """

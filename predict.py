@@ -6,29 +6,27 @@ from collections import OrderedDict as OD
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-#import mpl_toolkits.mplot3d.axes3d as p3
-#from mpl_toolkits.mplot3d import proj3d
 
-import parameter
+from util.butil import Series, DF
+from matrix import Matrix
+
 import residual, geodesic
 reload(residual)
-reload(parameter)
 reload(geodesic)
 
 
 class Predict(object):
     """
     - Make p0 compulsory and default??  Yes 
-    - Make output of f a pd.Series and Df a pd.DataFrame?  Yes
     """
     
-    def __init__(self, f, pids, dids, p0, Df=None, domain=None, prior=None, **kwargs):
+    def __init__(self, f, p0=None, pids=None, yids=None, Df=None, 
+                 domain=None, prior=None, **kwargs):
         """
         Input:
             f: 
             pids: parameter ids
-            dids: data(/residual?) ids
+            yids: prediction ids
             p0:  
             
         
@@ -41,12 +39,20 @@ class Predict(object):
         # B   NaN
         # dtype: float64
         # for details, one can check out .../pandas/core/series.py
-        p0 = parameter.Parameter(p0, pids)
+        if hasattr(f, 'p0'):
+            p0 = f.p0
+            
+        ## FIXME ***: fix the constructor
+        
+            
+        p0 = Series(p0, pids)
         
         def _f(p=None):
             if p is None:
                 p = p0
-            return pd.Series(np.array(f(p)), index=dids)
+            #if isinstance(p, list) or isinstance(p, tuple) or isinstance(p, np.ndarray):
+            #p = Series(p, index=pids)
+            return Series(f(p), index=yids)
         
         if Df is None:
             pass  # finite difference?
@@ -54,11 +60,11 @@ class Predict(object):
         def _Df(p=None):
             if p is None:
                 p = p0
-            return pd.DataFrame(np.array(Df(p)), index=dids, columns=pids)
+            return Matrix(np.array(Df(p)), rowvarids=yids, colvarids=pids)
                     
         self.f = _f
         self.pids = pids
-        self.dids = dids
+        self.yids = yids
         self.p0 = p0
         self.Df = _Df
         # domain and prior: necessary?
@@ -67,8 +73,8 @@ class Predict(object):
         
         for kw, arg in kwargs.items():
             setattr(self, kw, arg)
-        
-
+                
+    
     # necessary??    
     def __getattr__(self, attr):
         return getattr(self.f, attr)
@@ -79,8 +85,14 @@ class Predict(object):
     
     
     def __repr__(self):
-        return "Parameter ids: %s\nData ids: %s\np0:\n%s"%\
-            (str(self.pids), str(self.dids), str(self.p0))
+        return "pids: %s\nyids: %s\np0:\n%s"%\
+            (str(self.pids), str(self.yids), str(self.p0))
+            
+    
+    @property
+    def fvec(self):
+        fvec = lambda ps: np.vectorize(self.f)(ps)
+        return fvec
         
     
     def get_in_logp(self):
@@ -88,64 +100,131 @@ class Predict(object):
         Get a Prediction object in log parameters.
         """
         def f_logp(lp):
-            lp = parameter.Parameter(lp, self.p0.logpids)
+            if not isinstance(lp, Series):
+                lp = Series(lp, self.p0.logvarids)
             return self.f(lp.exp())
         
         def Df_logp(lp):
-            lp = parameter.Parameter(lp, self.p0.logpids)
-            return self.Df(lp.exp()) * lp.exp()  # needs testing
-
-        pred_logp = Predict(f_logp, pids=self.p0.logpids, dids=self.dids, 
+            lp = Series(lp, self.p0.logvarids)
+            # d y/d logp = d y/(d p/p) = d y/d p * p
+            return self.Df(lp.exp()).normalize(x=lp.exp())  # needs testing
+        
+        if self.prior:
+            def prior_logp(lp):
+                return self.prior(np.exp(lp).values)  # FIXME **
+            #prior_logp = lambda lp: self.prior(np.exp(lp))
+        else:
+            prior_logp = self.prior
+            
+        pred_logp = Predict(f_logp, pids=self.p0.logvarids, yids=self.yids, 
                             p0=self.p0.log(), Df=Df_logp, 
-                            domain=None, prior=None)
+                            domain=None, prior=prior_logp)
         return pred_logp
     
     
-    def plot_image(self, p0=None, decade=6, npt=100, pts=None, xyzlabels=['','',''], 
+    def set_prior(self, prior=None, dim=None, codim=None, p0=None, **kwargs):
+        """
+        Input:
+            prior: a string
+            dim, codim: an int
+            kwargs: a placeholder
+        """
+        if prior == 'jeff':
+            if dim is None:
+                dim = len(self.p0)
+            if codim:
+                dim -= codim
+            self.prior = lambda p: self.Df(p).svd(to_mat=False)[1][:dim].prod()
+        if prior == 'lognormal':
+            pass
+        
+    
+    
+    def plot_image(self, p0=None, method='grid', 
+                   
+                   decade=6, npt=100,  # parameters for grid 
+                   nstep=1000,  # parameters for sampling
+                   
+                   pts=None, 
+                   
+                   xyzlabels=['','',''], xyzlims=None, 
                    filepath='', 
-                   color='b', alpha=0.5, shade=False, edgecolor='none', 
+                   color='b', alpha=0.2, shade=False, edgecolor='none', 
                    **kwargs_surface):
         """
         Plot the image of predict, aka "model manifold".
         
         Input:
+            p0: the center of grid or starting point of sampling
+            method: 'grid' or 'sampling' (using Jeffrey's prior)
             decade: how many decades to cover
             npt: number of points for each parameter
             pts: a list of 3-tuples for the points to be marked
         """
         #import ipdb
         #ipdb.set_trace()
+        
         if p0 is None:
             p0 = self.p0
             
-        ps = [np.logspace(np.log10(p0_i)-decade/2, np.log10(p0_i)+decade/2, npt) 
-              for p0_i in p0]
-        pss = np.meshgrid(*ps)
+        """
+        if method == 'grid':
+            plotutil.plot
+        """
         
-        # make a dummy function that takes in the elements of an input vector 
-        # as separate arguments
-        def _f(*p):
-            return self(p) 
-
-        yss = _f(*pss)
+        if method == 'grid':
+            ps = [np.logspace(np.log10(theta)-decade/2, np.log10(theta)+decade/2, npt) 
+                  for theta in p0]
+            pss = np.meshgrid(*ps)
+            
+            # make a dummy function that takes in the elements of an input vector 
+            # as separate arguments
+            
+            pss_flat = [thetass.flatten() for thetass in pss] 
+            ps = zip(*pss_flat)
+            ys = map(self.f, ps)
+            yss_flat = zip(*ys)
+            yss = [np.reshape(yiss, thetass.shape) for yiss in yss_flat]
+            
+        if method == 'sampling':
+            pass
+        
+        if xyzlabels is None:
+            xyzlabels = self.yids    
+        
         if len(yss) > 3:
             #yss = pca(yss, k=3)
             xyzlabels = ['PC1', 'PC2', 'PC3']
-            pass
+        
         
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         ax.set_aspect("equal")
+
         ax.plot_surface(*yss, color=color, alpha=alpha, shade=shade, 
                         edgecolor=edgecolor, **kwargs_surface)
+        #ax.plot_trisurf(yss[0].flatten(), yss[1].flatten(), yss[2].flatten())
+        #ax.scatter(yss[0].flatten(), yss[1].flatten(), yss[2].flatten())
                         
         if pts is not None:
-            ax.scatter(*np.array(pts).T, color='r', alpha=1)
+            for idx, pt in enumerate(pts):
+                if idx == 0:
+                    color = 'r'
+                else:
+                    color = 'y'    
+                ax.scatter(*pt, color=color, s=(idx+1)*30) #, alpha=1./(idx+1))
+            #ax.scatter(*np.array(pts).T, color='r', alpha=1)
             
         ax.set_xlabel(xyzlabels[0])
         ax.set_ylabel(xyzlabels[1])
         ax.set_zlabel(xyzlabels[2])
+        
+        if xyzlims:
+            ax.set_xlim(xyzlims[0])
+            ax.set_ylim(xyzlims[1])
+            ax.set_zlim(xyzlims[2])
 
+        
         plt.show()
         plt.savefig(filepath)
         plt.close()
@@ -168,7 +247,7 @@ class Predict(object):
                 p_minus = p - deltap
                 jacT.append((self(p_plus)-self(p_minus))/2/deltap_i)
             jac = np.transpose(jacT)
-            jac = pd.DataFrame(jac, index=self.dids, columns=self.pids) 
+            jac = DF(jac, index=self.dids, columns=self.pids) 
             return jac
         
         if self.Df == None:
@@ -183,7 +262,7 @@ class Predict(object):
             scheme: 'sigma': constant sigma
                     'cv': proportional to dat by cv
                     'mixed': the max of scheme 'sigma' and 'cv'
-            kwargs: a placeholder
+            kwargs: a waste basket
         """
         y = self(p)
         if scheme == 'sigma':
@@ -238,6 +317,7 @@ class Predict(object):
     
     def plot(self, n=100, pts=None, show=True, filepath=''):
         """
+        FIXME **: ??
         """
         if self.domain is not None:
             ps = self.domain.apply(lambda interval: 

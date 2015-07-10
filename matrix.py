@@ -3,13 +3,155 @@
 
 import itertools 
 
-import pandas as pd
-import numpy as np
 import sympy
 
+import pandas as pd
+import numpy as np
 
 
-class Matrix(object):
+from util.butil import Series, DF
+
+
+
+class Matrix(DF):
+    """
+    A possibly useful conceptual distinction: 
+        - DF is mostly a book-keeping table
+        - Matrix represents linear transformation between v. spaces over a field
+    
+    """
+    @property
+    def _constructor(self):
+        return Matrix
+    
+    
+    def __init__(self, data, rowvarids=None, colvarids=None, **kwargs):
+        if rowvarids is not None:
+            kwargs.update({'index': rowvarids})
+        if colvarids is not None:
+            kwargs.update({'columns': colvarids})
+        super(Matrix, self).__init__(data, **kwargs)
+        
+    
+    def __mul__(self, other):
+        """
+        A customization of np.matrix.__mul__ so that if two Matrix instances
+        are passed in, their attributes of rowvarids and colvarids are kept.
+        """
+        if hasattr(other, 'colvarids'):
+            assert self.colvarids == other.rowvarids, "varids do not match"
+            colvarids = other.colvarids
+        elif isinstance(other, float) or isinstance(other, int):
+            colvarids = self.colvarids
+        else:
+            colvarids = None
+        return Matrix(np.dot(self, other), 
+                      rowvarids=self.rowvarids, colvarids=colvarids)
+        
+                
+    def __pow__(self, exponent):
+        return Matrix(np.matrix(self)**exponent, 
+                      rowvarids=self.rowvarids, colvarids=self.colvarids)
+        
+    
+    
+    def ch_rowvarids(self, rowvarids_new):
+        self.rowvarids = rowvarids_new
+        return self
+    
+    def ch_colvarids(self, colvarids_new):
+        self.colvarids = colvarids_new
+        return self
+        
+    
+    def get_rank(self, tol=None):
+        return np.linalg.matrix_rank(self, tol=tol)
+
+    @property
+    def rank(self):
+        return self.get_rank()
+    
+    def rref(self):
+        """
+        row-reduced echolon form
+        
+        Get the reduced row echelon form (rref) of the matrix using sympy.
+        """
+        # symmat's dtype is sympy.core.numbers.Integer/Zero/One, and 
+        # when converted to np.matrix the dtype becomes 'object' which
+        # slows down the matrix computation a lot
+        symmat = sympy.Matrix.rref(sympy.Matrix(self))[0]
+        return Matrix(np.asarray(symmat.tolist(), dtype='float'), 
+                      self.rowvarids, self.colvarids)
+    
+    
+    def svd(self, to_mat=True):
+        """
+        Input:
+            to_mat: 
+        """
+        U, S, Vt = np.linalg.svd(self)
+        if to_mat:
+            # http://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.linalg.matrix_rank.html
+            rank = np.sum(S > S.max() * max(self.shape) * 1e-16)
+            U = Matrix(U[:,:rank], rowvarids=self.rowvarids, colvarids=self.colvarids)
+            S = Matrix(np.diag(S), rowvarids=self.colvarids, colvarids=self.colvarids)
+            Vt = Matrix(Vt, rowvarids=self.colvarids, colvarids=self.colvarids)
+            #assert np.allclose(U*S*Vt, self)   
+        return U, S, Vt
+    
+    
+    @property
+    def I(self):
+        return Matrix(np.linalg.inv(self), rowvarids=self.colvarids, 
+                      colvarids=self.rowvarids)
+    
+    
+    def normalize(self, y=None, x=None):
+        """
+        M = dy / dx
+        M_normed = d logy/d logx = diag(1/y) * M * diag(x)
+        
+        Used much in rxnnet mca calculations.
+        """
+        mat = self
+        if y is not None:
+            mat = Matrix.diag(1/y) * self
+        if x is not None:
+            mat = mat * Matrix.diag(x)
+        return mat 
+    
+    
+    @staticmethod
+    def eye(rowvarids, colvarids=None):
+        """
+        """
+        if colvarids is None:
+            colvarids = rowvarids
+        return Matrix(np.eye(len(rowvarids)), rowvarids=rowvarids, 
+                      colvarids=colvarids)
+    
+    
+    @staticmethod
+    def diag(ser):
+        """
+        Return the diagonal Matrix of vector ser. 
+        
+        D(x) = diag(x)
+        """
+        ser = Series(ser)
+        return Matrix(np.diag(ser), rowvarids=ser.index, colvarids=ser.index)
+    
+    """
+    def flipud(self):
+        return Matrix(np.flipud(self), self.rowvarids[::-1], self.colvarids)
+    
+    def fliplr(self):
+        return Matrix(np.fliplr(self), self.rowvarids, self.colvarids[::-1])
+    """
+    
+
+class Matrix0(object):
     """
     """
     

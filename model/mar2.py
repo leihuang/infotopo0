@@ -29,19 +29,24 @@ v2 = r2*k2 * (X - R2*X2)
 S = sympy.solve(v1-v2, X)[0]
 J = sympy.simplify(v1.subs(X, S))
 
-kwargs0 = {}
+kwargs0 = dict(X1=2, X2=1, r1=1, r2=1, R1=1, R2=1)
 
 def _S(p, **kwargs):
-    return np.float(S.evalf(subs={k1:p['k1'], k2:p['k2'], 
-                                  X1:kwargs['X1'], X2:kwargs['X2'], 
-                                  r1:kwargs['r1'], r2:kwargs['r2'], 
-                                  R1:kwargs['R1'], R2:kwargs['R2']}))
+    kwargs0.update(kwargs)
+    return np.float(S.evalf(subs={k1:p[0], k2:p[1], 
+                                  X1:kwargs0['X1'], X2:kwargs0['X2'], 
+                                  r1:kwargs0['r1'], r2:kwargs0['r2'], 
+                                  R1:kwargs0['R1'], R2:kwargs0['R2']}))
 
 def _J(p, **kwargs):
-    return np.float(J.evalf(subs={k1:p['k1'], k2:p['k2'], 
-                                  X1:kwargs['X1'], X2:kwargs['X2'], 
-                                  r1:kwargs['r1'], r2:kwargs['r2'], 
-                                  R1:kwargs['R1'], R2:kwargs['R2']}))
+    kwargs0.update(kwargs)
+    return np.float(J.evalf(subs={k1:p[0], k2:p[1], 
+                                  X1:kwargs0['X1'], X2:kwargs0['X2'], 
+                                  r1:kwargs0['r1'], r2:kwargs0['r2'], 
+                                  R1:kwargs0['R1'], R2:kwargs0['R2']}))
+
+print _S([1,1])
+print _J([1,1])
 
 def get_predict_S(r1s=[1], r2s=[1], R1s=None, R2s=None):
     def predict_S(p):
@@ -59,5 +64,11 @@ pred_J = get_predict_J()
 pred = pred_S + pred_J
 
 
+class Model(object):
+    pass
+
+
+class Experiments(object):
+    pass
 
 

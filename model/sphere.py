@@ -20,6 +20,13 @@ import Geodesic_Code2 as g
 reload(g)
 
 
+class Model(object):
+    
+    def get_predict(self):
+        pass
+
+
+ 
 
 def f((phi, theta)):
     """

@@ -12,7 +12,7 @@ import re
 import numpy as np
 import sympy
 
-from util import butil
+from util2 import butil
 
 from infotopo.model.rxnnet import model
 reload(model)
