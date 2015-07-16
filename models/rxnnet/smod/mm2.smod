@@ -1,0 +1,9 @@
+@model=MM2 (irreversible)
+
+@species
+ S: 100
+ P: 0
+
+@reactions
+ R: S -> P; v=SMM; V=1, K=1
+

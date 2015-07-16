@@ -6,16 +6,17 @@ shape
 
 import numpy as np
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
-from mpl_toolkits.mplot3d import proj3d
+#import mpl_toolkits.mplot3d.axes3d as p3
+#from mpl_toolkits.mplot3d import proj3d
+import mpl_toolkits
 
-import geodesic
+from infotopo import geodesic
 reload(geodesic)
 
 
 
-from infotopo.model.toy import twoexp 
-reload(twoexp)
+from infotopo.models import twoexp 
+#reload(twoexp)
 #from twoexp import get_f
 
 f = twoexp.get_f(1,2,3)
@@ -26,7 +27,7 @@ def plot_image_transition(f, decade=4, npt=500, pts=None, xyzlabels=['','',''],
                color='b', alpha=0.5, shade=False, edgecolor='none', 
                **kwargs_surface):
     """
-    Plot the image of the predict function, aka "model manifold".
+    Plot the image of the predict function, aka "models manifold".
     
     Input:
         decade: how many decades to cover

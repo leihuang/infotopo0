@@ -29,7 +29,7 @@ from more_itertools import unique_everseen
 from util import butil 
 Series, DF = butil.Series, butil.DF
 
-from matrix import Matrix
+from util.matrix import Matrix
 
 
     
@@ -150,8 +150,8 @@ class Ensemble(DF):
         Output:
             None (in-place changes)
         """
-        columns_new = [(vartype, varid) for varid in self.columns]
-        columns_new = pd.MultiIndex.from_tuples(columns_new)                                        
+        tuples = [(vartype, varid) for varid in self.columns]
+        columns_new = pd.MultiIndex.from_tuples(tuples)                                        
         self.columns = columns_new
     
         
@@ -178,17 +178,41 @@ class Ensemble(DF):
         return ens
     
     
-    def get_yens(self, pred):
+    def uniquify(self, vartype='p'):
         """
+        """
+        if self.columns.nlevels == 2:
+            ens = getattr(self, vartype)
+        else:
+            ens = self
+        return self.iloc[ens.drop_duplicates().index]
+        
+        
+    def predict(self, pred):
+        """
+        """
+        ens_uniq = self.uniquify()
+        yens = ens_uniq.apply(pred, axis=1)
+        yens.columns.name = None  # it is 'step' otherwise
+        for idx in self.index:
+            if idx in ens_uniq.index:
+                idx_uniq = idx
+            else:
+                yens.loc[idx] = yens.loc[idx_uniq]
+        return yens.sort_index()
+    
+    """
+    def get_yens(self, pred):
+    
         FIXME **
         
         Input:
             pred: a function
-        """
+        
         yens = self.p.apply(pred, axis=1)
         yens.columns.name = ''
         return yens
-
+    """
     
     # ??
     #def append(self, row):
@@ -254,7 +278,8 @@ class Ensemble(DF):
     
     #def calc(self, f, varids=None, **kwargs):
     #    return Ensemble(dat=self.apply(f, axis=1), varids=varids, **kwargs)
-        
+    
+    
     
     def exp(self):
         """
@@ -636,11 +661,11 @@ def _smat2deltap(smat):
 
 """
         Generate a Bayesian ensemble of parameter sets consistent with the data in 
-        the model. The sampling is done in terms of the logarithm of the parameters. 
+        the models. The sampling is done in terms of the logarithm of the parameters. 
        
         Inputs: 
             p0: -- Initial parameter KeyedList to start from  
-            hess: -- Hessian of the model 
+            hess: -- Hessian of the models 
             nstep: -- Maximum number of Monte Carlo steps to attempt 
      75       max_run_hours -- Maximum number of hours to run 
      76       temperature -- Temperature of the ensemble 

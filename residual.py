@@ -7,16 +7,16 @@ from collections import OrderedDict as OD
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import leastsq
+from scipy.optimize import leastsq, minimize
 
 from SloppyCell import lmopt
 
 from util import butil
 Series, DF = butil.Series, butil.DF
 
-from matrix import Matrix
+from util.matrix import Matrix
 
-import sampling
+from infotopo import sampling
 reload(sampling)
 
 
@@ -42,8 +42,16 @@ class Residual(object):
             jac_r = jac.divide(sigma, axis=0)
             return jac_r
         
+        def _grad(p=None):
+            if p is None:
+                p = pred.p0
+            jac_r = _Dr(p)
+            r = _r(p)
+            return Series(np.dot(jac_r.T, r), pred.pids) 
+        
         self.r = _r
         self.Dr = _Dr
+        self.grad = _grad
         self.pids = pred.pids
         self.rids = pred.yids
         self.p0 = pred.p0
@@ -91,7 +99,7 @@ class Residual(object):
         pass
     
     
-    def fit_scipy(self, p0=None, in_logp=True, *args, **kwargs):
+    def fit_lm_scipy(self, p0=None, in_logp=True, *args, **kwargs):
         """
         """
         if p0 is None:
@@ -115,24 +123,24 @@ class Residual(object):
         
         out = Series(OD([('p', Series(p, res.pids)),
                          ('cost', np.linalg.norm(infodict['fvec'])**2/2),
-                         ('covmat', Matrix(cov, rowvarids=res.pids, colvarids=res.pids)), 
-                         ('nfev', infodict['nfev']),
+                         ('covmat', Matrix(cov, res.pids, res.pids)), 
+                         ('nfcall', infodict['nfev']),
                          ('r', Series(infodict['fvec'], res.rids)), 
-                         ('mesg', mesg), ('ier', ier)]))
+                         ('message', mesg), ('ier', ier)]))
         
         if in_logp:
-            out['p'] = out.p.exp()
-            # out['covmat'] = 
+            out.p = out.p.exp()
+            # out.covmat = 
         
         if not kwargs.get('full_output', True):
             out = out[['p', 'ier']] 
         
         return out
-    fit_scipy.__doc__ += leastsq.__doc__
+    fit_lm_scipy.__doc__ += leastsq.__doc__
                      
     
     
-    def fit_sloppycell(self, p0=None, in_logp=True, *args, **kwargs):
+    def fit_lm_sloppycell(self, p0=None, in_logp=True, *args, **kwargs):
         """Get the best fit using Levenberg-Marquardt algorithm.
         
         Input:
@@ -160,7 +168,7 @@ class Residual(object):
         kwargs_lm = butil.get_submapping(kwargs, f_key=lambda k: k in keys)
         kwargs_lm['full_output'] = True
         kwargs_lm['retall'] = True
-        p, cost, nfev, nDfev, convergence, lamb, Df, ps =\
+        p, cost, nfcall, nDfcall, convergence, lamb, Df, ps =\
             lmopt.fmin_lm(f=res.r, x0=p0, fprime=res.Dr, *args, **kwargs_lm)
             #lmopt.fmin_lm(f=res.r, x0=p0, fprime=None, *args, **kwargs_lm)
         
@@ -174,18 +182,18 @@ class Residual(object):
         
         out = Series(OD([('p', p), ('cost', cost)]))
         if kwargs.get('full_output', False):
-            out['nfev'] = nfev
-            out['nDfev'] = nDfev
-            out['convergence'] = convergence
-            out['lamb'] = lamb
-            out['Df'] = Df
+            out.nfcall = nfcall
+            out.nDfcall = nDfcall
+            out.convergence = convergence
+            out.lamb = lamb
+            out.Df = Df
         if kwargs.get('retall', False):
-            out['ps'] = ps
+            out.ps = ps
         return out
-    fit_sloppycell.__doc__ += lmopt.fmin_lm.__doc__    
+    fit_lm_sloppycell.__doc__ += lmopt.fmin_lm.__doc__    
 
 
-    def fit_custom(self, p0=None, in_logp=True,
+    def fit_lm_custom(self, p0=None, in_logp=True,
                    maxnstep=1000, ret_full=False, ret_steps=False, disp=False, 
                    lamb0=0.001, tol=1e-6, k_up=10, k_down=10, ndone=5, **kwargs):
         """
@@ -250,8 +258,8 @@ class Residual(object):
             maxnstep = len(res.pids) * 100
 
         nstep = 0
-        nfev = 0
-        nDfev = 0  
+        nfcall = 0
+        nDfcall = 0  
 
         p = p0
         lamb = lamb0
@@ -261,7 +269,7 @@ class Residual(object):
         
         r = res(p0)
         cost = _r2cost(r)        
-        nfev += 1
+        nfcall += 1
 
         if ret_steps:
             ps = DF([p0], columns=res.pids)
@@ -277,7 +285,7 @@ class Residual(object):
             if accept:
                 jac = res.Dr(p)
                 U, S, Vt = jac.svd(to_mat=True)
-                nDfev += 1            
+                nDfcall += 1            
             
             
             deltap = - Vt.T * (S**2 + lamb * Matrix.eye(res.pids)).I * S * U.T * r
@@ -287,7 +295,7 @@ class Residual(object):
             
             r2 = res(p2)
             cost2 = _r2cost(r2)
-            nfev += 1
+            nfcall += 1
             
             if np.abs(cost - cost2) < max(tol, cost * tol):
                 done += 1
@@ -321,20 +329,53 @@ class Residual(object):
             
         out = Series(OD([('p', p), ('cost', cost)]))
         if ret_full:
-            out['nfcall'] = nfev
-            out['nDfcall'] = nDfev
-            out['convergence'] = convergence
-            out['nstep'] = nstep
+            out.nfcall = nfcall
+            out.nDfcall = nDfcall
+            out.convergence = convergence
+            out.nstep = nstep
         if ret_steps:
-            out['ps'] = ps
-            out['deltaps'] = deltaps
-            out['costs'] = costs
-            out['lambs'] = lambs
+            out.ps = ps
+            out.deltaps = deltaps
+            out.costs = costs
+            out.lambs = lambs
 
         return out
+    
+    
+    def fit_scipy(self, p0=None, in_logp=True, method='Nelder-Mead', **kwargs):
+        """
+        """
+        if p0 is None:
+            p0 = self.p0
+        else:
+            p0 = Series(p0, self.pids)
+            
+        if in_logp:
+            res = self.get_in_logp()
+            p0 = p0.log()
+        else:
+            res = self
+            
+        _grad = lambda p: np.dot(res.Dr(p).T, res(p))
+        out0 = minimize(res.cost, p0, method=method, jac=_grad, **kwargs)
+        
+        out = Series(OD([('p', Series(out0.x, res.pids)),
+                         ('cost', out0.fun),
+                         ('message', out0.message),
+                         ('nfcall', out0.nfev)]))
+        if hasattr(out0, 'nit'):
+            out.nstep = out0.nit
+        if hasattr(out0, 'njev'):
+            out.nDfev = out0.njev 
+        
+        if in_logp:
+            out.p = out.p.exp()
+            
+        return out
+    fit_scipy.__doc__ += minimize.__doc__
 
 
-    fit = fit_scipy
+    fit = fit_lm_scipy
     
     
     def sampling(self, p0=None, **kwargs):

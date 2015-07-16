@@ -6,11 +6,12 @@ from collections import OrderedDict as OD
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from util.butil import Series, DF
-from matrix import Matrix
+from util.matrix import Matrix
 
-import residual, geodesic
+from infotopo import residual, geodesic
 reload(residual)
 reload(geodesic)
 
@@ -60,7 +61,7 @@ class Predict(object):
         def _Df(p=None):
             if p is None:
                 p = p0
-            return Matrix(np.array(Df(p)), rowvarids=yids, colvarids=pids)
+            return Matrix(np.array(Df(p)), yids, pids)
                     
         self.f = _f
         self.pids = pids
@@ -141,18 +142,18 @@ class Predict(object):
     
     
     def plot_image(self, p0=None, method='grid', 
-                   
                    decade=6, npt=100,  # parameters for grid 
+                   
                    nstep=1000,  # parameters for sampling
                    
                    pts=None, 
                    
-                   xyzlabels=['','',''], xyzlims=None, 
+                   xyzlabels=None, xyzlims=None, 
                    filepath='', 
                    color='b', alpha=0.2, shade=False, edgecolor='none', 
                    **kwargs_surface):
         """
-        Plot the image of predict, aka "model manifold".
+        Plot the image of predict, aka "models manifold".
         
         Input:
             p0: the center of grid or starting point of sampling
@@ -212,7 +213,7 @@ class Predict(object):
                     color = 'r'
                 else:
                     color = 'y'    
-                ax.scatter(*pt, color=color, s=(idx+1)*30) #, alpha=1./(idx+1))
+                ax.scatter(*pt, color=color, alpha=1./(idx+1))  # s=(idx+1)*30) #, alpha=1./(idx+1))
             #ax.scatter(*np.array(pts).T, color='r', alpha=1)
             
         ax.set_xlabel(xyzlabels[0])

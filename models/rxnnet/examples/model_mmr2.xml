@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level2/version3" level="2" version="3">
+  <model id="MMR2">
+    <listOfCompartments>
+      <compartment id="CELL" size="1" constant="true"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="X1" compartment="CELL" initialConcentration="2" boundaryCondition="true" constant="true"/>
+      <species id="X2" compartment="CELL" initialConcentration="1" boundaryCondition="true" constant="true"/>
+      <species id="S" compartment="CELL" initialConcentration="1" boundaryCondition="false" constant="false"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="Vb_R1" value="1" constant="true"/>
+      <parameter id="KM_R1_X1" value="1" constant="true"/>
+      <parameter id="KM_R1_S" value="1" constant="true"/>
+      <parameter id="Vf_R1" value="1" constant="true"/>
+      <parameter id="dG0_R1" value="0" constant="true"/>
+      <parameter id="KE_R1" value="1" constant="true"/>
+      <parameter id="KM_R2_X2" value="1" constant="true"/>
+      <parameter id="Vb_R2" value="1" constant="true"/>
+      <parameter id="dG0_R2" value="0" constant="true"/>
+      <parameter id="KE_R2" value="1" constant="true"/>
+      <parameter id="KM_R2_S" value="1" constant="true"/>
+      <parameter id="Vf_R2" value="1" constant="true"/>
+      <parameter id="v_R1" value="1" constant="false"/>
+      <parameter id="v_R2" value="1" constant="false"/>
+    </listOfParameters>
+    <listOfRules>
+      <assignmentRule variable="v_R1">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <divide/>
+            <apply>
+              <times/>
+              <apply>
+                <divide/>
+                <ci> Vf_R1 </ci>
+                <ci> KM_R1_X1 </ci>
+              </apply>
+              <apply>
+                <minus/>
+                <ci> X1 </ci>
+                <apply>
+                  <divide/>
+                  <ci> S </ci>
+                  <ci> KE_R1 </ci>
+                </apply>
+              </apply>
+            </apply>
+            <apply>
+              <plus/>
+              <cn type="integer"> 1 </cn>
+              <apply>
+                <divide/>
+                <ci> S </ci>
+                <ci> KM_R1_S </ci>
+              </apply>
+              <apply>
+                <divide/>
+                <ci> X1 </ci>
+                <ci> KM_R1_X1 </ci>
+              </apply>
+            </apply>
+          </apply>
+        </math>
+      </assignmentRule>
+      <assignmentRule variable="v_R2">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <divide/>
+            <apply>
+              <times/>
+              <apply>
+                <divide/>
+                <ci> Vf_R2 </ci>
+                <ci> KM_R2_S </ci>
+              </apply>
+              <apply>
+                <minus/>
+                <ci> S </ci>
+                <apply>
+                  <divide/>
+                  <ci> X2 </ci>
+                  <ci> KE_R2 </ci>
+                </apply>
+              </apply>
+            </apply>
+            <apply>
+              <plus/>
+              <cn type="integer"> 1 </cn>
+              <apply>
+                <divide/>
+                <ci> S </ci>
+                <ci> KM_R2_S </ci>
+              </apply>
+              <apply>
+                <divide/>
+                <ci> X2 </ci>
+                <ci> KM_R2_X2 </ci>
+              </apply>
+            </apply>
+          </apply>
+        </math>
+      </assignmentRule>
+    </listOfRules>
+    <listOfReactions>
+      <reaction id="R1">
+        <listOfReactants>
+          <speciesReference species="X1" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="S" stoichiometry="1"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <apply>
+                  <divide/>
+                  <ci> Vf_R1 </ci>
+                  <ci> KM_R1_X1 </ci>
+                </apply>
+                <apply>
+                  <minus/>
+                  <ci> X1 </ci>
+                  <apply>
+                    <divide/>
+                    <ci> S </ci>
+                    <ci> KE_R1 </ci>
+                  </apply>
+                </apply>
+              </apply>
+              <apply>
+                <plus/>
+                <cn type="integer"> 1 </cn>
+                <apply>
+                  <divide/>
+                  <ci> S </ci>
+                  <ci> KM_R1_S </ci>
+                </apply>
+                <apply>
+                  <divide/>
+                  <ci> X1 </ci>
+                  <ci> KM_R1_X1 </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="R2">
+        <listOfReactants>
+          <speciesReference species="S" stoichiometry="1"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="X2" stoichiometry="1"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <apply>
+                  <divide/>
+                  <ci> Vf_R2 </ci>
+                  <ci> KM_R2_S </ci>
+                </apply>
+                <apply>
+                  <minus/>
+                  <ci> S </ci>
+                  <apply>
+                    <divide/>
+                    <ci> X2 </ci>
+                    <ci> KE_R2 </ci>
+                  </apply>
+                </apply>
+              </apply>
+              <apply>
+                <plus/>
+                <cn type="integer"> 1 </cn>
+                <apply>
+                  <divide/>
+                  <ci> S </ci>
+                  <ci> KM_R2_S </ci>
+                </apply>
+                <apply>
+                  <divide/>
+                  <ci> X2 </ci>
+                  <ci> KM_R2_X2 </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>

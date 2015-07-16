@@ -1,0 +1,92 @@
+\documentclass{article}
+\usepackage[a4paper,margin=1cm]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+% define left-right arrows with overhead texts
+% http://tex.stackexchange.com/questions/96549/how-do-i-write-above-a-left-right-arrow
+\makeatletter
+\newcommand\xleftrightarrow[2][]{%
+  \ext@arrow 9999{\longleftrightarrowfill@}{#1}{#2}}
+\newcommand\longleftrightarrowfill@{%
+  \arrowfill@\leftarrow\relbar\rightarrow}
+\makeatother
+
+
+\begin{document}
+
+\title{MCA for a Simple Pathway}
+\maketitle
+
+Consider the simplest pathway:
+
+\begin{equation}
+    \label{diagram}
+    \boxed{X_1} \xleftrightarrow{R_1} S \xleftrightarrow{R_2} \boxed{X_2}
+\end{equation}
+
+We assume that $X_1$ and $X_2$ are buffered external metabolites with constant concentrations (hence in boxes).
+
+The ratelaws for the two reactions are:
+\begin{equation}
+    \label{ratelaw}
+    \begin{aligned}
+        v_1 = k_1 (X_1 - S) \\
+        v_2 = k_2 (S - X_2)
+    \end{aligned}
+\end{equation}
+
+which means we assume (1) mass action kinetics and (2) $\Delta G^0=0$ and hence $K_E=1$ for both reactions (think of isomerization reactions).
+
+At steady state, $v_1=v_2$:
+\begin{equation}
+    k_1(X_1 - S^*)= k_2 (S^* - X_2)
+\end{equation}
+
+Steady-state concentration $S^*$ is hence the weighted average of $X_1$ and $X_2$:
+\begin{equation}
+    \label{ssconcn}
+     S^* = \frac{k_1 X_1 + k_2 X_2}{k_1+k_2}
+\end{equation}
+
+And steady-state flux $J$ is hence the \textit{harmonic mean} of $k_1$ and $k_2$ times the average chemical potential difference:
+\begin{equation}
+    \label{ssflux}
+    J = k_1(X_1-S^*) = \frac{2 k_1 k_2}{k_1+k_2} \frac{X_1-X_2}{2} \equiv H(k_1, k_2) \frac{X_1-X_2}{2}
+\end{equation}
+
+Elasticities for the two reactions \textit{at steady state} are:
+\begin{align}
+    \label{elasticity}
+    \epsilon^1 &= \frac{S}{v_1}\frac{\partial v_1}{\partial S} \Bigr|_{S=S^*} =\frac{S^*}{k_1(X_1-S^*)}(-k_1) = -\frac{S^*}{X_1-S^*} \\
+    \epsilon^2 &= \frac{S}{v_2}\frac{\partial v_2}{\partial S} \Bigr|_{S=S^*} =\frac{S^*}{k_2(S^*-X_2)}(k_2) = \frac{S^*}{S^*-X_2}
+\end{align}
+
+Flux control coefficients satisfy:
+\begin{equation}
+    \label{FCC1}
+    \begin{aligned}
+        C_1  + C_2 = 1 \\
+        C_1 \epsilon^1 + C_2 \epsilon^2 = 0
+    \end{aligned}
+\end{equation}
+
+And hence they are:
+\begin{equation}
+    \label{FCC2}
+    \begin{aligned}
+        C_1  =  \frac{-\epsilon_2}{\epsilon_1-\epsilon_2} = \frac{-\frac{S^*}{S^*-X_2}}{-\frac{S^*}{X_1-S^*}-\frac{S^*}{S^*-X_2}}=\frac{X_1-S^*}{X_1-X_2} = \frac{k_2}{k_1+k_2} \\
+        C_2  =  \frac{\epsilon_1}{\epsilon_1-\epsilon_2} = \frac{\frac{S^*}{X_1-S^*}}{-\frac{S^*}{X_1-S^*}-\frac{S^*}{S^*-X_2}}=\frac{S^*-X_2}{X_1-X_2} = \frac{k_1}{k_1+k_2} 
+    \end{aligned}
+\end{equation}
+
+%
+%\begin{figure}
+%    \centering
+%    \includegraphics[width=3.0in]{myfigure}
+%    \caption{Simulation Results}
+%    \label{simulationfigure}
+%\end{figure}
+
+
+\end{document}

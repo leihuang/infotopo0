@@ -25,7 +25,7 @@ Terminology:
     
 Compare: 
     structure: 
-        - FIXME **: migrate functions in rxnnet.model to here
+        - FIXME **: migrate functions in rxnnet.models to here
         - FIXME **: in this case, can allow dexpts and pexpts to be None
         p: 
         custom object: eg, ratelaws (latex)
@@ -52,7 +52,9 @@ compare:
 
     
 """
+from __future__ import division
 
+import logging
 from collections import OrderedDict as OD
 
 import numpy as np
@@ -61,12 +63,12 @@ import pandas as pd
 from util import butil
 Series, DF = butil.Series, butil.DF
 
-import residual, sampling
+from infotopo import residual, sampling
 reload(residual)
 reload(sampling)
 
 
-
+#logging.basicConfig(filename='compare.log', level=logging.DEBUG)
 
 class Comparison(object):
     """
@@ -74,8 +76,8 @@ class Comparison(object):
     def __init__(self, mod, mod2, dexpts=None, dexpts2=None, pexpts=None, pexpts2=None):
         """
         Input: 
-            mod: reference model
-            mod2: alternative model
+            mod: reference models
+            mod2: alternative models
             dexpts: experiments for collecting data
             dexpts2: sometimes different from dexpts in 'conditions';
                 eg, ('kf',2) vs ('Vf',2);
@@ -144,7 +146,7 @@ class Comparison(object):
         return res2
     
     
-    def cmp_fit(self, p=None, sampling=False, initguess=None, **kwargs):
+    def cmp_fit(self, p=None, sample=False, initguess=None, **kwargs):
         """
         Input:
             sample: if True, return the ensemble fit; otherwise return just the 
@@ -169,7 +171,7 @@ class Comparison(object):
 
         out = res2.fit(**kwargs)
         
-        if sampling:
+        if sample:
             ens2 = sampling.sampling(res2, p0=out.p, **kwargs)
             return ens2
         else:
@@ -192,11 +194,12 @@ class Comparison(object):
             tuples = [('p2', pid) for pid in self.pids2] + [('e2', 'cost')]
             index = pd.MultiIndex.from_tuples(tuples)
             try:
-                out = self.cmp_fit(p=p, disp=0, full_output=1, **kwargs)                
+                out = self.cmp_fit(p=p, disp=0, full_output=1, sample=False, **kwargs)                
                 return Series(out.p.tolist() + [out.cost], index=index)
-            except:
+            except Exception, e:
+                logging.exception(e)
                 return Series([np.nan]*len(self.pids2) + [np.inf], index=index)
-        ens2 = ens.p.apply(_f, axis=1)
+        ens2 = ens.p.predict(_f)
         return ens.add_ens(ens2)
     
         
@@ -235,18 +238,18 @@ class Comparison(object):
         if sampling:
             ens2 = res2.sampling(p0=p2, **kwargs)
             ens2.vartypes = ['p2', 'e2']
-            zens2 = ens2.p2.apply(self.ppred2, axis=1)
+            zens2 = ens2.p2.predict(self.ppred2)
             ens2 = ens2.add_ens(z2=zens2)
             return z, ens2  # ens2: p2, e2, z2
         else:
             z2 = self.ppred2(p2)
             dat = p.tolist() + z.tolist() + p2.tolist() + [cost2] + z2.tolist()
-            tus = [('p', pid) for pid in p.index] +\
-                  [('z', zid) for zid in z.index] +\
-                  [('p2', pid) for pid in p2.index] +\
-                  [('e2', 'cost')] +\
-                  [('z2', zid) for zid in z2.index]
-            out = Series(dat, index=pd.MultiIndex.from_tuples(tus))
+            tuples = [('p', pid) for pid in p.index] +\
+                     [('z', zid) for zid in z.index] +\
+                     [('p2', pid) for pid in p2.index] +\
+                     [('e2', 'cost')] +\
+                     [('z2', zid) for zid in z2.index]
+            out = Series(dat, index=pd.MultiIndex.from_tuples(tuples))
             return out
         
         """
@@ -268,9 +271,9 @@ class Comparison(object):
             assert hasattr(ens, 'p'), "ens does not have p"
             assert hasattr(ens, 'p2'), "ens does not have p2"
         else:
-            ens = self.fits(**kwargs)
-        zens = ens.p.apply(self.ppred, axis=1)
-        zens2 = ens.p2.apply(self.ppred2, axis=1)
+            ens = self.cmp_fits(**kwargs)
+        zens = ens.p.predict(self.ppred)
+        zens2 = ens.p2.predict(self.ppred2)
         ens = ens.add_ens(z=zens, z2=zens2)
         return ens
         
@@ -280,7 +283,7 @@ class Comparison(object):
         FIXME ***
         
         Input:
-            func: a function that takes a model and outputs something to be
+            func: a function that takes a models and outputs something to be
                 compared
             varids: a list
             to_table: if True...
