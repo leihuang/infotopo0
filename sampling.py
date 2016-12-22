@@ -17,6 +17,7 @@ recalculate hessian?
 
 from __future__ import division
 import time
+import logging
 from collections import OrderedDict as OD, Mapping
 
 import numpy as np
@@ -26,14 +27,16 @@ import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D
 from more_itertools import unique_everseen
 
-from util import butil 
+from util import butil, plotutil
 Series, DF = butil.Series, butil.DF
 
 from util.matrix import Matrix
 
 
+
     
 class Ensemble(DF):
+    
     @property
     def _constructor(self):
         return Ensemble
@@ -43,7 +46,7 @@ class Ensemble(DF):
     # specify the commons variable types and their order
     _vartypes = ['p', 'y', 'e', 'z', 'p2', 'y2', 'e2', 'z2']  
     
-    def __init__(self, data=None, index=None, columns=None, **kwargs):
+    def __init__(self, data=None, index=None, columns=None, dtype='float', copy=False):
         """Make a *simple* or *composite* ensemble.
         
         Simple ensembles have ``pandas.Index`` as columns, while
@@ -58,7 +61,7 @@ class Ensemble(DF):
             columns = butil.flatten(columns, depth=1)
             columns = pd.MultiIndex.from_tuples(columns)
         super(DF, self).__init__(data=data, index=index, columns=columns, 
-                                 **kwargs)
+                                 dtype='float', copy=copy)
         self.index.name = 'step'
     
     def get_vartypes(self):
@@ -75,49 +78,7 @@ class Ensemble(DF):
         self.columns = pd.MultiIndex.from_tuples(tuples)
     
     vartypes = property(fget=get_vartypes, fset=set_vartypes)
-         
-    """
-    def get_ens_vartype(self, vartype='pid'):
-        if vartype in self.columns.get_level_values(0):
-            subens = self[vartype]
-            subens.columns.name = vartype
-        else:
-            subens = Ensemble(index=self.index)
-        return subens
     
-    
-    @property
-    def pens(self):
-        return self.get_ens_vartype(vartype='pid')
-    
-    @property
-    def yens(self):
-        return self.get_ens_vartype(vartype='yid')
-    
-    @property
-    def eens(self):
-        return self.get_ens_vartype(vartype='eid')
-    
-    @property
-    def zens(self):
-        return self.get_ens_vartype(vartype='zid')
-    
-    @property
-    def pens2(self):
-        return self.get_ens_vartype(vartype='pid2')
-
-    @property
-    def yens2(self):
-        return self.get_ens_vartype(vartype='yid2')
-
-    @property
-    def eens2(self):
-        return self.get_ens_vartype(vartype='eid2')
-
-    @property
-    def zens2(self):
-        return self.get_ens_vartype(vartype='zid2')
-    """
     
     def add(self, row=None, **kwargs):
         """
@@ -140,7 +101,7 @@ class Ensemble(DF):
                    for vartype in self.vartypes])
         
 
-    def add_vartype(self, vartype):
+    def set_vartype(self, vartype):
         """In-place convert a simple ensemble to a composite ensemble 
         by making the columns a ``MultiIndex``.
         
@@ -188,31 +149,28 @@ class Ensemble(DF):
         return self.iloc[ens.drop_duplicates().index]
         
         
-    def predict(self, pred):
+    def predict(self, f, yids=None):
         """
         """
+        yids = getattr(f, 'yids', yids)
+        assert yids is not None, "yids is None"
+            
+        nans = Series([np.nan]*len(yids), yids)
+        # skip p's that has nan
+        _f = lambda p: Series(f(p), yids) if not p.hasnans() else nans
+            
         ens_uniq = self.uniquify()
-        yens = ens_uniq.apply(pred, axis=1)
+        yens = ens_uniq.apply(_f, axis=1)
         yens.columns.name = None  # it is 'step' otherwise
         for idx in self.index:
             if idx in ens_uniq.index:
                 idx_uniq = idx
             else:
-                yens.loc[idx] = yens.loc[idx_uniq]
+                if self.loc[idx].hasnans():
+                    yens.loc[idx] = nans
+                else:
+                    yens.loc[idx] = yens.loc[idx_uniq]
         return yens.sort_index()
-    
-    """
-    def get_yens(self, pred):
-    
-        FIXME **
-        
-        Input:
-            pred: a function
-        
-        yens = self.p.apply(pred, axis=1)
-        yens.columns.name = ''
-        return yens
-    """
     
     # ??
     #def append(self, row):
@@ -344,6 +302,15 @@ class Ensemble(DF):
         plt.close()
     
 
+    def scatter3d(self, **kwargs):
+        """See the doc of plotutil.scatter3d:
+        """
+        xs, ys, zs = self.iloc[:,0], self.iloc[:,1], self.iloc[:,2]
+        plotutil.scatter3d(xs, ys, zs, **kwargs)
+        
+    scatter3d.__doc__ += plotutil.scatter3d.__doc__
+        
+        
     def scatter_3d(self, pts=None, xyzlabels=None, xyzlims=None, filepath=''):
         """
         """
@@ -377,7 +344,9 @@ class Ensemble(DF):
 
 
 
-    def scatter(self, hist=False, log10=False, pts=None, adjust=None, filepath=''):
+    def scatter(self, hist=False, log10=False, pts=None, colors=None,
+                figsize=None, adjust=None, labels=None, labelsize=6, filepath='',
+                nodiag=True, lims=None):
         """
         Input:
             hist: if True, also plot histograms for the marginal distributions
@@ -388,7 +357,9 @@ class Ensemble(DF):
         n = self.ncol
         assert n > 1, "Cannot do scatterplot with 1d data."
         
-        fig = plt.figure(figsize=(n*2, n*2))
+        if figsize is None:
+            figsize = (n*2, n*2)
+        fig = plt.figure(figsize=figsize)
         if n == 2:
             ax = fig.add_subplot(111)
             xs, ys = self.iloc[:,0], self.iloc[:,1]
@@ -409,34 +380,48 @@ class Ensemble(DF):
             ax.yaxis.set_tick_params(labelsize=7)
             ax.set_xlim(0,1)
             ax.set_ylim(0,1)
+            
         if n >= 3:
+            if colors is None:
+                colors = 'k'
+            if labels is None:
+                labels = self.colvarids
             for i, j in np.ndindex((n, n)):
                 ens_i = self.iloc[:, i]
                 ens_j = self.iloc[:, j]
-                varid_i = self.colvarids[i]
-                varid_j = self.colvarids[j]
+                varid_i = labels[i]
+                varid_j = labels[j]
                 ax = fig.add_subplot(n, n, i*n+j+1)
-                ax.scatter(ens_j, ens_i, s=1, marker='o', facecolor='k', lw=0)
+                if nodiag:
+                    if i == j:
+                        ens_i = []
+                        ens_j = []
+                ax.scatter(ens_j, ens_i, s=2, marker='o', facecolor=colors, lw=0)
                 if pts is not None:
                     for pt in pts:
                         ax.scatter([pt[i]],[pt[j]], marker='o', color='r', s=3)  # can change the color for diff pts
                 if log10:
                     ax.set_xscale('log', basex=10)
                     ax.set_yscale('log', basey=10)
-    
+
                 ax.set_xticks([])
                 ax.set_yticks([])
 
                 if i == 0:
-                    ax.set_xlabel(varid_j, fontsize=6)
+                    ax.set_xlabel(varid_j, fontsize=labelsize)
                     ax.xaxis.set_label_position('top')
                 if i == n-1:
-                    ax.set_xlabel(varid_j, fontsize=6)
+                    ax.set_xlabel(varid_j, fontsize=labelsize)
                 if j == 0:
-                    ax.set_ylabel(varid_i, fontsize=6)
+                    ax.set_ylabel(varid_i, fontsize=labelsize)
                 if j == n-1:
-                    ax.set_ylabel(varid_i, fontsize=6, rotation=180)
+                    ax.set_ylabel(varid_i, fontsize=labelsize, rotation=270)
                     ax.yaxis.set_label_position('right')
+                    ax.yaxis.labelpad = 20
+                
+                if lims is not None:
+                    ax.set_xlim(lims[j])
+                    ax.set_ylim(lims[i])
         
         kwargs = {'wspace':0, 'hspace':0, 'top':0.9, 'bottom':0.1, 
                   'left':0.1, 'right':0.9}    
@@ -448,6 +433,25 @@ class Ensemble(DF):
         plt.close()
     
     
+    @classmethod
+    def from_csv(cls, *args, **kwargs):
+        """Signature is the same as pd.DataFrame.from_csv.
+        Use pickling for lossless data persistence.
+        """
+        ens = DF.from_csv(*args, **kwargs)
+        data = ens.values[2:,:].astype(np.float)
+        index = pd.Index([int(idx) for idx in ens.index[2:]], name='step')
+        vartypes = [vartype.split('.')[0] for vartype in ens.columns]
+        varids = []
+        for varid in ens.iloc[0]:
+            varid = varid.replace('inf', 'np.inf')
+            if '(' in varid:
+                varids.append(eval(varid))
+            else:
+                varids.append(varid)
+        columns = pd.MultiIndex.from_tuples(zip(vartypes, varids))
+        ens = Ensemble(data=data, index=index, columns=columns) 
+        return ens
     
     #def concat(self, other, inplace=False):
     #    if inplace:
@@ -455,7 +459,44 @@ class Ensemble(DF):
     #    else:
     #        return Ensemble(dat=pd.concat([self, other], axis=1), varids=self.varids)
     
+
+def pgrid2pens(pids, plists=None, **pid2list):
+    """Convert parameter lists to parameter ensembles through gridding.
     
+    Input:
+        pids: specify the order
+        plists: a sequence or a dict
+        
+    >>>pens = pgrid2pens(['k1', 'k2'], k1=[0.1,1,10], k2=[0.5,1,2])
+    >>>pens.values.tolist()
+    >>>[[0.5, 0.1],
+    >>> [1.0, 0.1],
+    >>> [2.0, 0.1],
+    >>> [0.5, 1.0],
+    >>> [1.0, 1.0],
+    >>> [2.0, 1.0],
+    >>> [0.5, 10.0],
+    >>> [1.0, 10.0],
+    >>> [2.0, 10.0]]
+    
+    
+    There might be bug here:
+    >>>pens = sampling.pgrid2pens(list('ab'), plists=[[1,2],[1]])
+    >>>pens.set_vartype('p')
+    >>>hasattr(pens, 'p')  # True
+    >>>hasattr(pens, 'p')  # True
+    
+    >>>pens = sampling.pgrid2pens(list('ab'), plists=[[1,2.],[1]])  # a float, mixed type
+    >>>pens.set_vartype('p')
+    >>>hasattr(pens, 'p')  # True
+    >>>hasattr(pens, 'p')  # False
+    """
+    if plists is not None:
+        pid2list = OD(zip(pids, plists))
+    else:
+        pid2list = butil.get_submapping(OD(pid2list), pids)
+    pgrid = np.meshgrid(*pid2list.values())
+    return Ensemble(zip(*[_.flatten() for _ in pgrid]), columns=pids)     
 
 
 def sampling(func, nstep, p0=None, in_logp=True, seed=None, scheme_sampling='jtj', 
@@ -480,9 +521,6 @@ def sampling(func, nstep, p0=None, in_logp=True, seed=None, scheme_sampling='jtj
     Metropolis choice of A(a->b): 
     https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm
     A(a->b) = min(1, Pr(b)/Pr(a))
-       
-    
-    
 
     Input:
         func: predict or residual

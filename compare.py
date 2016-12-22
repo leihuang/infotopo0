@@ -52,6 +52,7 @@ compare:
 
     
 """
+
 from __future__ import division
 
 import logging
@@ -103,7 +104,7 @@ class Comparison(object):
         self.pids = mod.pids
         self.pids2 = mod2.pids
         
-        self.p0 = self.dpred.p0
+        self.p0 = self.mod.p0
     
     def add_dexpts(self, dexpts, dexpts2):
         """
@@ -164,11 +165,14 @@ class Comparison(object):
             
             (p, y, e, p2, y2, e2)
         """
+        if p is None:
+            p = self.dpred.p0
+            
         res2 = self.get_residual2(p=p, **kwargs)
                     
         if initguess: 
             kwargs['p0'] = initguess(p)
-
+        
         out = res2.fit(**kwargs)
         
         if sample:
@@ -178,7 +182,7 @@ class Comparison(object):
             return out
     
     
-    def cmp_fits(self, **kwargs):
+    def cmp_fits(self, pens=None, **kwargs):
         """
         
         Input:
@@ -187,20 +191,33 @@ class Comparison(object):
                     residual.Residual.fit: 
         
         """
-        if self.dpred.prior is None:
-            self.dpred.set_prior('jeff', **kwargs)
-        ens = sampling.sampling(self.dpred, **kwargs)
-        def _f(p):
-            tuples = [('p2', pid) for pid in self.pids2] + [('e2', 'cost')]
-            index = pd.MultiIndex.from_tuples(tuples)
+        #import ipdb
+        #ipdb.set_trace()
+        
+        if pens is None:
+            if self.dpred.prior is None:
+                self.dpred.set_prior('jeff', **kwargs)
+            pens = sampling.sampling(self.dpred, **kwargs)
+        else:
+            if pens.columns.nlevels == 1:
+                pens.set_vartype('p')
+            else:
+                assert hasattr(pens, 'p'), "The provided pens does not have p"
+            
+        tuples = [('p2', pid) for pid in self.pids2] + [('e2', 'cost')]
+        mindex = pd.MultiIndex.from_tuples(tuples)
+            
+        def _fit(p):
+            print p.name
             try:
                 out = self.cmp_fit(p=p, disp=0, full_output=1, sample=False, **kwargs)                
-                return Series(out.p.tolist() + [out.cost], index=index)
+                return Series(out.p.tolist() + [out.cost], index=mindex)
             except Exception, e:
                 logging.exception(e)
-                return Series([np.nan]*len(self.pids2) + [np.inf], index=index)
-        ens2 = ens.p.predict(_f)
-        return ens.add_ens(ens2)
+                return Series([np.nan]*len(self.pids2) + [np.inf], index=mindex)
+            
+        ens2 = pens.p.predict(_fit, yids=mindex)
+        return pens.add_ens(ens2)
     
         
     """
@@ -278,12 +295,13 @@ class Comparison(object):
         return ens
         
         
-    def cmp(self, func, varids=None, to_table=False, tex=True, filepath='', **kwargs_tex):
+    def cmp(self, func, varids=None, to_table=False, tex=True, filepath='', 
+            **kwargs_tex):
         """
         FIXME ***
         
         Input:
-            func: a function that takes a models and outputs something to be
+            func: a function that takes a model and outputs something to be
                 compared
             varids: a list
             to_table: if True...

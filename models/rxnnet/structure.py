@@ -35,7 +35,7 @@ def reorder_xids(net):
 
 
 def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True, 
-                   integerize=True):
+                   integerize=False, to_mat=True):
     """Return the stoichiometry matrix (N) of the given network or 
     dict rxnid2stoich. Rows correspond to species, and columns correspond to 
     reactions.
@@ -50,15 +50,9 @@ def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True,
     """
     if net:
         try:
-            N = net.stoich_mat
-            
-            ## need to check what structures are examined... FIXME
-            if net._get_structure() == net._last_structure:
-                return N
-            else:
-                net.compile()  # it does the assignment net._last_structure = net._get_structure()
-                raise ValueError("Net's structure has been changed and\
-                                  N potentially outdated.")
+            ## assume network structure has not changed and 
+            # precalculated N is up-to-date
+            return net.stoich_mat
         except (AttributeError, ValueError):
             if only_dynvar:
                 rowvarids = net.xids
@@ -97,17 +91,20 @@ def get_stoich_mat(net=None, rxnid2stoich=None, only_dynvar=True,
         for i in range(N.ncol):
             col = N.iloc[:,i]
             nonzeros = [num for num in butil.flatten(col) if num]
-            denoms = [fractions.Fraction(str(round(nonzero,2))).denominator 
+            denoms = [fractions.Fraction(nonzero).limit_denominator().denominator 
                       for nonzero in nonzeros]
             denom = np.prod(list(set(denoms)))
             N.iloc[:,i] = col * denom
     
     if net is not None:
         net.stoich_mat = N
+        
+    if not to_mat:
+        N = N.values
     return N
 
 
-def get_pool_mul_mat(net):
+def get_pool_mul_mat(net, to_mat=True):
     """
     Return a matrix whose row vectors are multiplicities of dynamic variables
     in conservation pools. 
@@ -144,7 +141,10 @@ def get_pool_mul_mat(net):
             # http://www.sagemath.org/doc/tutorial/tour_linalg.html
             f = open('.tmp_sage.py', 'w')
             f.write('from sage.all import *\n\n')
-            f.write('A = matrix(ZZ, %s)\n\n' % matstr)  # integers as the field
+            if np.float in N.dtypes.values:
+                f.write('A = matrix(RR, %s)\n\n' % matstr)  # real field
+            else:
+                f.write('A = matrix(ZZ, %s)\n\n' % matstr)  # integer field
             f.write('print A.kernel()')  # this returns the left nullspace vectors
             f.close()
     
@@ -154,9 +154,10 @@ def get_pool_mul_mat(net):
             
             ## Process the output from sage.
             vecstrs = out.communicate()[0].split('\n')[2:-1]
-            vecs = [eval(re.sub('(?<=\d)\s*(?=\d|-)', ',', vec)) for vec in vecstrs]
-            poolids = ['Pool%d'%idx for idx in range(1, len(vecs)+1)]
-            P = Matrix(vecs, poolids, net.xids)
+            vecs = [eval(re.sub('(?<=\d)\s+(?=\d|-)', ',', vec)) for vec in vecstrs]
+            #poolids = ['Pool%d'%idx for idx in range(1, len(vecs)+1)]
+            poolids = net.xids[-len(vecs):][::-1]
+            P = Matrix(vecs, poolids, N.rowvarids)
             # Clean things up: so far P can be, eg, 
             #        X1  X2  X3  X4
             # Pool1   0   0   1   1  # say, adenonine backbone
@@ -171,13 +172,51 @@ def get_pool_mul_mat(net):
             P = P.ix[:, ::-1].rref().ix[::-1, ::-1]
         net.pool_mul_mat = P
         
+        if not to_mat:
+            p = P.values
+    
         return P
 
 
-def get_ss_flux_mat(net):
+def get_ss_flux_mat(net, integerize=True, to_mat=True):
     """
     Input:
         net & stoichmat: one and only one of them should be given
+        integerize: does not work very well so far: eg, for N = 
+        
+              RBCO  PGAK  GAPDH  REGN  RK  PGAT  GAPT
+        RuBP    -1     0      0     0   1     0     0
+        PGA      2    -1      0     0   0    -1     0
+        BPGA     0     1     -1     0   0     0     0
+        GAP      0     0      1    -5   0     0    -1
+        Ru5P     0     0      0     3  -1     0     0, 
+        
+        or: N = array([[-1.,  0.,  0.,  0.,  1.,  0.,  0.],
+                       [ 2., -1.,  0.,  0.,  0., -1.,  0.],
+                       [ 0.,  1., -1.,  0.,  0.,  0.,  0.],
+                       [ 0.,  0.,  1., -5.,  0.,  0., -1.],
+                       [ 0.,  0.,  0.,  3., -1.,  0.,  0.]])
+        K should be:
+        RBCO    3   0
+        PGAK    0   1
+        GAPDH   0   1
+        REGN    1   0
+        RK      3   0
+        PGAT    6  -1
+        GAPT   -5   1
+        
+        But this code, using "integerize" gives: 
+        RBCO    3   0
+        PGAK    0   1
+        GAPDH   0   1
+        REGN    0   0
+        RK      3   0
+        PGAT    6  -1
+        GAPT   -5   1
+
+        For this reason, "integerize" should not be used for now unless debugged 
+        and more testings have been done, and integer N is required for now.
+                      
     """
     try:
         K = net.ss_flux_mat
@@ -193,6 +232,13 @@ def get_ss_flux_mat(net):
 
         ## convert the matrix into a string recognizable by sage
         N = net.N
+        N_int = Matrix.astype(N, np.int)  
+        
+        if np.allclose(N, N_int):
+            N = N_int
+        else:
+            raise ValueError("N is not in integers.")
+        
         if N.rank == N.ncol:
             K = Matrix(None, net.rxnids)
         else:
@@ -205,7 +251,10 @@ def get_ss_flux_mat(net):
             # http://www.sagemath.org/doc/tutorial/tour_linalg.html
             f = open('.tmp_sage.py', 'w')
             f.write('from sage.all import *\n\n')
-            f.write('A = matrix(ZZ, %s)\n\n' % matstr)  # integers as the field
+            if np.float in N.dtypes.values:
+                f.write('A = matrix(RR, %s)\n\n' % matstr)  # real field
+            else:
+                f.write('A = matrix(ZZ, %s)\n\n' % matstr)  # integer field
             f.write('print kernel(A.transpose())')  # return right nullspace vectors
             f.close()
             
@@ -217,18 +266,36 @@ def get_ss_flux_mat(net):
             vecstrs = out.communicate()[0].split('\n')[2:-1]
             #vecs = [eval(re.sub('(?<=\d)\s*(?=\d|-)', ',', vec)) 
             #        for vec in vecstrs]
-            vecs = [vec.strip('[]').split(' ') for vec in vecstrs]
-            vecs = [[int(elem) for elem in vec if elem] for vec in vecs]
-            fdids = ['FluxDist%d'%idx for idx in range(1, len(vecs)+1)]
+            vecs = [filter(None, vec.strip('[]').split(' ')) for vec in vecstrs]
+            try:
+                vecs = [[int(elem) for elem in vec if elem] for vec in vecs]
+            except ValueError:
+                vecs = [[float(elem) for elem in vec if elem] for vec in vecs]
+            fdids = ['J%d'%idx for idx in range(1, len(vecs)+1)]
             K = Matrix(np.transpose(vecs), net.rxnids, fdids)
+            
+        if integerize:  # buggy, see the docstring FIXME **
+            for i in range(K.ncol):
+                col = K.iloc[:,i]
+                nonzeros = [num for num in butil.flatten(col) if num]
+                denoms = [fractions.Fraction(nonzero).limit_denominator(1000).denominator 
+                          for nonzero in nonzeros]
+                denom = np.prod(list(set(denoms)))
+                K.iloc[:,i] = np.asarray(col * denom, dtype='int')
+        
+        assert (N*K).is_zero(), "The calculated K is not really in"\
+        "the nullspace of N!"
+                        
         net.ss_flux_mat = K
         
+        if not to_mat:
+            K = K.values
+
         return K
 
 
 def get_dxids(net):
-    """
-    A typical look of P:
+    """A typical look of P:
             X1  X2  X3  X4
     Pool1   -2  -1   0   1
     Pool2    2   1   1   0
@@ -261,10 +328,27 @@ def get_ixids(net):
 get_idynvarids = get_ixids  # deprecated
 
 
-def get_reduced_stoich_mat(net):
+def get_reduced_stoich_mat(net, to_mat=True):
     """
     """
-    return net.N.loc[net.ixids]
+    Nr = net.N.loc[net.ixids]
+    if not to_mat:
+        Nr = Nr.values
+    return Nr
+
+
+def get_reduced_link_mat(net, to_mat=True):
+    """
+    L0: L = [I ]
+            [L0]
+    """
+    if len(net.ixids) == len(net.xids):
+        L0 = Matrix(columns=net.ixids)
+    else:
+        L0 = -net.P.loc[:, net.ixids].ch_rowvarids(net.dxids)
+    if not to_mat:
+        L0 = L0.values
+    return L0
 
 
 def get_link_mat(net):
@@ -275,12 +359,24 @@ def get_link_mat(net):
     N = L * Nr
     """
     I = Matrix.eye(net.ixids)
-    if len(net.ixids) == len(net.xids):
-        L = I
-    else:
-        L0 = -net.P.loc[:, net.ixids].ch_rowvarids(net.dxids)
-        L = Matrix(pd.concat((I, L0)))
+    L0 = get_reduced_link_mat(net)
+    L = Matrix(pd.concat((I, L0)))
     return L
+
+
+def get_modules(net):
+    N0 = get_stoich_mat(net, only_dynvar=Fasle)
+    N = N0.loc[net.xids]
+    J = get_ss_flux_mat(net)
+    sets = filter(lambda s: len(s)>1, butil.powerset(range(net.rxnids)))
+    m2rxn = OD()
+    for m in sets:
+        Jm = np.zeros(J.shape)
+        Jm[s] = J[s]
+        dxdtm = np.dot(N, Jm)
+        
+        
+    
 
 
 """

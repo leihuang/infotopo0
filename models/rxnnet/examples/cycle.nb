@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      6670,        221]
-NotebookOptionsPosition[      6010,        193]
-NotebookOutlinePosition[      6365,        209]
-CellTagsIndexPosition[      6322,        206]
+NotebookDataLength[      7429,        244]
+NotebookOptionsPosition[      6767,        216]
+NotebookOutlinePosition[      7122,        232]
+CellTagsIndexPosition[      7079,        229]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -188,8 +188,31 @@ Cell[BoxData[
   3.640459996814528*^9}]
 }, Open  ]],
 
-Cell[BoxData[""], "Input",
- CellChangeTimes->{{3.6404523449224367`*^9, 3.640452347426755*^9}}]
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"v1", ":=", 
+   RowBox[{
+    RowBox[{"k1f", "*", "X0", "*", "X1"}], "-", 
+    RowBox[{"k1b", "*", "X2"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"v2", ":=", 
+   RowBox[{
+    RowBox[{"k2f", "*", "X2"}], "-", 
+    RowBox[{"k2b", "*", 
+     SuperscriptBox["X3", "2"]}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"v3", ":=", 
+   RowBox[{
+    RowBox[{"k3f", "*", "X3"}], "-", 
+    RowBox[{"k3b", "*", "X1"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"v4", ":=", 
+   RowBox[{
+    RowBox[{"k4", "*", "X3"}], "-", 
+    RowBox[{"k4", "*", "X3e"}]}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.6404523449224367`*^9, 3.640452347426755*^9}, {
+  3.64692595622911*^9, 3.646926063668556*^9}, {3.646926109425384*^9, 
+  3.6469261592443657`*^9}, {3.646926233312495*^9, 3.646926235315352*^9}}]
 },
 WindowSize->{808, 655},
 WindowMargins->{{4, Automatic}, {Automatic, 4}},
@@ -222,7 +245,7 @@ Cell[CellGroupData[{
 Cell[4856, 156, 286, 6, 28, "Input"],
 Cell[5145, 164, 752, 23, 48, "Output"]
 }, Open  ]],
-Cell[5912, 190, 94, 1, 28, "Input"]
+Cell[5912, 190, 851, 24, 82, "Input"]
 }
 ]
 *)

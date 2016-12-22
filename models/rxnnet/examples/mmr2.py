@@ -8,14 +8,15 @@ from infotopo.models.rxnnet import model
 reload(model) 
 
 
+'''
 net0 = model.Network(id='MMR2_standard')
 net0.add_compartment('CELL')
-net0.add_species('X1', 'CELL', 2, is_constant=True)
-net0.add_species('X2', 'CELL', 1, is_constant=True)
-net0.add_species('S', 'CELL', 1)
-net0.add_reaction_mm_qe('R1', stoich_or_eqn='X1<->S', pM={'Vf':1,'X1':1,'S':1,'KE':1}, 
+net0.add_species('C1', 'CELL', 2, is_constant=True)
+net0.add_species('C2', 'CELL', 1, is_constant=True)
+net0.add_species('X', 'CELL', 1)
+net0.add_reaction_mm_qe('R1', stoich_or_eqn='C1<->X', pM={'Vf':1,'A1':1,'X':1,'KE':1}, 
                        haldane='Vf', mechanism='standard', add_thermo=False)
-net0.add_reaction_mm_qe('R2', stoich_or_eqn='S<->X2', pM={'Vf':1,'S':1,'X2':1,'KE':1}, 
+net0.add_reaction_mm_qe('R2', stoich_or_eqn='C<->A2', pM={'Vf':1,'X':1,'A2':1,'KE':1}, 
                        haldane='Vf', mechanism='standard', add_thermo=False)
 net0 = net0.add_ratevars()
 net0.compile()
@@ -26,19 +27,41 @@ net = model.Network(id='MMR2')
 net.add_compartment('CELL')
 #net.add_species('X1', 'CELL', 2, is_constant=True)
 #net.add_species('X2', 'CELL', 1, is_constant=True)
-net.add_parameter('X1', 2, is_optimizable=False)
-net.add_parameter('X2', 1, is_optimizable=False)
-net.add_species('S', 'CELL', 1)
-net.add_reaction('R1', stoich_or_eqn='<->S', 
-                 ratelaw='V1*(X1/K1-S/K1)/(1+X1/K1+S/K1)', 
+net.add_parameter('A1', 2, is_optimizable=False)
+net.add_parameter('A2', 1, is_optimizable=False)
+net.add_species('X', 'CELL', 1)
+net.add_reaction('R1', stoich_or_eqn='<->X', 
+                 ratelaw='V1*(A1/K1-X/K1)/(1+A1/K1+X/K1)', 
                  p=OD([('V1',1),('K1',1)])) 
-net.add_reaction('R2', stoich_or_eqn='S<->', 
-                 ratelaw='V2*(S/K2-X2/K2)/(1+S/K2+X2/K2)', 
+net.add_reaction('R2', stoich_or_eqn='X<->', 
+                 ratelaw='V2*(X/K2-A2/K2)/(1+X/K2+A2/K2)', 
                  p=OD([('V2',1),('K2',1)])) 
 net = net.add_ratevars()
-net.compile()
+#net.compile()
+'''
 
-#net2.to_sbml('model_mmr2_simple.xml')
+#ratelaw1 = '(V1f*C1/K1C1-V1b*X/K1X)/(1+C1/K1C1+X/K1X)' 
+#ratelaw1 = 'k1f*C1-k1b*X' 
+ratelaw1 = 'V1/K1*(C1-X)/(1+C1/K1+X/K1)' 
+#ratelaw2 = '(V2f*X/K2X-V2b*C2/K2C2)/(1+X/K2X+C2/K2C2)'
+#ratelaw2 = 'k2f*X-k2b*C2'
+ratelaw2 = 'V2/K2*(X-C2)/(1+X/K2+C2/K2)' 
+pids_R1 = ['V1','K1'] 
+pids_R2 = ['V2','K2']
+
+net = model.Network(id='MMR2')
+net.add_compartment('CELL')
+#net.add_species('X1', 'CELL', 2, is_constant=True)
+#net.add_species('X2', 'CELL', 1, is_constant=True)
+net.add_parameter('C1', 2, is_optimizable=False)
+net.add_parameter('C2', 1, is_optimizable=False)
+net.add_species('X', 'CELL', 1)
+net.add_reaction('R1', stoich_or_eqn='C1<->X', ratelaw=ratelaw1, 
+                 p=OD.fromkeys(pids_R1, 1))
+net.add_reaction('R2', stoich_or_eqn='X<->C2', ratelaw=ratelaw2,
+                 p=OD.fromkeys(pids_R2, 1)) 
+net.add_ratevars()
+#net.compile()
 
 
 

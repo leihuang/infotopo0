@@ -1,74 +1,64 @@
 """
 Import pred and do analysis elsewhere...
 
+Spherical parametrization of a sphere
+Note that the metric is singular when polar angle phi=0.
 
 """
 
-from collections import OrderedDict as OD
-
 import numpy as np
-import pandas as pd
+from scipy.integrate import odeint
 
-import predict
+from util.butil import Series
 
-#import infotopo.prediction as p
-#import infotopo.geometry as g
-#reload(p)
-#reload(g)
-
-import Geodesic_Code2 as g
-reload(g)
+from infotopo import predict, sampling
+reload(predict)
+reload(sampling)
 
 
 class Model(object):
-    
+        
+    def __init__(self, p0, R=1):
+        self.pids = ['phi','theta']
+        self.p0 = Series(p0, self.pids)
+        self.R = R
+
     def get_predict(self):
-        pass
+        R = self.R
+        
+        def _f(p):
+            y = [R*np.sin(p[0])*np.cos(p[1]), 
+                 R*np.sin(p[0])*np.sin(p[1]),
+                 R*np.cos(p[0])]
+            return np.array(y)
+        
+        def _Df(p):
+            jac = [[R*np.cos(p[0])*np.cos(p[1]), -R*np.sin(p[0])*np.sin(p[1])], 
+                   [R*np.cos(p[0])*np.sin(p[1]), R*np.sin(p[0])*np.cos(p[1])],
+                   [-R*np.sin(p[0]), 0]]
+            return np.array(jac)
+        
+        pred = predict.Predict(f=_f, p0=self.p0, name='sphere', pids=self.pids,
+                               yids=['x','y','z'], Df=_Df)
+        return pred
 
+mod = Model(p0=[0,0], R=1)
+pred = mod.get_predict()
 
- 
+"""
+def func(y, t):
+    #y = (p1, p2, v1, v2)
+    #return [y[2], y[3], np.cos(y[0])*np.sin(y[0])*y[3], -2*np.cos(y[0])/np.sin(y[0])*y[2]*y[3]]
+    return [y[2], y[3], np.cos(y[0])*np.sin(y[0])*y[3]**2, -2*np.cos(y[0])/np.sin(y[0])*y[2]*y[3]]
 
-def f((phi, theta)):
-    """
-    Inputs:
-        phi: (0, pi)
-        theta: (0, 2*pi)
-    """
-    return np.array([np.sin(phi)*np.cos(theta), np.sin(phi)*np.sin(theta), np.cos(phi)])
+y0 = [1, 0, np.sqrt(2)/2, np.sqrt(2)/2]
+ts = np.arange(0, 6, 0.1)
+ys = odeint(func, y0, ts)
+ens = sampling.Ensemble(ys, columns=pred.pids+['v1', 'v2'])
+pens = ens[pred.pids]
 
+yens = pens.apply(pred, axis=1)
 
-def Df((phi, theta)):
-    """
-    """
-    return np.array([[np.cos(phi)*np.cos(theta), -np.sin(phi)*np.sin(theta)], 
-                     [np.cos(phi)*np.sin(theta), np.sin(phi)*np.cos(theta)],
-                     [-np.sin(phi), 0]])
+yens.scatter3d()
 
-pred = predict.Predict(f, Df, pids, dids)
-
-#domain = pd.Series(OD([('phi', (0,np.pi)), ('theta', (0, 2*np.pi))])) 
-#pred = p.Prediction(f, Df=Df, domain=domain)
-
-
-#gd = g.Geodesic(r=f, j=Df, )
-#pred.plot(n=200)
-
-
-geqn = g.Geodesic(r=f, j=Df, M=3, N=2, x=(np.pi/4,np.pi/4), v=np.array([1,1]), lam=0.0001)
-
-geqn.integrate(tmax=50)
-
-
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
-
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-ax.set_aspect("equal")
-ax.plot(*geqn.rs.T, color='b', alpha=0.2)
-plt.show()
-plt.close()
+"""

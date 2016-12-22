@@ -4,8 +4,10 @@
 import numpy as np
 import pandas as pd
 
-import matplotlib.pyplot as plt
+import SloppyCell
 
+from util import plotutil 
+from util.butil import DF
 
 def sort_times(times):
     """
@@ -16,11 +18,11 @@ def sort_times(times):
             times_sorted.extend(t)
         else:
             times_sorted.append(t)
-    times_sorted = sorted(set(times_sorted))
+    times_sorted = sorted(set(np.float_(times_sorted)))
     return times_sorted
 
 
-class Trajectory(object):
+class Trajectory0(object):
     """
     dat: one of the following five options 
         - a 2d array (row indexed by time, and column indexed by varid); 
@@ -154,9 +156,18 @@ class Trajectory(object):
         pass
     
     
-    def plot(self, plotvarids=None, filepath=''):
+    def plot(self, plotvarids=None, **kwargs):
         """
         """
+        if plotvarids is not None:
+            dat = self.loc[:, plotvarids].values.T
+        else:
+            dat = self.values.T
+        
+        reload(plotutil)
+        plotutil.plot(self.times, dat, **kwargs)
+        
+        '''
         nvar = len(self.varids)
         nsubplot = int(np.ceil(nvar/7.)) 
         
@@ -168,5 +179,76 @@ class Trajectory(object):
         
         plt.savefig(filepath)
         plt.close()
+        '''
         
+
+class Trajectory(DF):
+    """
+    data: one of the following five options 
+        - a 2d array (row indexed by time, and column indexed by varid); 
+            varids has to be provided in this case
+        - a SloppyCell traj
+        - a pd.DataFrame
+        - a pd.Series
+        - a Trajectory instance
+    """
+    def __init__(self, data=None, times=None, varids=None, dtype='float', copy=False):
+        if isinstance(data, SloppyCell.ReactionNetworks.Trajectory_mod.Trajectory):
+            traj_sc = data
+            data = traj_sc.values
+            times = traj_sc.timepoints
+            varids = traj_sc.key_column.keys()
+        super(DF, self).__init__(data, times, varids, dtype, copy)
+        self.index.name = 'time'
+    
+    
+    def __add__(self, other):
+        """
+        """
+        if self.varids == other.varids:
+            times = self.times + other.times  # list addition
+            varids = self.varids
+            values = np.vstack((self.values, other.values))
+        elif self.times == other.times:
+            times = self.times
+            varids = self.varids + other.varids
+            values = np.hstack((self.values, other.values))      
+        else:
+            raise ValueError("...")
+        return Trajectory(values, times, varids)
+
+
+    @property
+    def times(self):
+        return self.index.tolist()
+
+    
+    @property
+    def varids(self):
+        return self.columns.tolist()
+    
+    
+    @property
+    def ntime(self):
+        return len(self.times)
+
+
+    @property
+    def nvar(self):
+        return len(self.varids)    
+
+    
+    def get_diff_traj(self, other):
+        pass
+    
+    
+    def plot(self, plotvarids=None, **kwargs):
+        """
+        """
+        if plotvarids is not None:
+            values = self.loc[:, plotvarids].values.T
+        else:
+            values = self.values.T
         
+        reload(plotutil)
+        plotutil.plot(self.times, values, **kwargs)

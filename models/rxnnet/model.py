@@ -4,6 +4,55 @@ FIXME ***:
 try to convert functions in modules into methods by binding the functions to the class? 
 modules: structure and mca...
 
+               
++------------+------------+-----------+----------+-----------+
+| variables  |   values   |    ids    |  logids? |  comment  |
++============+============+===========+==========+===========+
+|    vars    |  varvals   |   varids  |          | 
++------------+------------+-----------+----------+
+|  optvars   |   p, p0    |   pids    |   yes    |
++------------+------------+-----------+----------+
+|   params   |            |           |          |
++------------+------------+-----------+----------+
+|  dynvars   |  x, x0, s  |   xids    |   yes    | 
++------------+------------+-----------+----------+
+|            |            |   ixids   |          | 
++------------+------------+-----------+----------+
+|            |            |   dxids   |          | 
++------------+------------+-----------+----------+
+|    spp     |            |   spids   |          |
++------------+------------+-----------+----------+
+|  asgvars   | asgvarvals | asgvarids |          | 
++------------+------------+-----------+----------+
+|  algvars   |            | algvarids |          |
++------------+------------+-----------+----------+
+|  ratevars  |            | ratevarids|          |
++------------+------------+-----------+----------+
+|   ncvars   |            |           |          | dynvars + asgvars + algvars + ratevars
++------------+------------+-----------+----------+
+|  convars   | convarvals | convarids |          |
++------------+------------+-----------+----------+
+|            |     v      |   vids    |   yes    | 
++------------+------------+-----------+----------+
+|            |     J      |   Jids    |   yes    | 
++------------+------------+-----------+----------+
+
+
++------------+------------+-----------+ 
+|   rules    |    ids     |  comment  | 
++============+============+===========+ 
+|    rxns    |   rxnids   |           |
++------------+------------+-----------+
+|  ratelaws  |   rxnids   |           |
++------------+------------+-----------+
+|  asgrules  | asgvarids  |           | 
++------------+------------+-----------+ 
+|  algrules  | algvarids  |           |
++------------+------------+-----------+
+|  raterules | ratevarids |           |
++------------+------------+-----------+
+
+
 """
 
 from __future__ import division
@@ -12,6 +61,7 @@ import copy
 import re
 import itertools
 import os
+import sympy
 import logging
 
 import numpy as np
@@ -20,6 +70,7 @@ import pandas as pd
 from SloppyCell.ReactionNetworks import Network as Network0,\
     Dynamics, IO, KeyedList
 from SloppyCell import ExprManip as exprmanip
+from SloppyCell.daskr import daeintException
 
 # FIXME ****
 from util import butil
@@ -30,14 +81,19 @@ from util.matrix import Matrix
 from infotopo import predict
 reload(predict)
 
-from infotopo.models.rxnnet import trajectory, structure, mca
+from infotopo.models.rxnnet import trajectory, structure, mca, algebra, experiments, ratelaw
 reload(trajectory)
+reload(mca)
+reload(algebra)
+reload(experiments)
+reload(ratelaw)
 
 
 
 
-class Network(Network0):
-    """
+class Network(object, Network0):
+    """Turn Network into a new-style class as ``property`` is used extensively.
+    
     Two levels of specifications:
         - biological: species, reactions, rates, parameters, etc.
         - mathematical: dynamical, assigned, algebraic, constant, optimizable, etc.
@@ -51,74 +107,58 @@ class Network(Network0):
             for attrid, attrval in net.__dict__.items():
                 setattr(self, attrid, attrval)
             if not hasattr(self, 't'):
-                self.t = 0 
+                self.t = 0
+        
         #['id', 'compartments', 'parameters', 'species', 'reactions', 
         # 'assignmentRules', 'algebraicRules', 'rateRules', 'constraints', 'events', 'functionDefinitions']:
-    
-    
-    def set_p(self, p):
-        self.update_optimizable_vars(p[self.pids])
-    
-    
+        
     @property
     def vars(self):
-        return Series(OD(self.variables.items()))
-
-
-    @property
-    def p(self):
-        return Series(OD([(var.id, var.value) for var 
-                            in self.optimizableVars]))
+        return Series(OD(self.variables.items()), dtype=object)
     
     @property
-    def p0(self):
-        return Series(OD([(var.id, var.initialValue) for var 
-                          in self.optimizableVars]))    
+    def varvals(self):
+        return self.vars.apply(lambda var: var.value)
+    #varvals = vals
     
-    @property
-    def dynvars(self):
-        return Series(OD(self.dynamicVars.items()))
-    
-    
-    @property
-    def asgvars(self):
-        return Series(OD(self.assignedVars.items()))
-    
-    
-    @property
-    def rxns(self):
-        return Series(OD(self.reactions.items()))
-    
-
-    @property
-    def asgrules(self):
-        return Series(OD(self.assignmentRules.items()))
-    
-    
-    @property
-    def algrules(self):
-        return Series(OD(self.algebraicRules.items()))
-
-
-    @property
-    def raterules(self):
-        return Series(OD(self.rateRules.items()))
-    
-    
-    """
-    funcdefs = function_definitions
-    asgvars = assigned_vars
-    algvars = algebraic_vars
-    convars = constant_vars
-    dynvars = dynamic_vars
-    optvars = optimizable_vars
-    """
-    
-    # vids? dynvids, asgvids, ratevids, algvids?
     @property
     def varids(self):
         return self.variables.keys()
     
+    @property
+    def xdim(self):
+        return len(self.x)
+    
+    @property
+    def vdim(self):
+        return len(self.rxns)
+    
+    @property
+    def pdim(self):
+        return len(self.p)
+    
+    @property
+    def cdim(self):
+        return len(self.convarids)
+    
+    @property  ## FIXME **: what's the use of it? remove it?
+    def optvars(self):
+        return Series(OD(self.optimizableVars.items()), dtype=object)
+    
+    @property
+    def p(self):
+        return Series([var.value for var in self.optimizableVars], self.pids, 
+                      dtype=np.float) 
+
+    @p.setter
+    def p(self, p2):
+        self.update_optimizable_vars(p2)
+    
+    @property
+    def p0(self):
+        #return self.optvars.apply(lambda var: var.initialValue)
+        return Series([var.val0 for var in self.optimizableVars], self.pids)
+        
     @property
     def pids(self):
         return self.optimizableVars.keys()
@@ -127,39 +167,139 @@ class Network(Network0):
     def logpids(self):
         return map(lambda pid: 'log_'+pid, self.pids)
     
+    
+    @property
+    def pvars(self):
+        return Series(OD(self.optimizableVars.items()), dtype=object)
+    params = pvars  # FIXME **: backward compatibility; deprecation warning
+    
+    
+    @property
+    def xvars(self):
+        return Series(OD(self.dynamicVars.items()), dtype=object)
+    dynvars = xvars  # FIXME **: backward compatibility; deprecation warning
+    
+    
+    def get_x(self, p=None, t=None, to_ser=False):
+        if p is not None:
+            self.update(p=p)
+        self.update(t=t)
+        return self.dynvars.apply(lambda var: var.value)
+    x = property(get_x)
+    
+    
+    @property
+    def x0(self):
+        return self.dynvars.apply(lambda var: self.evaluate_expr(var.initialValue))
+
+
+    @x0.setter   ## FIXME ***: test it
+    def x0(self, xinit2):
+        for xid_, x0_ in xinit2.items():
+            self.dynvars[xid_].initialValue = x0_
+    
+    
     @property
     def xids(self):
         return self.dynamicVars.keys() 
-    dynvarids = xids
+    
     
     @property
     def logxids(self):
         return map(lambda xid: 'log_'+xid, self.xids)
     
     @property
-    def asgvarids(self):
-        return self.assignedVars.keys() 
-    
-    @property
-    def ncvarids(self):  # non-constant variables
-        return self.dynvarids + self.asgvarids
-    
-    @property
-    def constvarids(self):
-        return self.constantVars.keys()
+    def spvars(self):
+        return Series(OD(self.species.items()), dtype=object)
+    spp = spvars  # FIXME **: backward compatibility; deprecation warning
     
     @property
     def spids(self):
         return self.species.keys()
     
     @property
-    def rxnids(self):
-        return self.reactions.keys()
+    def asgvars(self):
+        return Series(OD(self.assignedVars.items()), dtype=object)
+    
+    @property
+    def asgvarvals(self):
+        return self.asgvars.apply(lambda var: var.value)
+        
+    @property
+    def asgvarids(self):
+        return self.assignedVars.keys()
+    
+    @property
+    def algvars(self):
+        return Series(OD(self.algebraicVars.items()), dtype=object)
+    
+    @property
+    def algvarids(self):
+        return self.algebraicVars.keys()
+    
+    @property
+    def vvars(self):
+        return self.vars[self.ratevarids]
+    ratevars = vvars  # FIXME **: backward compatibility; deprecation warning
+    
+    @property
+    def ratevarids(self):
+        return self.rateRules.keys()
+    
+    @property
+    def ncvars(self):  # non-constant variables  ## FIXME ***
+        return Series.append(Series.append(Series.append(self.dynvars, self.asgvars), 
+                                           self.algvars), self.ratevars)
+    
+    @property
+    def ncids(self):
+        return self.xids + self.asgvarids + self.algvarids #+ self.ratevarids
+    ncvarids = ncids  # FIXME **: backward compatibility; deprecation warning
+    ## FIXME ****: when net.add_species('X', 1, is_boundary_condition=1), 
+    ## 'X' appears in both xids and algvarids
+    
+    @property
+    def cvars(self):
+        return Series(OD([(var.id, var) for var in self.constantVars if
+                          var not in self.compartments and 
+                          not var.is_optimizable]), dtype=object)
+    convars = cvars  # FIXME **: backward compatibility; deprecation warning
+        
+    @property
+    def c(self):
+        return Series(OD([(var.id, var.value) for var in self.constantVars if 
+                          var not in self.compartments and 
+                          not var.is_optimizable]), dtype=np.float)
+        ##self.convars.apply(lambda var: var.value)
+    
+    #convarvals = c  # FIXME **: backward compatibility; deprecation warning
+    
+    @property
+    def convarvals(self):
+        return self.constantVarValues
+    
+    
+    @property
+    def cids(self):
+        return [var.id for var in self.constantVars if 
+                var not in self.compartments and 
+                not var.is_optimizable]
+    convarids = cids  # FIXME **: backward compatibility; deprecation warning
+    
+    
+    #def get_v(self, x=None, p=None, **varmap):
+    #    self.update(x=x, p=p, **varmap)
+        
+
+    @property
+    def v(self):
+        return Series([self.evaluate_expr(vid) for vid in self.vids], self.vids)
+    #rates = v
 
     @property
     def vids(self):
         return map(lambda _: 'v_'+_, self.rxnids)
-    rateids = vids
+    #rateids = vids
     
     @property
     def logvids(self):
@@ -168,63 +308,43 @@ class Network(Network0):
     @property
     def Jids(self):
         return map(lambda _: 'J_'+_, self.rxnids)
-    fluxids = Jids
+    #fluxids = Jids
     
     @property
     def logJids(self):
         return map(lambda Jid: 'log_'+Jid, self.Jids)
+
+    @property
+    def rxns(self):
+        return Series(OD(self.reactions.items()), dtype=object)
+    
+    @property
+    def rxnids(self):
+        return self.reactions.keys()
     
     @property
     def ratelaws(self):
-        return Series(OD([(rxn.id, rxn.kineticLaw) for rxn in self.rxns]))
-    
-    @property
-    def vals(self):
-        return Series(OD([(var.id, var.value) for var in self.variables]))
-    varvals = vals
+        return self.rxns.apply(lambda rxn: rxn.kineticLaw)
 
-    
-    def get_x0(self):
-        return Series(OD([(var.id, var.initialValue) for var in self.dynamicVars]))
-
-    def set_x0(self, x0):
-        """
-        set initial condition
-        """
-        for xid_, x0_ in x0.items():
-            self.variables.get(xid_).initialValue = x0_
-    
-    x0 = property(get_x0, set_x0, doc="initial condition")        
-    
-    
     @property
-    def x(self):
-        return Series(OD([(var.id, var.value) for var in self.dynamicVars]))
-    
-    @x.setter
-    def x(self, x2):
-        """
-        """
-        for xid_, x_ in x2.items():
-            self.variables.get(xid_).value = x_
-    
-    #x = property(get_x, set_x)
-    dynvarvals = x
-    
-    
+    def asgrules(self):
+        return Series(OD(self.assignmentRules.items()), dtype=object)
+        
+    @property
+    def algrules(self):
+        return Series(OD(self.algebraicRules.items()), dtype=object)
+
+    @property
+    def raterules(self):
+        return Series(OD(self.rateRules.items()), dtype=object)
+
+    @property    
+    def funcdefs(self):
+        return Series(OD(self.functionDefinitions.items()), dtype=object)
+        
     # FIXME ***:
     # call it theta? theta: parameters; p: optimizable parameters??
     # when cmp, we should compare theta. 
-    @property
-    def constvarvals(self):
-        return Series(OD([(var.id, var.value) for var in self.constantVars]))
-    
-    
-    @property
-    def rates(self):
-        return Series([self.evaluate_expr(rateid) for rateid in self.rateids],
-                         index=self.rateids)
-    v = rates
     
     
     def copy(self):
@@ -248,14 +368,117 @@ class Network(Network0):
     
     
     def regularize(self):
-        """
+        """Remove unnecessarily heterogeneous model specifications such as
+        function definitions, assignment rules for conserved moieties...
+        
+        v = v(x, y, p)
+        dx/dt = N v
+        y = f(x, p)
+        
+        asgrules: 
+        1) Conserved moiety, eg, ADP=3-ATP: y->x (make asgvar to be dynvar)
+        2) Shorthand, eg, a=sqrt(k1/k2): y->p (make asgvar to be parameter)
+        3) Monitor, eg, v_R1=k1*S: remove y (y does not feed back into system)
+        4) True DAE, eg, from QE: X1=X/(1+KE): conceptually, it is k->infinity singular perturbation 
+        
+        =>
+        
+        v = v(x, p)
+        dx/dt = N v
+        
+        Obselete:
         Regularize the network so that all parameters have ranges between 0
         and infinity.
         """
-        pass
+        net = self.remove_function_definitions()
+        # how to systematically remove asgrules for conserved moieties?
+        return net
+         
+
+    def clean(self):
+        """Standardize the data structures and clean up the methods...
+        Might break people's codes...
         
+        rxn.ratelaw? (KineticLaw in SBML)
+        pd.Series replacing KeyedList?
+        Name conventions such as "rateRules"...
+        
+        FIXME *
+        """
+        net = self.copy()
+        for rxn in net.reactions:
+            if hasattr(rxn, 'kineticLaw'):
+                rxn.ratelaw = rxn.kineticLaw
+                
+        # delete SloppyCell obsolete methods
+        del net.get_eqn_structure
+        del net.get_initial_velocities
+        return net
     
-    def add_reaction_ma(self, rxnid, stoich_or_eqn, p, reversible=True, 
+    
+    def get_eqns(self):
+        """
+        v = v(x, y, p)  ratelaws
+        dx/dt = N v  odes
+        y = f(x, p)  asgrules/algrules
+        """
+        eqns = Series([])
+        eqns['ratelaws'] = self.ratelaws
+        eqns['N'] = self.get_stoich_mat(only_dynvar=True)
+        eqns['asgrules'] = self.asgrules.filt(f_key=lambda varid: not varid.startswith('v_'))
+        eqns['algrules'] = self.algrules
+        eqns['p'] = self.p
+        eqns = eqns.filt(f_val=lambda _: len(_) > 0)
+        return eqns
+    
+    
+    def get_eqn(self, p=None, **kwargs):
+        from infotopo import dynamics
+        reload(dynamics)
+        
+        #consts = self.convarvals.tolist()[:-len(self.optimizableVars)]
+        
+        #if p is None:
+        #    p = self.p
+            
+        f = lambda t, x:\
+            self.res_function(t, x, [0]*len(x), self.convarvals)  #consts+list(p))
+
+        eqn = dynamics.ODE(f, x0=self.x0, **kwargs) #, p=p, pids=self.pids, xids=self.xids)
+        return eqn
+    
+    
+    def get_eqns2(self):
+        """
+        FIXME ****
+        """
+        def _mul(row, vids):
+            items = []
+            for n, vid in zip(row, vids):
+                if int(n) == 0:
+                    continue
+                elif n > 0:
+                    items.append('%d*%s' % (n,vid))
+                else:
+                    items.append('(%d*%s)' % (n,vid))
+            expr = '+'.join(items)
+            return exprmanip.simplify_expr(expr)
+        eqns = Series([_mul(row, self.vids)+' = 0' for row in self.N.values], 
+                      ['d%s/dt=0'%xid for xid in self.xids])
+        return eqns
+
+
+    def get_ode_strs(self):
+        """Doesn't work for DAE for now. 
+        """
+        _repl_ratelaw = lambda eqn: exprmanip(eqn, self.ratelaws.to_dict())
+        eqns = [exprmanip.sub_for_vars(eqn.rstrip(' = 0').replace('v_',''),
+                                       self.ratelaws.to_dict()) 
+                for eqn in self.get_eqns2().values.tolist()]
+        return eqns
+
+    
+    def add_reaction_ma(self, id, stoich_or_eqn, p, reversible=True, 
                         haldane='kf', add_thermo=False, T=25):
         """
         Add a reaction assuming mass action kinetics.
@@ -288,6 +511,8 @@ class Network(Network0):
             T: a float; temperature in celsius, used for RT in thermodynamic 
                 relationships
         """
+        rxnid = id  ## FIXME **
+        
         ## get stoich
         if isinstance(stoich_or_eqn, str):
             eqn = stoich_or_eqn
@@ -367,16 +592,16 @@ class Network(Network0):
         self.addReaction(rxnid, stoichiometry=stoich, kineticLaw=ratelaw)
 
 
-    def add_reaction_qe(self, rxnid, stoich_or_eqn, KE):
+    def add_reaction_qe(self, id, stoich_or_eqn, KE):
         """
         Add a reaction that is assumed to be at quasi-equilibrium (qe). 
         """
-        self.add_reaction(rxnid=rxnid, stoich_or_eqn=stoich_or_eqn, 
-                          p={'KE_'+rxnid:(KE,False)}, ratelaw='0')
+        self.add_reaction(id=id, stoich_or_eqn=stoich_or_eqn, 
+                          p={'KE_'+id:(KE,False)}, ratelaw='0')
         # add algebraic rules
         
     
-    def add_reaction_mm_qe(self, rxnid, stoich_or_eqn, 
+    def add_reaction_mm_qe(self, id, stoich_or_eqn, 
                            pM, pI=None, pA=None, 
                            reversible=True, haldane='Vf', 
                            mechanism='standard', 
@@ -471,6 +696,8 @@ class Network(Network0):
             T: a float; temperature in celsius, used for RT in thermodynamic 
                 relationships
         """
+        rxnid = id  ## FIXME **
+        
         ## get states (from stoich, p (with modifier info), states, mechanism)
         # get stoich and reversible
         if isinstance(stoich_or_eqn, str):
@@ -642,7 +869,7 @@ class Network(Network0):
         self.addReaction(rxnid, stoichiometry=stoich, kineticLaw=ratelaw)
         
             
-    def add_reaction(self, rxnid, stoich_or_eqn, ratelaw, p=None, **kwargs):
+    def add_reaction(self, id, stoich_or_eqn, ratelaw, p=None, **kwargs):
         """
         Add a reaction with all the given information, in a sense a wrapper
         of the SloppyCell.ReactionNetworks.Network.addReaction.
@@ -658,6 +885,8 @@ class Network(Network0):
                 a float (pval) or a tuple (pval, is_optimizable); 
                 eg, p={'V_R1':1, 'KM_S':2, 'KE_R1':(1, False)}
         """
+        rxnid = id  ## FIXME **
+        
         ## get stoich
         if isinstance(stoich_or_eqn, str):
             eqn = stoich_or_eqn
@@ -700,17 +929,13 @@ class Network(Network0):
         """
         Add rate variables.
         """
-        #import ipdb
-        #ipdb.set_trace()
-        net = self.copy()
-        for rxn in net.reactions:
+        for rxn in self.reactions:
             rateid = 'v_' + rxn.id
             try:
-                net.add_parameter(rateid, is_constant=False, is_optimizable=False)
-                net.add_assignment_rule(rateid, rxn.kineticLaw)
+                self.add_parameter(rateid, is_constant=False, is_optimizable=False)
+                self.add_assignment_rule(rateid, rxn.kineticLaw)
             except ValueError:
                 pass
-        return net
     
     
     def print_details(self):
@@ -732,36 +957,21 @@ class Network(Network0):
             self.assignmentRules.items()
         print "Rate Rules:\n\t",\
             self.rateRules.items()
-
-    
-    def standardize(self):
-        """
-        rxn.ratelaw? (KineticLaw in SBML)
-        pd.Series replacing KeyedList?
-        Name conventions such as "rateRules"...
-        
-        Very low priority...
-        """
-        net = self.copy()
-        for rxn in net.reactions:
-            if hasattr(rxn, 'kineticLaw'):
-                rxn.ratelaw = rxn.kineticLaw
-        return net
     
     
     def get_uses(self, varid):
         """
         """
-        uses = OD()
-        uses_rxn = OD([])
+        uses, uses_rxn, uses_asgrule = OD(), OD(), OD()
+    
         for rxn in self.reactions:
             if varid in exprmanip.extract_vars(rxn.kineticLaw):
                 uses_rxn[rxn.id] = rxn.kineticLaw
         uses['rxn'] = uses_rxn
-        uses_asgrule = OD()
+        
         for asgvarid, asgrule in self.asgrules.iteritems():
             if varid in exprmanip.extract_vars(asgrule):
-                uses_rxn[asgvarid] = asgrule
+                uses_asgrule[asgvarid] = asgrule
         uses['asgrule'] = uses_asgrule
         """
         for algrule in self.algrules:
@@ -797,7 +1007,8 @@ class Network(Network0):
         
         Input:
             only_expr: if True, only replace varid in expressions such as
-                reaction ratelaws, assignment rules, etc.
+                reaction ratelaws, assignment rules, etc.; 
+                useful when varid_new is like 'varid_old * r'
         """
         vid, vid2 = varid_old, varid_new
         if only_expr:
@@ -817,7 +1028,7 @@ class Network(Network0):
             var2.id = f(var.id)
             vars2.set(var2.id, var2)
         net2.variables = vars2
-            
+        
         rxns2 = KeyedList()
         for rxn in self.reactions:
             rxn2 = copy.deepcopy(rxn)
@@ -885,6 +1096,36 @@ class Network(Network0):
         return net
     
     
+    def replace_ratelaw(self, rxnid, rl, facelift=False):
+        net = self.copy()
+        
+        rxn = copy.deepcopy(net.rxns[rxnid])
+        rxnids = net.rxnids
+                
+        for pid in rxn.parameters:
+            # FIXME***: need to test the uses of the pid; some are shared 
+            # by other reactions as well
+            net.remove_component(pid)
+        net.remove_component(rxnid)
+        
+        if facelift:
+            rl = rl.facelift(xids_new=rxn.stoichiometry.keys(),  
+                             pcmap='rxnid', rxnidx=rxnid)
+
+        net.add_reaction(rxnid, stoich_or_eqn=rxn.stoichiometry, 
+                         ratelaw=rl.s, p=OD.fromkeys(rl.pids, 1))
+        
+        net = net.reorder_reactions(rxnids)
+        
+        vid = 'v_' + rxnid 
+        if vid in net.asgvarids:
+            net.assignmentRules.set(vid, net.ratelaws[rxnid])
+        
+        net.compile()  # FIXME ****: it does NOT seem to update!!
+        return net
+        
+        
+         
     def remove_function_definitions(self):
         """
         Only replace ratelaws of reactions so far...
@@ -921,7 +1162,53 @@ class Network(Network0):
                 self.vars[_id].name = name
             if _id in self.rxnids:
                 self.rxns[_id].name = name
+    
+    def add_compartment(self, id, *args, **kwargs):
+        """A wrapper of SloppyCell that accepts ...
+        """
+        if id in self.compartments.keys():
+            pass
+        else:
+            Network0.add_compartment(self, id, *args, **kwargs)
 
+
+    def add_species(self, *args, **kwargs):
+        """A wrapper of the SloppyCell method so that compartment does not
+        have to be passed in if there is only one compartment.
+        """
+        cmptids = self.compartments.keys()
+        
+        # input has compartment info
+        if any([cmptid in list(args)+kwargs.values() for cmptid in cmptids]):
+            Network0.add_species(self, *args, **kwargs)
+        # input has no compartment info
+        else:
+            if len(cmptids) == 0:
+                cmptid = 'cell'
+                self.add_compartment(cmptid)
+            elif len(cmptids) == 1:
+                cmptid = cmptids[0]
+            else:
+                raise ValueError("Compartment has to be provided.")
+            args = list(args)
+            args.insert(1, cmptid)    
+            Network0.add_species(self, *args, **kwargs)
+        
+    
+    def add_spp(self, **kwargs):
+        """
+        """
+        assert len(self.compartments) == 1, "network has more than one compartments."
+        cmptid = self.compartments.keys()[0]
+        for spid, concn0 in kwargs.items():
+            self.add_species(spid, cmptid, concn0)
+    
+    def add_p(self, **kwargs):
+        """
+        """
+        for pid, pval in kwargs.items():
+            self.add_parameter(pid, pval, is_optimizable=True)
+    
     
     def get_eq_pools(self):
         """
@@ -995,7 +1282,7 @@ class Network(Network0):
         sbml import loses the optimizability information
         """
         for pid in self.pids:
-            if pid.startswith('KE_'):
+            if pid.startswith('KE'):
                 self.set_var_optimizable(pid, False)
         self._makeCrossReferences()
         
@@ -1036,17 +1323,25 @@ class Network(Network0):
         return net
     
     
-    def perturb(self, condition):
+    def perturb0(self, condition):
         """
         """
-        net = self.copy() 
-        if condition == ():
-            return net
+        if condition in [(), None, '']:
+            return self
         else:
+            net = self.copy()
             if len(condition) == 2:
                 pid, mode = condition[0], '*'  # default
             else:
                 pid, mode = condition[:2]
+                
+            if pid in self.rxnids:
+                if 'Vf_%s' % pid in self.pids:
+                    pid = 'Vf_%s' % pid
+                elif 'kf_%s' % pid in self.pids:
+                    pid = 'kf_%s' % pid
+                else:
+                    raise ValueError("neither Vf_%s nor kf_%s are pids." % (pid, pid))
             
             if mode in ['*', '/', '+', '-']:
                 change = condition[-1]
@@ -1062,27 +1357,42 @@ class Network(Network0):
         return net
         
         
-    def measure(self, msrmts, to_ser=False):
+    
+    def perturb(self, condition):
+        """
+        """
+        if condition == ():  # wildtype  
+            return self
+        else:  # perturbation
+            net = self.copy()
+            for perturbation in condition:
+                varid, mode, strength = perturbation
+                if mode in ['*', '/', '+', '-']:
+                    varid2 = '(%s%s%s)'%(varid, mode, strength)
+                    net = net.replace_varid(varid, varid2, only_expr=True)  
+                if mode == '=':
+                    net.set_var_val(varid, strength)  # need to verify...
+            return net
+        
+        
+    def measure(self, msrmts, to_ser=False, **kwargs):
         """
         Input:
-            msrmts: measurements, a list of (varid, time)
+            msrmts: measurements, a list of (varid, time) with attributes
                 eg, [('A',1), ('J_R1',np.inf)]
         
         """
-        varids, times = zip(*msrmts)
-        varids, times = list(set(varids)), sorted(set(times))  # zip returns a tuple
-        traj = self.get_traj(times, varids=varids)
+        traj = self.get_traj(msrmts.times, varids=msrmts.varids, **kwargs)
         y = []
-        for varid, time in msrmts:
-            y.append(traj[varid].loc[time])
+        for varid, times in msrmts.varid2times.items():
+            y.extend(traj[varid][times].tolist())
         if to_ser:
             y = Series(y, index=msrmts)
         return y    
         
     
-    def get_parameter_sensitivities(self, msrmts, to_mat=True):
-        """
-        Get the _parameter_ sensitivities of the quantities in measurements 
+    def get_psens(self, msrmts, to_mat=False, **kwargs):
+        """Get the *parameter* sensitivities of the quantities in measurements 
         (msrmts). 
         
         Input:
@@ -1090,26 +1400,23 @@ class Network(Network0):
                 eg, [('A',1), ('J_R1',np.inf)]
         
         Output:
-            a pd.DataFrame
+
         """
-        #import ipdb
-        #ipdb.set_trace()
-        varids0, times = zip(*msrmts)
-        varids =  list(itertools.product(set(varids0), self.pids))
-        times = sorted(set(times))
-        traj = self.get_traj(times, varids=varids)
+        _get_derivids = lambda varids: list(itertools.product(varids, self.pids))
+        
+        traj = self.get_traj(msrmts.times, varids=_get_derivids(msrmts.varids),
+                             **kwargs)
         jac = []
-        for varid0, time in msrmts:
-            jac.append(traj.loc[time, [(varid0,pid) for pid in self.pids]].tolist())
+        for varid, times in msrmts.varid2times.items():
+            jac.extend(traj.loc[times, _get_derivids([varid])].values.tolist())   
         if to_mat:
             jac = Matrix(jac, msrmts, self.pids)
-        return jac
+        return jac    
+
     
-    get_psens = get_parameter_sensitivities
-    
-    
-    def get_predict(self, expts, **kwargs_prior):
-        """
+    """
+    def get_predict0(self, expts, **kwargs_prior):
+        
         Returns a predict object, essentially f = X*M, where M is the models and
         X is the design variable.
         
@@ -1120,9 +1427,6 @@ class Network(Network0):
             2   (k1, 2)        S    [1,np.inf]
             3   (k2, 2)        S    [2,10]
         
-        """
-        #import ipdb
-        #ipdb.set_trace()
         
         expts_worked = expts.copy()
         
@@ -1167,9 +1471,10 @@ class Network(Network0):
         if kwargs_prior:
             pred.set_prior(**kwargs_prior)
         return pred
-        
+    """
 
-    def get_predict2(self, expts, allow_fail=True):  # FIXME *: better name than allow_fail?
+
+    def get_predict(self, expts, p0=None, name='', **kwargs): 
         """Returns a predict object, essentially f = X * M, 
         where M is the models and X is the design variable.
         
@@ -1179,14 +1484,14 @@ class Network(Network0):
                 1        ()        S    np.inf
                 2   (k1, 2)        S    [1,np.inf]
                 3   (k2, 2)        S    [2,10]
-            test: 
+            name: 
+            kwargs: kwargs for dynamic and steady-state calculation
+            
         
         """
         #import ipdb
         #ipdb.set_trace()
         
-        # this will ...
-        expts = expts.regularize()
         """
         if test:
             for cond in expts.condset:
@@ -1197,39 +1502,44 @@ class Network(Network0):
                     expts.rm_condition(cond)
                     logging.warn("Remove condition: %s"%str(cond))
         """
+        
+        # this will ...
+        #expts = expts.regularize()
+        
+        ## FIXME ***: 
+        # When get y, one often needs to integrate
+        # When get jac, one often needs to sens-integrate, which is a superset
+        # of integrate (?): repetition of labor 
+        # Something like this:
+        # varids = yids + sensids, which are product(yids, pids) 
+        # traj = net.get_traj(times, varids)
+        # y = traj[yids]
+        # jac = traj[sensids]
+        net0 = self.copy()
+        
+        items = expts.get_condmsrmts_items()
+        items2 = [(net0.perturb(cond), msrmts) for cond, msrmts in items]
+        
         def f(p):
-            y = Series(conds=expts.conds)
-            for cond, msrmts in expts:
-                self.perturb(cond, inplace=True)
-                try:
-                    y_cond = self.measure(msrmts, cond=cond)  # a series
-                    y.append(y_cond)
-                except (Exception, daeintException):
-                    if allow_fail:
-                        y.conds.remove(cond)
-                        logging.warn("...")
-                    else:
-                        raise
-            return y
+            y = []
+            for net, msrmts in items2:
+                net.update(p=p)
+                y_cond = net.measure(msrmts, **kwargs)
+                y.extend(y_cond)
+            return np.array(y)
         
         def Df(p):
-            jac = Matrix(conds=expts.conds)
-            for cond, msrmts in expts:
-                self.perturb(cond, inplace=True)
-                try:
-                    jac_cond = self.get_psens(msrmts, cond=cond)  # a df
-                    jac.append(jac_cond)
-                except (Exception, daeintException):
-                    if allow_fail:
-                        jac.conds.remove(cond)
-                        logging.warn("...")
-                    else:
-                        raise
-            #jac = DF(jac, index=expts.dids, columns=self.pids)
-            return jac
+            jac = []
+            for net, msrmts in items2:
+                net.update(p=p)
+                jac_cond = net.get_psens(msrmts, **kwargs)
+                jac.extend(jac_cond)
+            return np.array(jac)
 
-        pred = predict.Predict(f=f, Df=Df, p0=self.p, pids=self.pids, 
-                               dids=expts.dids, expts=expts, allow_fail=allow_fail)
+        if p0 is None:
+            p0 = net0.p0
+        pred = predict.Predict(f=f, Df=Df, p0=net0.p, name=name, pids=net0.pids, 
+                               yids=expts.yids, expts=expts)
         return pred
         
         
@@ -1259,6 +1569,9 @@ class Network(Network0):
             jac = pd.DataFrame(jac, index=dids, columns=pids)
             return jac
         """
+    
+    def get_predict_vfield(self, ts):
+        pass
         
 
 ###############################################################################
@@ -1266,99 +1579,138 @@ class Network(Network0):
 
     ## calculating methods
     #  dynamics
-    def get_traj(self, times, varids=None, copy=False, **kwargs_int):
+    def get_traj(self, times, p=None, varids=None, copy_net=False, **kwargs):
         """
         Input:
-            times: a list of floats, lists or tuples
+            times: a list of numbers (time series), or
+                   a tuple of two numbers (an interval, dense sampling)
             copy: really necessary??? check the code behaviors... FIXME **
              
         Output:
             traj
         """
-        if copy:
+        if copy_net:
             net = self.copy()
         else:
             net = self
-            
-        #import ipdb
-        #ipdb.set_trace()
-
+        
+        if p is not None:
+            net.update(p=p)
+        
+        # assuming traj_sc has ncvarids by default; needs to check...
+        ncvarids = self.ncvarids  # FIXME ****: brittle here
         if varids is None:
             # only normal traj (no sens traj)
-            varids = self.ncvarids
+            varids = ncvarids
+            copy_traj_sc = False
+        elif varids == ncvarids:
+            copy_traj_sc = False
+        else:
+            copy_traj_sc = True
+        
         if any([isinstance(varid, tuple) for varid in varids]):
             calc_sens = True
         else:
             calc_sens = False
         
-        # sort times
-        times_sorted = trajectory.sort_times(times)
+        # sort times; return a list of sorted floats
+        #times_sorted = trajectory.sort_times(times)
+        if isinstance(times, tuple):
+            times_sorted = tuple(sorted(times))
+        else:
+            times_sorted = sorted(times)
         
         # see if steady state needs to be calculated
         if times_sorted[-1] == np.inf:
-            times_int = times_sorted[:-1]
+            times_intgr = times_sorted[:-1]
             calc_ss = True
         else:
-            times_int = times_sorted
+            times_intgr = copy.copy(times_sorted)
             calc_ss = False
         
         ## integrate to get traj_int
         # make an empty traj_int
-        if times_int == []:
-            traj_int = trajectory.Trajectory(varids=varids)
-        elif times_int == [0] or times_int == [0.0]:
-            dat = [self.evaluate_expr(varid, time=0) for varid in varids]
-            traj_int = trajectory.Trajectory(dat=dat, times=[0], varids=varids)
+        if times_intgr == []:
+            traj_intgr = trajectory.Trajectory(varids=varids)
+        elif times_intgr == [0.0]:
+            data = [[self.evaluate_expr(varid, time=0) for varid in varids]]
+            traj_intgr = trajectory.Trajectory(data=data, times=[0], varids=varids)
         else:
             # see if there are time intervals
-            if 'fill_traj' not in kwargs_int:
-                if isinstance(times, tuple) or any([isinstance(t, tuple) for t in times]):
+            if 'fill_traj' not in kwargs:
+                if isinstance(times, tuple) or any([isinstance(t, tuple) for t in times]):  
                     fill_traj = True
                 else:
                     fill_traj = False
-                kwargs_int['fill_traj'] = fill_traj    
+                kwargs['fill_traj'] = fill_traj    
         
             # fix time: when supplying a time not starting from 0, say, [1,2], 
             # SloppyCell starts from the current state of the network, 
             # even if the current state does not correspond to t=1.    
             # http://sourceforge.net/p/sloppycell/mailman/message/31806741/
-            if float(times_int[0]) != 0.0:
-                times_int.insert(0, 0)
-            if calc_sens:
-                traj_int_sc = Dynamics.integrate_sensitivity(net, times=times_int, **kwargs_int)
-            else:
-                traj_int_sc = Dynamics.integrate(net, times=times_int, **kwargs_int)
-            traj_int = trajectory.Trajectory(traj_int_sc.copy_subset(varids))      
+            times_intgr = list(times_intgr)
             
+            if float(times_intgr[0]) != 0.0:
+                times_intgr.insert(0, 0)
+            #net.x = net.x0
+            
+            if calc_sens:
+                integrate = Dynamics.integrate_sensitivity
+            else:
+                integrate = Dynamics.integrate
+            
+            try:
+                kwargs_intgr = butil.get_submapping(kwargs, f_key=lambda k: k in\
+                    ['rtol', 'atol', 'fill_traj', 'return_events', 
+                     'return_derivs', 'redirect_msgs', 'calculate_ic', 
+                     'include_extra_event_info', 'use_constraints'])
+                traj_intgr_sc = integrate(net, times=times_intgr, **kwargs_intgr)
+            except daeintException:
+                # It seems SloppyCell automatically sets net.x = net.x0, so:
+                net.t = 0
+                # rethrow the exception: 
+                # http://nedbatchelder.com/blog/200711/rethrowing_exceptions_in_python.html
+                raise
+            
+            # indexing creates a copy and slows things down
+            if copy_traj_sc:      
+                traj_intgr = trajectory.Trajectory(traj_intgr_sc)[varids]
+            else:
+                traj_intgr = trajectory.Trajectory(traj_intgr_sc)
+                
         ## perform MCA to get traj_ss
         if calc_ss:
             #f = lambda vid: vid.replace('v_','J_') if isinstance(vid, str) else vid 
             #varids_ss = map(f, varids)
-            varssvals = net.get_ssvals(varids=varids)
-            traj_ss = trajectory.Trajectory(dat=varssvals.tolist(), 
+            varssvals = net.get_ssvals(varids=varids, **kwargs)
+            traj_ss = trajectory.Trajectory(data=[varssvals.tolist()], 
                                             times=[np.inf], varids=varids)
         else:
             traj_ss = trajectory.Trajectory(varids=varids)
         
-        traj_all = traj_int + traj_ss
+        traj = traj_intgr + traj_ss
         
         net.t = times_sorted[-1]
         
         # comment out the following line because if fill_traj is True then
         # we want all the times...
+        
         #traj = traj_all.get_subset(times=times_sorted)  
-        return traj_all
+        return traj
     
     """
     structure (parameter-independent)
     """
     
-    def reorder_dynvarids(self):
-        return structure.reorder_dynvarids(self)
+    def reorder_xids(self):
+        return structure.reorder_xids(self)
  
    
     def get_stoich_mat(self, **kwargs):
+        """
+        """
         return structure.get_stoich_mat(self, **kwargs)
+    get_stoich_mat.__doc__ += structure.get_stoich_mat.__doc__
                                      
     
     def get_reduced_stoich_mat(self, **kwargs):
@@ -1426,33 +1778,36 @@ class Network(Network0):
     
 ###############################################################################
 
-    def get_x(self, t):
-        traj = self.get_traj([0,t], copy=True)
-        return traj.loc[t, self.dynvarids]
+    #def get_x(self, t):
+    #    traj = self.get_traj([0,t], copy_net=True)
+    #    return traj.loc[t, self.dynvarids]
     
     
-    def get_dxdt(self, t=None, x=None):
+    def get_dxdt(self, t=None, x=None, to_ser=False):
         """
         Velocities: velocities of species dynamics, dx/dt. 
+        (Another way of getting it is N*v.)  
         
         Input:
-            t: time, for non-autonomous dynamics
+            t: time
         """
-        self.compile()
-        
         if t is None:
             t = self.t
             
         if x is None:
             x = self.get_x(t=t)
-
+        
+        if not hasattr(self, 'res_function'):
+            self.compile()
+        
         # SloppyCell Network doesn't seem to update self.constantVarValues
         # >>> net.set_var_val('p1', 1)
         # >>> print net.constantVarValues
         # >>> net.set_var_val('p1', 100)
         # >>> print net.constantVarValues
-        dxdt = self.res_function(t, x, np.zeros(len(x)), self.constvarvals)
-        dxdt = Series(dxdt, index=self.dynvarids)
+        dxdt = self.res_function(t, x, np.zeros(len(x)), self.convarvals)
+        if to_ser:
+            dxdt = Series(dxdt, index=self.xids)
         return dxdt
     
     
@@ -1498,22 +1853,36 @@ class Network(Network0):
     get_s.__doc__ += mca.get_s.__doc__
     
     
+    def get_s_integration(self, *args, **kwargs):
+        """Provide mca.get_s_integration below for convenience. 
+        """
+        return mca.get_s_integration(self, *args, **kwargs)
+    get_s_integration.__doc__ += mca.get_s_integration.__doc__
+    
+    
+    def get_s_rootfinding(self, *args, **kwargs):
+        """Provide mca.get_s_rootfinding below for convenience. 
+        """
+        return mca.get_s_rootfinding(self, *args, **kwargs)
+    get_s_rootfinding.__doc__ += mca.get_s_rootfinding.__doc__
+     
+    
     def get_J(self, *args, **kwargs):
         """Signature the same as mca.get_s, provided below for convenience.
         """
-        self.set_ss(*args, **kwargs)
-        return self.v.rename(OD(zip(self.rateids, self.fluxids)))
+        mca.set_ss(self, *args, **kwargs)
+        return self.v.rename(OD(zip(self.vids, self.Jids)))
     get_J.__doc__ += mca.get_s.__doc__
     
     
     @property
     def s(self):
-        return self.get_s()
+        return self.get_s(to_ser=True)
     
     
     @property
     def J(self):
-        return self.get_J()
+        return self.get_J(to_ser=True)
     
     
     # steady-state
@@ -1524,15 +1893,15 @@ class Network(Network0):
             varids = self.ncvarids
         self.set_ss(**kwargs_ss)
         
-        varid2val = self.varvals.append(self.J).to_dict()
-        vartypes = []
-        
         def _calc_n_update(vartype, vartypes, varid2val):
             if vartype in vartypes:
                 pass
             else:
                 varid2val.update(getattr(self, vartype).to_series().to_dict())
                 vartypes.append(vartype)
+        
+        varid2val = self.varvals.append(self.J).to_dict()
+        vartypes = []
                 
         for varid in varids:
             if isinstance(varid, tuple):
@@ -1571,8 +1940,13 @@ class Network(Network0):
         return ssvals
     
     
-    def get_E_strs(self):
-        return mca.get_E_strs(self)
+    def get_Ep_str(self):
+        return mca.get_Ep_str(self)
+    
+    
+    def get_Ex_str(self):
+        return mca.get_Ex_str(self)
+    
     
     def get_concn_elas_mat(self, **kwargs):
         """
@@ -1660,8 +2034,38 @@ class Network(Network0):
     def nRJ(self):
         return self.get_flux_resp_mat(normed=True)
     
-###############################################################################
+    @property
+    def Exids(self):
+        return list(itertools.product(self.vids, self.xids))
     
+    @property
+    def Epids(self):
+        return list(itertools.product(self.vids, self.pids))
+    
+    @property
+    def Csids(self):
+        return list(itertools.product(self.xids, self.vids))
+    
+    @property
+    def CJids(self):
+        return list(itertools.product(self.Jids, self.vids))
+    
+    @property
+    def Rsids(self):
+        return list(itertools.product(self.xids, self.pids))
+    
+    @property
+    def RJids(self):
+        return list(itertools.product(self.Jids, self.pids))
+    
+    @property
+    def nCsids(self):
+        return list(itertools.product(self.logxids, self.logvids))
+    
+    @property
+    def nCJids(self):
+        return list(itertools.product(self.logJids, self.logvids))
+###############################################################################
     
     @staticmethod
     def from_sbml(filepath, **kwargs):
@@ -1690,26 +2094,36 @@ class Network(Network0):
                              landscape=landscape)
     
     
-    def update(self, p=None, t=None, **thetas):
+    def update(self, p=None, t=None, x=None, t_x=None, **varmap):
         """
         Update the state of network. 
         
         Input:
             p: parameter
             t: time 
-            thetas: kwargs for individual parameter values, eg, Vf_R1=2  (FIXME *: bad design?)
+            x: 
+            t_x: 
+            varmap: kwargs for individual variable values, eg, Vf_R1=2  (FIXME *: bad design?)
         """
         if p is not None:
-            self.update_optimizable_vars(p)
-        if thetas:
-            self.update_optimizable_vars(thetas)
+            self.p = p
+        if varmap:
+            for varid, varval in varmap.items():
+                self.set_var_ic(varid, varval)  # FIXME **: this suffices?
+                
         if t is not None:
-            #traj = self.get_traj(times=[0,t])
-            #dynvarvals = traj.get_var_vals(varids=self.dynvarids, times=[t])
-            #self.updateVariablesFromDynamicVars(self, dynvarvals, t)
+            if np.isclose(t, 0):
+                self.t = 0
+                for idx, dynvar in enumerate(self.dynvars):
+                    dynvar.value = self.x0[idx]  ## FIXME **
             if not np.isclose(self.t, t):
-                _ = self.get_traj(times=[0, t])  # FIXME **: this suffices? 
-    
+                self.get_traj(times=[t])  # FIXME **: this suffices?
+         
+        if x is not None:
+            assert t_x is not None, "t_x has to be provided."
+            self.t = t_x
+            self.updateVariablesFromDynamicVars(x, t_x)
+        
     
     def reorder_species(self, spids2):
         """
@@ -1739,7 +2153,62 @@ class Network(Network0):
                 net2.reactions.insert_item(0, rxnid, rxn)
         net2._makeCrossReferences()
         return net2
-
+    
+    
+    def reorder_parameters(self, pids2):
+        """
+        """
+        net2 = self.copy()
+        for pid in reversed(pids2):
+            if pid in net2.varids:
+                param = net2.vars[pid]
+                net2.variables.del_by_key(pid)
+                net2.variables.insert_item(0, pid, param)
+        net2._makeCrossReferences()
+        # needed to recompile 
+        # because SloppyCell's 'structure' does not concern the order, but it
+        # matters (took me an hour to find this bug...)
+        net2._last_structure = None  
+        net2.compile()
+        return net2
+    
+    
+    def remove_unused_vars(self):
+        """
+        """
+        for varid in self.varids:
+            if varid not in self.xids and varid not in self.asgvarids: 
+                uses_varid = self.get_uses(varid)
+                if uses_varid['rxn'] == OD() and uses_varid['asgrule'] == OD()\
+                    and varid not in self.compartments.keys():
+                    self.del_varid(varid)
+    
+    
+    def reduce(self, id=None, **limits):
+        """
+        Input:
+            limits: in the form of pid=limiting_value; 
+                eg, k1=np.inf, k2=0
+            
+        """
+        def take_limit(expr, limits):
+            for pid, pval_limit in limits.items():
+                expr = str(sympy.limit(expr, pid, pval_limit))
+            return expr
+            
+        net = self.copy()
+        if id is None:
+            net.id = self.id + '_reduced'
+        
+        for rxn in net.rxns:
+            rxn.kineticLaw = take_limit(rxn.kineticLaw, limits)
+        for asgvarid, asgrule in net.asgrules.items():
+            net.assignmentRules.set(asgvarid, take_limit(asgrule, limits))
+        
+        net.remove_unused_vars()
+        net.compile()
+        return net
+        
 
     def draw_nx(self, pos=None, jsonpath=None, figsize=None, arrows=True, show=True, filepath=''):
         """
@@ -1777,28 +2246,50 @@ class Network(Network0):
         plt.close() 
     
 
-    def draw_pgv(self, pos=None, jsonpath=None,
+    def draw_pgv(self, jsonpath=None, pos=None, rxnlabels=None,
                  arrowsize=0.5,
                  shape_sp='ellipse', shape_rxn='box',
                  spid2rgba=(0,255,0,100), rxnid2rgba=(255,0,0,100),
                  labelfontsize_sp=8, labelfontsize_rxn=8,
                  spid2shapescale=0.2, rxnid2shapescale=0.2,
-                 insert_images=True, imagepath='', filepath=''):
+                 insert_images=False, imagepath='', filepath=''):
         """
+        Doc of node and edges attributes in graphviz:
+            http://www.graphviz.org/content/attrs
+            
+        Input:
+            rxnlabels: if given, a mapping from rxnid to a str (to be appended
+                after rxnid in the plot)
         """
         import pygraphviz as pgv
+        
+        if jsonpath is not None:
+            pos = _json2pos(jsonpath)
+        else:
+            assert pos is not None, "either jsonpath or pos has to be provided" 
+            
+        nodeids = pos.keys()
+        
+        edges_rxn = []
+        for rxnid, rxn in self.rxns.items():
+            for spid, stoichcoef in rxn.stoichiometry.items():
+                nodeids_sp = [nodeid for nodeid in nodeids if 
+                              spid == nodeid.split('_')[0] and
+                              rxnid in nodeid.split('_')[1:]]
+                if len(nodeids_sp) == 1:
+                    nodeid = nodeids_sp[0]
+                elif len(nodeids_sp) > 1:
+                    raise ValueError('more than one nodeid matches spid: %s'%\
+                                     str(nodeids_sp))
+                else:
+                    nodeid = spid 
+                if stoichcoef < 0:  # substrate
+                    edges_rxn.append((nodeid, rxnid))
+                if stoichcoef > 0:  # product
+                    edges_rxn.append((rxnid, nodeid))
                 
         ## some preprossessing...
-        
         spids, rxnids = self.spids, self.rxnids
-        figids = map(lambda rxnid:'fig'+rxnid, rxnids)
-        edges_rxn = butil.flatten([[(spid, rxn.id) for spid, stoichcoef
-                                    in rxn.stoichiometry.items() if stoichcoef<0]+\
-                                   [(rxn.id, spid) for spid, stoichcoef
-                                    in rxn.stoichiometry.items() if stoichcoef>0] 
-                                   for rxn in self.rxns], D=1)
-        edges_fig = zip(rxnids, figids)
-        
         if not isinstance(spid2rgba, Mapping):
             spid2rgba = OD.fromkeys(spids, spid2rgba)
         if not isinstance(rxnid2rgba, Mapping):
@@ -1807,73 +2298,316 @@ class Network(Network0):
             spid2shapescale = OD.fromkeys(spids, spid2shapescale)
         if not isinstance(rxnid2shapescale, Mapping):
             rxnid2shapescale = OD.fromkeys(rxnids, rxnid2shapescale)
-                  
-        pos = _json2pos(jsonpath)
         
         G = pgv.AGraph(strict=False, directed=True)
         
-        G.add_nodes_from(spids+rxnids+figids)
-        G.add_edges_from(edges_rxn, arrowsize=arrowsize)
-        G.add_edges_from(edges_fig, arrowsize=0, style='dotted')
+        if insert_images:
+            figids = map(lambda rxnid:'fig'+rxnid, rxnids)
+            edges_fig = zip(rxnids, figids)
         
+            G.add_nodes_from(nodeids+figids)
+            G.add_edges_from(edges_rxn, arrowsize=arrowsize)
+            G.add_edges_from(edges_fig, arrowsize=0, style='dotted')
+        else:
+            G.add_nodes_from(nodeids+rxnids)
+            G.add_edges_from(edges_rxn, arrowsize=arrowsize)
         #G.graph_attr = {'label':figtitle, 'labelfontsize':figtitlefontsize}
         
-        for spid in spids:
-            node_spid = G.get_node(spid)
-            node_spid.attr['pos'] = '%f, %f'%tuple(pos[spid])
-            node_spid.attr['shape'] = shape_sp
-            #node_spid.attr['fillcolor'] = 'green'
-            node_spid.attr['fillcolor'] = '#%02x%02x%02x%02x' % spid2rgba[spid]
-            node_spid.attr['style'] = 'filled'
-            #node_spid.attr['size'] = 2.
-            node_spid.attr['fontsize'] = labelfontsize_sp
-            node_spid.attr['width'] = spid2shapescale[spid]
-            node_spid.attr['height'] = spid2shapescale[spid]
-            
-        for rxnid in rxnids:
-            node_rxnid = G.get_node(rxnid)
-            node_rxnid.attr['pos'] = '%f, %f'%tuple(pos[rxnid])
-            node_rxnid.attr['shape'] = shape_rxn
-            node_rxnid.attr['fillcolor'] = '#%02x%02x%02x%02x' % rxnid2rgba[rxnid]
-            node_rxnid.attr['style'] = 'filled'
-            node_rxnid.attr['label'] = rxnid
-            node_rxnid.attr['fontsize'] = labelfontsize_rxn
-            node_rxnid.attr['width'] = rxnid2shapescale[rxnid]
-            node_rxnid.attr['height'] = rxnid2shapescale[rxnid]
+        for nodeid, nodepos in pos.items():
+            if nodeid.split('_')[0] in spids:
+                spnode = G.get_node(nodeid)
+                spnode.attr['pos'] = '%f, %f'%tuple(nodepos)
+                spnode.attr['label'] = nodeid.split('_')[0]
+                spnode.attr['shape'] = shape_sp
+                #node_spid.attr['fillcolor'] = 'green'
+                spnode.attr['fillcolor'] = '#%02x%02x%02x%02x' % spid2rgba[spid]
+                spnode.attr['style'] = 'filled'
+                #node_spid.attr['size'] = 2.
+                spnode.attr['fontsize'] = labelfontsize_sp
+                spnode.attr['width'] = spid2shapescale[spid]
+                spnode.attr['height'] = spid2shapescale[spid]
+            else:
+                rxnnode = G.get_node(nodeid)
+                rxnnode.attr['pos'] = '%f, %f'%tuple(nodepos)
+                if rxnlabels is not None:
+                    label = '%s (%s)' % (nodeid, rxnlabels[nodeid])
+                else:
+                    label = nodeid
+                rxnnode.attr['label'] = label
+                rxnnode.attr['shape'] = shape_rxn
+                rxnnode.attr['fillcolor'] = '#%02x%02x%02x%02x' % rxnid2rgba[rxnid]
+                rxnnode.attr['style'] = 'filled'
+                rxnnode.attr['fontsize'] = labelfontsize_rxn
+                rxnnode.attr['width'] = rxnid2shapescale[rxnid]
+                rxnnode.attr['height'] = rxnid2shapescale[rxnid]
         
-        for rxnid in rxnids:
-            figid = 'fig' + rxnid
-            node_fig = G.get_node(figid)
-            node_fig.attr['pos'] = '%f, %f'%tuple(pos[figid])
-            node_fig.attr['shape'] = 'box'
-            node_fig.attr['label'] = ''
-            node_fig.attr['fillcolor'] = ''
-            node_fig.attr['style'] = 'filled'
-            if insert_images:
-                #node_rxnid.attr['image'] = 'hist_%s.png'%rxnid
+        if insert_images:
+            for rxnid in rxnids:
+                figid = 'fig' + rxnid
+                node_fig = G.get_node(figid)
+                node_fig.attr['pos'] = '%f, %f'%tuple(pos[figid])
+                node_fig.attr['shape'] = 'box'
+                node_fig.attr['label'] = ''
+                node_fig.attr['fillcolor'] = ''
+                node_fig.attr['style'] = 'filled'
                 node_fig.attr['imagepath'] = imagepath
                 node_fig.attr['image'] = 'hist.pdf'  
-        
+            
         G.draw(filepath, prog='neato', args='-n2')
         
+        
+    def to_tex_polynomials(self, varids_r, d_tex=None, filepath='', landscape=True, margin=2):
+        """
+        Input:
+            d_latex:
+        """
+        #def _replace(expr, d):
+        #    for s, s2 in d.items():
+        #        expr = expr.replace(s, s2)
+        #    return expr
+        
+        
+        _repl = exprmanip.sub_for_vars
+        _raisepower = lambda tu: tu[0] ** tu[1]
+        
+        def _2tex_pid(pid):
+            if pid.startswith('Vf_') or pid.startswith('Vb_'):
+                pid = '%s^{%s}' % tuple(pid.split('_'))
+            if pid.count('_') == 2:
+                pid = '%s^{%s}_{%s}' % tuple(pid.split('_'))
+            return pid
+        d_tex = dict(zip(self.pids, [_2tex_pid(pid) for pid in self.pids]) +\
+                     d_tex.items())
+        
+        _2tex = lambda sympyexpr:\
+            sympy.latex(sympyexpr, mode='plain', long_frac_ratio=10, mul_symbol='dot',
+                        symbol_names=butil.chkeys(d_tex, lambda k: sympy.symbols(k))) 
+        _rm1pt0 = lambda expr: re.sub('(?<![0-9])1.0\s*\\\cdot', '', expr)
+
+        if len(varids_r) > 1:
+            rids = ['r%d'%i for i in range(1, len(varids_r)+1)]
+        else:
+            rids = ['r']
+        varids_r2 = ['*'.join(tu) for tu in zip(varids_r, rids)]
+        d = OD(zip(varids_r, varids_r2))
+        ratelaws = np.array([str(sympy.simplify(_repl(ratelaw, d))) for ratelaw in self.ratelaws])
+        denoms = np.array([str(sympy.fraction(rl)[1]) for rl in ratelaws])
+        
+        X = sympy.symbols(self.xids)
+        r = sympy.symbols(rids)
+        
+        polys = []
+        for ixid, stoichcoefs in zip(self.ixids, self.Nr.values):
+            idxs_nonzero = [idx for idx, stoichcoef in enumerate(stoichcoefs) 
+                            if not np.isclose(stoichcoef, 0)]
+            stoichcoefstrs_nonzero = [str(coef).rstrip('.0') for coef in stoichcoefs[idxs_nonzero]]
+            str_ratelawsum = _rm1pt0('+'.join(['%s*%s'%tu for tu in zip(stoichcoefstrs_nonzero, ratelaws[idxs_nonzero])]))
+            str_denomprod = '*'.join(['(%s)'%denom for denom in denoms[idxs_nonzero]])
+            poly = sympy.Poly(sympy.simplify('(%s)*%s'%(str_ratelawsum, str_denomprod)), X)
+            polys.append(poly)
+            
+        lines = []
+        lines.append(r'\documentclass{article}') 
+        lines.append(r'\usepackage{amsmath,fullpage,longtable,array,calc,mathastext,breqn,xcolor}') 
+        if landscape == True:
+            lines.append(r'\usepackage[a4paper,landscape,margin=1in]{geometry}')
+        else:
+            lines.append(r'\usepackage[a4paper,margin=%fin]{geometry}'%margin)
+        lines.append(r'\begin{document}') 
+       
+        coefs_r = []
+        yids = []
+        for poly in polys:
+            termstrs = []
+            
+            leadingcoef_r = sympy.Poly(poly.coeffs()[0], r).coeffs()[0]
+            
+            for monom_X, coef_X in poly.terms():
+                coef_X = sympy.simplify(coef_X, ratio=1)
+                poly_r = sympy.Poly(coef_X, r)
+                
+                coefs_r.extend([coef_r/leadingcoef_r for coef_r in poly_r.coeffs()])
+                
+                monom_X = sympy.prod(map(_raisepower, zip(X, monom_X)))
+                monomstr_X = _2tex(monom_X)
+                if monomstr_X == '1':
+                    monomstr_X = ''
+                monomstr_X = '\\textcolor{red}{%s}' % monomstr_X
+                
+                termstrs_r = []
+                for monom_r, coef_r in poly_r.terms():
+                    
+                    coefstr_r = _rm1pt0(_2tex(coef_r))
+                    if coef_r.is_Add:
+                        coefstr_r = '\left('+ coefstr_r +'\\right)'
+                    
+                    monom_r = sympy.prod(map(_raisepower, zip(r, monom_r)))
+                    monomstr_r = _2tex(monom_r)
+                    if monomstr_r == '1':
+                        monomstr_r = ''
+                    monomstr_r = '\\textcolor{blue}{%s}' % monomstr_r
+                        
+                    termstrs_r.append(coefstr_r + '\t' + monomstr_r)
+                    coefstr_X = '\\left(' + '+'.join(termstrs_r) + '\\right)'
+                    
+                    yids.append((ixid, str(monom_X), str(monom_r)))
+                
+                termstrs.append(coefstr_X + '\t' + monomstr_X)
+        
+            linestr = '\\begin{dmath} \n' + '+'.join(termstrs) + '=0\n\end{dmath} \n\n'
+            lines.append(linestr.replace('+-', '-'))
+        
+        lines.append('\\end{document}') 
+        
+        if filepath:
+            fh = file(filepath, 'w') 
+            fh.write(os.linesep.join(lines)) 
+            fh.close()
+        
+        coefs_r = [_rm1pt0(str(coef)) for coef in coefs_r]
+        
+        str_h = str(coefs_r).replace("'", "")
+        str_Dh = str([[exprmanip.diff_expr(coef, pid) for pid in self.pids] 
+                      for coef in coefs_r]).replace("'", "")
+        
+        def h(p):
+            self.update(p=p)
+            return np.array(eval(str_h, self.varvals.to_dict()))
+        
+        def Dh(p):
+            self.update(p=p)
+            return np.array(eval(str_Dh, self.varvals.to_dict()))
+        
+        coefs = predict.Predict(f=h, Df=Dh, pids=self.pids, p0=self.p0, 
+                                yids=yids, funcform=coefs_r) 
+        
+        return coefs
+
+        
+        
+    def get_polynomials(self, varid2rid=None, N=None):
+        """
+        FIXME ****: I don't need the r thing. Just use C...
+        Input:
+            varid2rid: optional; 
+            N: different arrangements of N yield equivalent polynomials
+                of different complexities;
+                eg, N=net.Nr[[0,1,3,2]].rref()[[0,1,3,2]]
+        """
+        
+        _repl = exprmanip.sub_for_vars
+        #_raisepower = lambda tu: tu[0] ** tu[1]
+        
+        if varid2rid is None:
+            ratelaws = self.ratelaws
+            rids = None
+        else:
+            varid2rid = OD(varid2rid)
+            varids_r, rids = varid2rid.keys(), varid2rid.values()
+            varids_r2 = ['*'.join(tu) for tu in zip(varids_r, rids)]
+            d = OD(zip(varids_r, varids_r2))
+            ratelaws = np.array([str(sympy.simplify(_repl(ratelaw, d))) 
+                                 for ratelaw in self.ratelaws])
+            
+        denoms = np.array([str(sympy.fraction(rl)[1]) for rl in ratelaws])
+        
+        polys = []
+        if N is None:
+            N = self.Nr.values
+        else:
+            N = np.array(N)
+        for ixid, scoefs in zip(self.ixids, N):
+            idxs_nonzero = [idx for idx, scoef in enumerate(scoefs) 
+                            if not np.isclose(scoef, 0)]
+            scoefstrs_nonzero = [str(scoef).rstrip('.0') for scoef in 
+                                 scoefs[idxs_nonzero]]
+            rlsumstr = '+'.join(['%s*%s'%tu for tu in 
+                                 zip(scoefstrs_nonzero, ratelaws[idxs_nonzero])])
+            denomprodstr = '*'.join(['(%s)'%denom for denom in denoms[idxs_nonzero]])
+            polystr = sympy.simplify('(%s)*%s'%(rlsumstr, denomprodstr))
+            poly = algebra.Polynomial.from_str(polystr, self.xids, 
+                                               pids=self.pids, p0=self.p0, polyid=ixid, 
+                                               subvarids=rids, convarvals=self.convarvals) 
+            polys.append(poly)
+        
+        for row in self.P:
+            pass
+        
+        polys = algebra.Polynomials(polys)
+        return polys
     
+    def get_polynomials2(self, varids=None, N=None):
+        """
+        FIXME ****: I don't need the r thing. Just use C...
+        Input:
+            varid2rid: optional; 
+            N: different arrangements of N yield equivalent polynomials
+                of different complexities;
+                eg, N=net.Nr[[0,1,3,2]].rref()[[0,1,3,2]]
+        """
+        ratelaws = self.ratelaws
+        denoms = np.array([str(sympy.fraction(rl)[1]) for rl in ratelaws])
+        
+        if hasattr(N, 'colvarids'):
+            N = N.loc[:, self.rxnids].values
+        elif N is None:
+            N = self.Nr.values
+        else:
+            N = np.array(N)
+            
+        polys = []    
+        for ixid, scoefs in zip(self.ixids, N):
+            idxs_nonzero = [idx for idx, scoef in enumerate(scoefs) 
+                            if not np.isclose(scoef, 0)]
+            scoefstrs_nonzero = [str(scoef).rstrip('.0') for scoef in 
+                                 scoefs[idxs_nonzero]]
+            rlsumstr = '+'.join(['%s*%s'%tu for tu in 
+                                 zip(scoefstrs_nonzero, ratelaws[idxs_nonzero])])
+            denomprodstr = '*'.join(['(%s)'%denom for denom in denoms[idxs_nonzero]])
+            polystr = sympy.simplify('(%s)*%s'%(rlsumstr, denomprodstr))
+            poly = algebra.Polynomial.from_str(polystr, self.xids, 
+                                               pids=self.pids, p0=self.p0, 
+                                               polyid=ixid, subvarids=varids, 
+                                               convarvals=self.convarvals) 
+            polys.append(poly)
+        
+        for row in self.P:
+            pass
+        
+        polys = algebra.Polynomials(polys)
+        return polys
+
+        
 def _json2pos(filepath):
     """
+    
+    To make json file:
+        1) Open Cytoscape, import sbml file
+        2) Visualize the network, arrange the nodes
+        3) One can color them according to "sbml type" (say, species red and
+            reactions blue)
+        4) Create new (species) nodes to declutter if needed; in this case, 
+            all nodes corresponding to the same species have to be named in
+            the spid_rxnid(1_rxnid2...) convention (eg, ATP_PGAK)
+        5) Export it through "Export -> Network and View"
+    
+    pos: a mapping from nodeid to pos, where nodeid has a particular naming 
+        scheme: if it is duplicated for visualization purpose, then it is 
+        spid_rxnid (duplicate spid for the particular rxnid to avoid cluttering)
     """
     import json
     fh = open(filepath)
     out = json.load(fh)
     fh.close()
-    pos = OD()
+    pos = Series([])
     for node in out['elements']['nodes']:
+        nodeid = node['data']['sbml_id']        
         pos_node = butil.get_values(node['position'], ['x','y'])
         pos_node[1] *= -1
-        pos[node['data']['sbml_id']] = pos_node
-    
+        pos[nodeid] = pos_node
     return pos
     
-
-
+    
 def from_smod(filepath):
     """
     """
@@ -1952,18 +2686,23 @@ def from_smod(filepath):
     
     return net 
 
-
-def _get_substrates(stoich, multi=False):
+# move to ratelaw?  FIXME ***
+def _get_substrates(stoich_or_eqn, multi=False):
     """
     Input: 
-        stoich: a mapping, from species ids to stoich coefs which can be
-                an int, a float, or a string.
+        stoich_or_eqn: a mapping, from species ids to stoich coefs which can be
+                an int, a float, or a string; or a str
         multi: a bool; if True, return a multiset by repeating
             for stoichcoef times
     
     Output:
         a list of substrate ids
     """
+    if isinstance(stoich_or_eqn, str):
+        eqn = stoich_or_eqn
+        stoich = _eqn2stoich(eqn)
+    else:
+        stoich = stoich_or_eqn
     subids = []
     for spid, stoichcoef in stoich.items():
         try:
@@ -1976,39 +2715,53 @@ def _get_substrates(stoich, multi=False):
             else:
                 subids.append(spid)
     return subids
+get_substrates = _get_substrates
 
 
-def _get_products(stoich, multi=False):
+# move to ratelaw?  FIXME ***
+def _get_products(stoich_or_eqn, multi=False):
     """
     Input: 
-        stoich: a mapping, from species ids to stoich coefs which can be
-                an int, a float, or a string.
+        stoich_or_eqn: a mapping, from species ids to stoich coefs which can be
+                an int, a float, or a string; or a str
         multi: a bool; if True, return a multiset by repeating
             for stoichcoef times
     
     Output:
         a list of product ids
     """
+    if isinstance(stoich_or_eqn, str):
+        eqn = stoich_or_eqn
+        stoich = _eqn2stoich(eqn)
+    else:
+        stoich = stoich_or_eqn
     proids = []
     for spid, stoichcoef in stoich.items():
         try:
-            stoichcoef = int(float(stoichcoef))
+            #stoichcoef = int(float(stoichcoef))
+            stoichcoef = float(stoichcoef)
         except ValueError:
             stoichcoef = 1
         if stoichcoef > 0:
+            if not np.isclose(stoichcoef, int(stoichcoef)):
+                multi = False
             if multi:
                 proids.extend([spid]*stoichcoef)
             else:
                 proids.append(spid)
     return proids
+get_products = _get_products
 
 
+# move to ratelaw?  FIXME ***
 def _get_reactants(stoich, multi=False):
     """
     """
     return _get_substrates(stoich, multi=multi) + _get_products(stoich, multi=multi)
+get_reactants = _get_reactants
 
 
+# move to ratelaw?  FIXME ***
 def _eqn2stoich(eqn):
     """
     Convert reaction equation (a string) to stoichiometry (a dictionary).
@@ -2021,7 +2774,13 @@ def _eqn2stoich(eqn):
             sc_unsigned, spid = '1', l[0]
         if len(l) == 2:
             sc_unsigned, spid = l
-        sc_unsigned = int(sc_unsigned)
+        """
+        if np.isclose(sc_unsigned, int(sc_unsigned)):
+            sc_unsigned = int(sc_unsigned)
+        else:
+            pass
+        """
+        sc_unsigned = eval(sc_unsigned)
         return spid, sc_unsigned
     
     # remove annotating species
@@ -2094,14 +2853,14 @@ def cmp_ratelaw(nets, only_common=False, filepath='', landscape=True,
     Output:
         
     """
-    rateids_common = [rateid for rateid in nets[0].rateids 
-                      if all([rateid in net.rateids for net in nets])]
+    rateids_common = [vid for vid in nets[0].vids 
+                      if all([vid in net.vids for net in nets])]
     ratelaws = DF([net.asgrules[rateids_common] for net in nets],
                         index=[net.id for net in nets], 
                         columns=rateids_common).T
     if not only_common:
         for net in nets:
-            rateids_net = [_ for _ in net.rateids if _ not in rateids_common]
+            rateids_net = [_ for _ in net.vids if _ not in rateids_common]
             ratelaws_net = DF({net.id: net.asgrules[rateids_net]})
             ratelaws = pd.concat((ratelaws, ratelaws_net))
     # tex things up    
@@ -2150,3 +2909,184 @@ def cmp_ratelaw(nets, only_common=False, filepath='', landscape=True,
         fh.close()        
     
     return ratelaws
+
+
+def extract_varids(expr):
+    """
+    """
+    return set(exprmanip.extract_vars(expr))
+    
+    
+def make_net(eqns, ratelaws, 
+             facelift=False, scheme='num', parametrization='VK',
+             rxnids=None, cids=None, r=False, add_ratevars=True, 
+             netid='', **kwargs):
+    """
+    FIXME **: need to be able to add inhibitors and activators...
+    
+    Input:
+        eqns: a list of equation strings
+        ratelaws: 
+            - a list, of:
+                * ratelaw.RateLaw instances, #(or ratelaws strings,) 
+                * ratelaw string short codes ('ma'/'mm' + 'ke'/'');
+            when it is standard ratelaw.RateLaw instances to be 
+            facelifted, which comes in two schemes ('num' and 'rxnid')
+            - a str: 'mm', 'ma', 'mmke', 'make'
+        facelift:
+        scheme: 'num' or 'rxnid'               
+        rxnids:
+        cids:
+        r: 
+        add_ratevars:
+        netid:
+        
+        kwargs: varid, varval to set in net
+    """
+    
+    ## get all the information ready
+    
+    # get rxnids
+    if rxnids is None:
+        rxnids = ['R%d'%i for i in range(1, len(eqns)+1)]
+    
+    # get ratelaws
+    if isinstance(ratelaws, str):
+        rltype = ratelaws
+        ratelaws = []
+        for eqn in eqns:
+            rlid = '%s%d%d' % (rltype, 
+                               len(get_substrates(eqn)),
+                               len(get_products(eqn)))
+            ratelaws.append(ratelaw.get_ratelaw(rlid, parametrization))
+    else: # a list
+        pass
+        
+    """
+    if ratelaws in ['ma', 'mm', 'make', 'mmke', 'mai', 'mmi', 'qe']:
+        rltype = ratelaws
+        subs = _get_substrates(eqn, multi=True)
+        pros = _get_products(eqn, multi=True)
+        
+        
+        ratelaws = [_get_ratelaw(eqn, rltype) for eqn in eqns]
+    
+    def _eqn2rlstr(eqn, rltype):  
+        subs = _get_substrates(eqn, multi=True)
+        pros = _get_products(eqn, multi=True)
+        if len(set(subs)) < len(subs) or len(set(pros)) < len(pros):
+            # a makeshift solution below  FIXME **
+            s = ''
+            if len(subs) == 2:
+                if len(set(subs)) == 1:
+                    s += 'AA'
+                else:
+                    s += 'AB'
+            if len(pros) == 2:
+                if len(set(pros)) == 1:
+                    s += 'PP'
+                else:
+                    s += 'PQ'
+            return 'rl_%s%d%d_%s' % (rltype, len(subs), len(pros), s)
+        else:
+            return 'rl_%s%d%d' % (rltype, len(subs), len(pros))
+    
+    
+        else:
+            return ratelaw.RateLaw(s, xids=xids)
+    """        
+    
+    net = Network(id=netid)
+    
+    # add species
+    for eqn in eqns:
+        spids = get_reactants(eqn)
+        for spid in spids:
+            if spid not in net.spids:
+                net.add_species(spid, 1.)
+    
+    # add reactions and parameters
+    for idx, (rxnid, eqn, rl) in enumerate(zip(rxnids, eqns, ratelaws)):
+        if scheme == 'num':
+            rxnidx = idx + 1
+        if scheme == 'rxnid':
+            rxnidx = rxnid
+        
+        if facelift:
+            # slicing because of irreversible reactions 
+            rl = rl.facelift(xids_new=get_reactants(eqn)[:len(rl.xids)],  
+                             pcmap=scheme, rxnidx=rxnidx)
+            
+        if r:
+            rid = 'r%d' % (idx+1)
+            s = '%s*(%s)' % (rid, rl.s)
+            net.add_parameter(rid, is_optimizable=False)
+        else:
+            s = rl.s
+
+        if 'inf' not in s:
+            net.add_reaction(rxnid, stoich_or_eqn=eqn, ratelaw=s, 
+                             p=OD.fromkeys(rl.pids, 1))
+        else:
+            net.add_algebraic_rule(rl.s.replace('inf','1'))
+            for xid in rl.xids:
+                net.variables.get(xid).is_boundary_condition = True  
+        
+    
+    if cids is not None:    
+        for cid in cids:
+            if cid not in net.varids:
+                net.add_parameter(cid)
+            net.set_var_constant(cid, True)
+            net.set_var_optimizable(cid, False)
+            
+    net.update(**kwargs)
+    
+    if add_ratevars:
+        net.add_ratevars()
+    
+    net.compile()
+    
+    return net
+
+
+def make_path(ratelaws, **kwargs):
+    """Make a linear pathway: C1 <-> X1 <-> ... <-> C2. 
+    
+    Docstring of make_net is attached for convenience. 
+    """
+    m = len(ratelaws)  # number of reactions
+    if 'eqns' not in kwargs:
+        if m == 2:
+            xids = ['X']
+        else:
+            xids = ['X%d'%i for i in range(1, m)]
+        xids = ['C1'] + xids + ['C2']
+        tus = zip(xids[:-1], xids[1:])
+        eqns = ['<->'.join(tu) for tu in tus]
+        #print eqns
+        #eqns = ['C1<->X', 'X<->C2']
+    #if 'netid' not in kwargs:
+    #    kwargs['netid'] = 'path%d'%len(ratelaws)
+    return make_net(eqns, ratelaws, **kwargs)
+make_path.__doc__ += make_net.__doc__
+
+#from ratelaw import v_mmke11, v_mmke22, v_mmke21
+
+
+"""
+net = make_net(eqns=['X1+C1<->2 X2', 'X2+X3<->X1+X4', 'X2<->C3', 'X4+C2<->X3'],
+               #ratelaws=[v_mmke22, v_mmke22, v_mmke11, v_mmke21],
+               ratelaws=['mmke']*4,
+               cids=['KE1','KE2','KE3','KE4','C3'], scheme_pid='num',
+               )
+
+net2 = make_net(eqns=['RuBP+CO2<->2 PGA', 'PGA+ATP<->BPGA+ADP', 'BPGA<->GAP',
+                      '5 GAP<->3 Ru5P', 'Ru5P+ATP<->RuBP+ADP', 'PGA<->PGAc'], 
+                rxnids=['RBCO', 'PGAK', 'GAPDH', 'REGN', 'RK', 'PGAT'],
+                #ratelaws=[v_mmke22, v_mmke22, v_mmke11, v_mmke11, v_mmke22, v_mmke11],
+                ratelaws=['mmke']*6,
+                cids=['CO2', 'PGAc'], scheme_pid='rxnid')
+
+net3 = make_path(ratelaws=['ma','mm'])
+"""
