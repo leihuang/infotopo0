@@ -123,8 +123,6 @@ class HasseDiagram(nx.DiGraph):
             
     def add_node(self, nodeid, corank=None, rank=None, style='filled', **kwargs):
         """
-        
-        
         Essential attributes of a node:
             nodeid: a str, preferably short, for internal manipulation
             corank: an int, more convenient than providing rank
@@ -437,6 +435,8 @@ class HasseDiagram(nx.DiGraph):
         # get edgeid2color
         if not isinstance(edgeid2color, Mapping):
             edgeid2color = dict.fromkeys(self.edgeids, edgeid2color)
+        if rank2size is None:
+            rank2size = dict.fromkeys(self.order.keys(), (1,1))
 
         
         ## Create a pygraphviz.AGraph instance
@@ -460,7 +460,7 @@ class HasseDiagram(nx.DiGraph):
                 # http://www.graphviz.org/content/attrs
                 node.attr['pos'] = '%f,%f' % nodeid2pos[nodeid]
                 node.attr['label'] = nodeid2label[nodeid]
-                node.attr['fillcolor'] = _colormap(nodeid2color[nodeid])
+                node.attr['fillcolor'] = _colormap(nodeid2color.get(nodeid, 'white'))
                 node.attr['shape'] = nodeshape
                 node.attr['style'] = nodeid2style[nodeid]
                 node.attr['fontsize'] = 50
@@ -1018,23 +1018,25 @@ class HasseDiagram(nx.DiGraph):
         """
         pass 
     
-"""
-hd_mm11 = HasseDiagram(rank=4)
-hd = hd_mm11
-hd.add_node(nodeid='', corank=0, )
-
-hd2 = hd.get_product(hd)
-"""
 
 
 def get_product(hds, f_nodeattr=None):
-    """Rewrite the whole function of compose... It ought to be simple. 
-    But HasseDiagram has changed a bit.  
+    """Get the product of a list of Hasse diagrams.
     
     Input:
         hds:
         f_nodeattr: a function that takes in a list of nodeattr (dict) from
-            the component models and outputs a new dict
+            the component models and outputs a new dict to be taken as the 
+            attributes of the node
+            
+                
+    n=3                                   (a,A)
+                            
+    n=2                    A              (1,A)  (2,A)  (a,b)  (a,c)
+                          / \         
+    n=1          a   X   b   c      =     (a,3)  (a,4)  (1,b)  (2,b)  (1,c)  (2,c)
+                / \     /     \
+    n=0        1   2   3       4          (1,3)  (1,4)  (2,3)  (2,4)
     """
     hd = HasseDiagram(rank=sum([hd_.rank for hd_ in hds]))
     
@@ -1050,16 +1052,7 @@ def get_product(hds, f_nodeattr=None):
             nodeattr = {}
         hd.add_node(nodeid, rank=rank, **nodeattr)
     
-    """
-    # deprecated: too slow
-    for nodeid in hd.nodes():
-        for idx, nodeid_ in enumerate(nodeid):
-            for succid_ in hds[idx].successors(nodeid_):
-                succid = nodeid[:idx] + (succid_,) + nodeid[idx+1:] 
-                hd.add_edge(nodeid, succid)
-    """
-    
-    def get_edgeids(nodeids, edgeid_, idx):
+    def _get_edgeids(nodeids, edgeid_, idx):
         if not isinstance(nodeids[0], tuple):
             nodeids = map(lambda nodeid: (nodeid,), nodeids)
         edgeids = [(nodeid[:idx] + (edgeid_[0],) + nodeid[idx:],
@@ -1071,161 +1064,42 @@ def get_product(hds, f_nodeattr=None):
     for idx, hd_ in enumerate(hds):
         nodeids_others = butil.get_product(*[h.nodes() for i, h in enumerate(hds) 
                                              if i!=idx])
-        edgeids.extend(butil.flatten([get_edgeids(nodeids_others, edgeid_, idx) 
+        edgeids.extend(butil.flatten([_get_edgeids(nodeids_others, edgeid_, idx) 
                                       for edgeid_ in hd_.edges()], depth=1))
     
-    # Note that a for-loop is unbearably slow for adding edges
+    # Note that for-loops are unbearably slow for adding edges
     hd.add_edges_from(edgeids, {'style':'filled'})
     
     return hd    
         
+
+def get_vertex_covers(edges):
     """
-    ranks = [hd_.rank for hd_ in hds]
-    
-    hd = HasseDiagram(rank=sum(ranks))
-    for rank in range(hd.rank+1):
-        parts = partition(rank, len(hds), ranks, perm=True)
-        
-        tus_rank = []
-        for part in parts:
-            # tuples of nodeids from hds (of a partition)
-            tus_part = butil.get_product(*[hd_.order[rank_] for hd_, rank_ in
-                                           zip(hds, part)])
-            tus_rank.extend(tus_part)
-        
-        # http://stackoverflow.com/questions/15352995/
-        # removing-permutations-from-a-list-of-tuples
-        # keep the order
-        if remove_permutation:
-            tus_rank_noperm = []
-            tus_sorted = set(tuple(sorted(tu)) for tu in tus_rank)
-            for tu in tus_rank:
-                tu_sorted = tuple(sorted(tu))
-                if tu_sorted in tus_sorted:
-                    tus_rank_noperm.append(tu)
-                    tus_sorted.remove(tu_sorted)
-            tus_rank = tus_rank_noperm
-
-        for tu in tus_rank:
-            if func_nodeattr:
-                nodeattr = func_nodeattr([hd_.get_nodeattr(nodeid) 
-                                          for hd_, nodeid in zip(hds, tu)])
-            else:
-                nodeattr = {}
-            hd.add_node(tu, rank=rank, **nodeattr)
-            
-    for tu in hd.nodeids:
-        successors = []
-        for idx, nodeid_ in enumerate(tu):
-            successors.extend([tu[:idx]+(succ_,)+tu[idx+1:] 
-                               for succ_ in hds[idx].successors(nodeid_)])
-        for succ in successors:
-            if succ in hd:
-                hd.add_edge(tu, succ)
-    
-    #if func_nodeid:
-    #    nodeidmap = dict(zip(hd.nodeids, 
-    #                         [func_nodeid(nodeid) for nodeid in hd.nodeids]))
-    #    hd = nx.relabel_nodes(hd, nodeidmap)  
-            
-    return hd
     """
+    nodeids = list(set(butil.flatten(edges, 1)))
+    
+    def _work(subset):
+        for edge in edges:
+            if all([nodeid not in edge for nodeid in subset]):
+                return False
+        return True
+
+    powerset = butil.powerset(nodeids)
+    covers = [subset for subset in powerset if _work(subset)]
+    return covers
 
 
-
-# Rename it to get_product? With signature simply hd = get_product(hds)?
-# It's really just Cartesian product... 
-# All right, see above... 
-def compose(hds, #func_nodeid=None, 
-            func_nodeattr=None, remove_permutation=False):
+def is_disjoint(cover, edges):
     """
-    FIXME ****: rewrite the codes here...
-    It was unbearably slow for compose([hd_mm11]*3)...
-    
-    Compose a few Hasse diagrams together to form a composite Hasse diagram.
-    
-    Input:
-        hds: a list of HasseDiagram instances
-        #func_nodeid: a function that takes in a tuple of nodeids from hds and
-        #    outputs a new nodeid for the composite hd; if None, nodes in the 
-        #    new diagram will have ids like (nodeid1, nodeid2, ...)
-        func_nodeattr: a function that takes in a tuple of nodeattrs from hds and
-            outputs a new nodeattr (a dict)
-        remove_permutation: 
-        
-    n=3                                   (a,A)
-                            
-    n=2                    A              (1,A)  (2,A)  (a,b)  (a,c)
-                          / \         
-    n=1          a   X   b   c      =     (a,3)  (a,4)  (1,b)  (2,b)  (1,c)  (2,c)
-                / \     /     \
-    n=0        1   2   3       4          (1,3)  (1,4)  (2,3)  (2,4)
-        
     """
-    ranks = [hd_.rank for hd_ in hds]
-    
-    hd = HasseDiagram(rank=sum(ranks))
-    for rank in range(hd.rank+1):
-        parts = partition(rank, len(hds), ranks, perm=True)
-        
-        tus_rank = []
-        for part in parts:
-            # tuples of nodeids from hds (of a partition)
-            tus_part = butil.get_product(*[hd_.order[rank_] for hd_, rank_ in
-                                           zip(hds, part)])
-            tus_rank.extend(tus_part)
-        
-        # http://stackoverflow.com/questions/15352995/
-        # removing-permutations-from-a-list-of-tuples
-        # keep the order
-        if remove_permutation:
-            tus_rank_noperm = []
-            tus_sorted = set(tuple(sorted(tu)) for tu in tus_rank)
-            for tu in tus_rank:
-                tu_sorted = tuple(sorted(tu))
-                if tu_sorted in tus_sorted:
-                    tus_rank_noperm.append(tu)
-                    tus_sorted.remove(tu_sorted)
-            tus_rank = tus_rank_noperm
+    for edge in edges:
+        if edge[0] in cover and edge[1] in cover:
+            return False
+    return True
 
-        for tu in tus_rank:
-            if func_nodeattr:
-                nodeattr = func_nodeattr([hd_.get_nodeattr(nodeid) 
-                                          for hd_, nodeid in zip(hds, tu)])
-            else:
-                nodeattr = {}
-            hd.add_node(tu, rank=rank, **nodeattr)
-            
-    for tu in hd.nodeids:
-        successors = []
-        for idx, nodeid_ in enumerate(tu):
-            successors.extend([tu[:idx]+(succ_,)+tu[idx+1:] 
-                               for succ_ in hds[idx].successors(nodeid_)])
-        for succ in successors:
-            if succ in hd:
-                hd.add_edge(tu, succ)
-    
-    #if func_nodeid:
-    #    nodeidmap = dict(zip(hd.nodeids, 
-    #                         [func_nodeid(nodeid) for nodeid in hd.nodeids]))
-    #    hd = nx.relabel_nodes(hd, nodeidmap)  
-            
-    return hd
 
 
 class HasseDiagram0(nx.DiGraph):
-    """
-    Adjacency graph...
-    """
-    
-    def __init__(self, *args, **kwargs):
-        super(HasseDiagram, self).__init__(*args, **kwargs)
-        self.order = OD()  # not sure if it is necessary
-    __init__.__doc__ = nx.DiGraph.__init__.__doc__
-        
-    def __repr__(self):
-        return str(self.nodeid2info.items()).replace('), (', ')\n(')[1:-1]
-        
     
     def add_node(self, nodeid, level, label='', info='', **kwargs):
         """
@@ -1445,51 +1319,6 @@ class HasseDiagram0(nx.DiGraph):
     
 
 
-def partition(n, k, m=None, perm=True):
-    """Given an integer n, return all the k-partitions (ie, partition of n 
-    into k parts) such that each part of a partition is no larger than
-    m (if given). Permutation flag enables returning, eg, both (2,3) and (3,2).
-    
-    Much of the code below is taken here:
-    # http://stackoverflow.com/questions/18503096/
-    # python-integer-partitioning-with-given-k-partitions
-    
-    Input:
-        m: an int or an iterable of length k
-    
-    Examples:
-    >>> partition(4, 2, 3, perm=True)
-    >>> [(1, 3), (3, 1), (2, 2)]
-    >>> partition(4, 3, 3, perm=False)
-    >>> [(3, 1, 0), (2, 2, 0), (2, 1, 1)]
-    """
-    def _partition(n, k, pre):
-        if n < 0:
-            return []
-        if k == 1:
-            if n <= pre:
-                return [[n]]
-            return []
-        ret = []
-        for i in range(min(pre, n), -1, -1):
-            ret += [[i] + sub for sub in _partition(n-i, k-1, i)]
-        return ret
-    parts = [tuple(part) for part in _partition(n, k, n)]
-    
-    # I added the permutation and filtering below
-    if perm: 
-        parts = butil.flatten([set(list(itertools.permutations(part))) 
-                              for part in parts], depth=1)
-    if m is not None:
-        def not_overflow(part):
-            if isinstance(m, int):
-                return all([num <= m for num in part])
-            else:
-                return all([num <= m_ for num, m_ in zip(part, m)])    
-        parts = filter(not_overflow, parts)
-    
-    return sorted(parts)
-
 
 def get_hasse_triangle():
     """A triangle
@@ -1592,7 +1421,7 @@ def get_hasse_tetrahedron():
     return hd
 
 
-def get_hasse_spyramid():
+def get_hasse_square_pyramid():
     """Square pyramid
     """
     hd = HasseDiagram(rank=3)
@@ -1662,6 +1491,7 @@ def get_hasse_spyramid():
     hd.add_edge('DE', 'E')
     
     return hd
+
 
 
 
@@ -1738,22 +1568,6 @@ def plot_isocurve_diagram(bids, xys, pairs, yscale=1, linewidth=1,
     plotutil.plt.close()
 
 
-def get_covering_subsets(nodeids, pairs):
-    def _work(subset):
-        for pair in pairs:
-            if all([nodeid not in pair for nodeid in subset]):
-                return False
-        return True
-
-    powerset = butil.powerset(nodeids)
-    subsets = [subset for subset in powerset if _work(subset)]
-    return subsets
-
-def is_disjoint(subset, pairs):
-    for pair in pairs:
-        if pair[0] in subset and pair[1] in subset:
-            return False
-    return True
     
 bids = ['a1','a2','a3','b1','b2','b3']
 pairs = [('a1','a2'),

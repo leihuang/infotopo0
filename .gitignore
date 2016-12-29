@@ -47,3 +47,9 @@ Thumbs.db
 
 # http://stackoverflow.com/questions/8021441/gitignore-hidden-dot-directories
 .*
+
+# Mathematics, usually messy and for my own use
+*.nb
+
+# directories
+tmp/

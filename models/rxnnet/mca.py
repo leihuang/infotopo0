@@ -26,7 +26,7 @@ TMIN = 1e3
 TMAX = 1e9
 TOL_SS = 1e-10
 K = 1000
-METHOD = 'rootfinding'
+METHOD = 'integration'
 
 
 def is_ss(net, tol=None):
@@ -100,12 +100,15 @@ def get_s_integration(net, p=None, Tmax=TMAX, tol_ss=TOL_SS):
 """
 
 
-def get_s_rootfinding(net, p=None, x0=None, to_ser=False, tol=None, **kwargs_fsolve):
+def get_s_rootfinding(net, p=None, x0=None, tol=None, ntrial=3, seeds=None, 
+                      test_stability=True, 
+                      full_output=False, to_ser=False, **kwargs_fsolve):
     """Return the steady state values of dynamic variables found by 
     the root-finding method, which may or may not represent the true
     steady state. 
     
-    Dynvarvals of the network do NOT get updated.
+    It may appear time-consuming the first time it is called, as attributes
+    like P are calculated and cached.
     
     Input:
         p:
@@ -115,15 +118,18 @@ def get_s_rootfinding(net, p=None, x0=None, to_ser=False, tol=None, **kwargs_fso
         
     Documentation of scipy.optimize.fsolve:
     """
-    if net.is_ss():
-        return net.x
-        
     if p is not None:
-        net.update(p=p)
+        net.update_optimizable_vars(p)
+    
+    if net.is_ss(tol=tol):
+        if full_output:
+            return net.x, {}, 1, ""
+        else:
+            return net.x    
+    
     P = net.P.values
     npool = P.shape[0]
     if npool > 0:
-        #poolsizes = P.apply(lambda row: np.dot(row, net.x0), axis=1)
         poolsizes = np.dot(P, net.x0)
         
     ixidxs = [net.xids.index(xid) for xid in net.ixids]
@@ -137,14 +143,10 @@ def get_s_rootfinding(net, p=None, x0=None, to_ser=False, tol=None, **kwargs_fso
         and the correct pool sizes.
         """
         dxdt = net.get_dxdt(x=x)
-        
         if npool > 0:
-            #dxidt = dxdt[net.ixids]
-            
             dxidt = dxdt[ixidxs]
-            #poolsizes_diff = P.apply(lambda row: np.dot(row, x), axis=1) - poolsizes
-            poolsizes_diff = np.dot(P, x) - poolsizes
-            return np.concatenate((dxidt, poolsizes_diff)) #dxidt.append(poolsizes_diff)
+            diffs = np.dot(P, x) - poolsizes
+            return np.concatenate((dxidt, diffs))
         else:
             return dxdt
         
@@ -152,17 +154,46 @@ def get_s_rootfinding(net, p=None, x0=None, to_ser=False, tol=None, **kwargs_fso
         """
         """
         dfidx = net.dres_dc_function(0, x, [0]*len(x), net.constantVarValues)[ixidxs]
-        return np.concatenate((dfidx, P))
+        if npool > 0:
+            return np.concatenate((dfidx, P))
+        else:
+            return dfidx
             
     if x0 is None:
         x0 = net.x0
-    
     if tol is None:
         tol = 1.49012e-08  # scipy default
-    s = sp.optimize.fsolve(_f, x0, fprime=_Df, xtol=tol, **kwargs_fsolve)
+        
+    out = sp.optimize.fsolve(_f, x0, fprime=_Df, xtol=tol, full_output=1, 
+                             **kwargs_fsolve)
+    count = 1
+    while out[2] != 1 and count <= ntrial:
+        count += 1
+        if seeds is None:
+            seed = count
+        else:
+            seed = seeds.pop(0)
+        out = sp.optimize.fsolve(_f, butil.Series(x0).randomize(seed=seed), 
+                                 fprime=_Df, xtol=tol, full_output=1, 
+                                 **kwargs_fsolve)
+    
+    s = out[0]
+    
+    net.update(x=s, t_x=np.inf)
+    
+    if test_stability:
+        jac = net.get_jac_mat()
+        if any(np.linalg.eigvals(jac) > 0):
+            print "Warning: the solution is an unstable steady state."
+
     if to_ser:
         s = Series(s, net.xids)
-    return s
+        out = (s,) + out[1:]
+    
+    if full_output:
+        return out
+    else:
+        return s
 
 get_s_rootfinding.__doc__ += sp.optimize.fsolve.__doc__
     

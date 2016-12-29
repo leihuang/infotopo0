@@ -1,5 +1,20 @@
 """
+This module is currently not used. 
+
+
+***********************************
 A unified interface...
+
+Simplify and improve SloppyCell.ReactionNetworks.Dynamics
+
+- integrate:
+    * return ndarray-based objects
+    * time
+    * efficiently resume integration (right now it starts from scratch rather from where it was left off)
+    * move trajectory.py here
+    * no events
+    * multiple integrators (compare performance)
+
 
 """
 

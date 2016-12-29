@@ -325,10 +325,10 @@ class Experiments(butil.DF):
 
     @property
     def yids(self):
-        yids_ = []
+        _yids = []
         for cond, msrmts in self.get_condmsrmts_items():
-            yids_.extend([_get_yid(cond, msrmt) for msrmt in msrmts])
-        return yids_
+            _yids.extend([_get_yid(cond, msrmt) for msrmt in msrmts])
+        return _yids
 
 
     @property
@@ -413,6 +413,9 @@ def _get_yid(cond, msrmt):
     # is wildtype)
     yid = ('%s, %s'%(condid, msrmtid)).lstrip(' ,')
     
+    # very ad-hoc solution for now  FIXME ***
+    yid = yid.replace("'","").replace(', =, ','=').replace('((','(').\
+        replace(')),','),').replace('), (',', ')
     return yid
 
 

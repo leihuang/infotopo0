@@ -702,7 +702,7 @@ class Geodesic(object):
     
     
     def integrate(self, tmax, dt, maxncall=500, dense_output=False, 
-                  print_s0=False, print_step=False, pass_exception=False):
+                  print_s0=False, print_step=False, pass_exception=True):
         """Integrate.
         
         pass_exception: use logging?  FIXME ***
@@ -891,10 +891,31 @@ class Geodesic(object):
         return Trajectory(np.array([_p2sigma(p) for p in self._ps]), 
                           index=self.ts, 
                           columns=['sigma%d'%idx for idx in range(1, self.N+1)])
+    
+    
+    def get_stats(self):
+        """
+        """
+        S0 = np.linalg.svd(self.Df(self.p0), compute_uv=False)
+        # VTt: terminal VT (V transposed)
+        St, VTt = np.linalg.svd(self.Df(self.p))[1:]
+        evt =  VTt[-1]  # terminal eigvec
+        return S0, St, evt
         
         
-    def is_global_boundary(self, part, tol_singval=1e-2, tol_eigvec=1e-2, 
-                           ret_stats=False):
+    def is_boundary(self, stats=None, tol_singval=1e-2):
+        """
+        """
+        if stats is None:
+            stats = self.get_stats()
+        S0, St = stats[:2]
+        if St[-1] / S0[-1] < tol_singval:
+            return True
+        else:
+            return False
+    
+        
+    def is_global_boundary(self, part, tol_singval=1e-2, tol_eigvec=1e-2):
         """A crude filter to get the global boundaries.
         
         FIXME ****: Or maybe I should check the diff between initial and terminal singvals??
@@ -926,20 +947,7 @@ class Geodesic(object):
             tol_eigvec: threshold of elements of eigenvector to determine 
                 whether a parameter is involved in the limiting behavior 
                 (the *smaller* the more boundaries considered global)
-        """
-        S0 = np.linalg.svd(self.Df(self.p0), compute_uv=False)
-        # VTt: terminal VT (V transposed)
-        St, VTt = np.linalg.svd(self.Df(self.p))[1:]
-        evt =  VTt[-1]  # terminal eigvec
-        stats = S0, St, evt 
-
-        def _is_boundary(stats):
-            S0, St, evt = stats  
-            if St[-1] / S0[-1] < tol_singval:
-                return True
-            else:
-                return False
-            
+        """            
         def _is_global(stats):
             """
             An example:
@@ -974,10 +982,8 @@ class Geodesic(object):
             else:
                 return False
             """
-        if ret_stats:
-            return stats
-            
-        if _is_boundary(stats) and _is_global(stats):
+        stats = self.get_stats()
+        if self.is_boundary(stats, tol_singval) and _is_global(stats):
             return True
         else:
             return False 
@@ -1206,8 +1212,9 @@ class Geodesics(butil.Series):
     
     
     def plot(self, vartypes=('_p','_y','_s','eigvec'), ncol=2,
+             varlabels=(r'$p(t)$', r'$y(t)$', r'$\log_{10} \sigma(t)$', r'$v$'),
              figsize=(18,10), subplots_adjust={'wspace':0.8,'hspace':0.8,'right':0.95}, 
-             figtitle='', show=True, filepath='', keymap=None,
+             figtitle='', show=True, filepath='', keymap=None, 
              **kwargs):
         """
         
@@ -1311,6 +1318,10 @@ class Geodesics(butil.Series):
             # ravel returns a view while flatten returns a copy
             axs_vartype = axmat[:, idx::_nvartype].ravel()
             _plot_vartype(vartype, axs_vartype, idx)
+        
+        if varlabels is not None:
+            for idx_col, ax in enumerate(axmat[0]):
+                ax.set_title(varlabels[idx_col % len(varlabels)])
             
         if figtitle:
             plotutil.plt.suptitle(figtitle, fontsize=13)

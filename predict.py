@@ -493,7 +493,7 @@ class Predict(object):
             idx_eigvec:
             uturn: 
             yidxs: a subset of data indices; if given, only part of the data 
-                would be used to calculate eigvec (useful for SU)
+                would be used to calculate eigvec (useful for SN)
             kwargs: kwargs of geodesic.Geodesic.__init__, whose docstring 
                 is appended below. \n
         """
@@ -1262,7 +1262,7 @@ def list2predict2(l, pids, uids=None, us=None, yids=None, c=None, p0=None):
     return Predict(f=f, Df=Df, p0=p0, pids=pids, yids=yids)    
     
 
-def str2predict(s, pids, uids, us, c=None, p0=None):
+def str2predict(s, pids, uids, us, c=None, p0=None, yids=None):
     """
     Input:
         us: a list of u's where each u has the same length as uids and has the 
@@ -1293,7 +1293,9 @@ def str2predict(s, pids, uids, us, c=None, p0=None):
     
     if p0 is None:
         p0 = [1] * len(pids)
-    yids = ['u=%s'%str(list(u)) for u in us]
+    
+    if yids is None:
+        yids = ['u=%s'%str(list(u)) for u in us]
         
     return Predict(f=f, Df=Df, p0=p0, pids=pids, yids=yids)
     

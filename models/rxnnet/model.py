@@ -290,25 +290,36 @@ class Network(object, Network0):
     #def get_v(self, x=None, p=None, **varmap):
     #    self.update(x=x, p=p, **varmap)
         
-
+    def get_v(self, to_ser=False):
+        v = [self.evaluate_expr(rxn.kineticLaw) for rxn in self.reactions]
+        if to_ser:
+            return Series(v, self.vids)
+        else:
+            return np.array(v)
+        
+    
     @property
     def v(self):
-        return Series([self.evaluate_expr(vid) for vid in self.vids], self.vids)
+        return self.get_v(to_ser=True)
     #rates = v
+
 
     @property
     def vids(self):
         return map(lambda _: 'v_'+_, self.rxnids)
     #rateids = vids
+
     
     @property
     def logvids(self):
         return map(lambda vid: 'log_'+vid, self.vids)
+
     
     @property
     def Jids(self):
         return map(lambda _: 'J_'+_, self.rxnids)
     #fluxids = Jids
+
     
     @property
     def logJids(self):
@@ -1474,8 +1485,8 @@ class Network(object, Network0):
     """
 
 
-    def get_predict(self, expts, p0=None, name='', **kwargs): 
-        """Returns a predict object, essentially f = X * M, 
+    def get_predict(self, expts, **kwargs): 
+        """Returns a predict object, essentially f = X * F, 
         where M is the models and X is the design variable.
         
         Input:
@@ -1486,11 +1497,15 @@ class Network(object, Network0):
                 3   (k2, 2)        S    [2,10]
             name: 
             kwargs: kwargs for dynamic and steady-state calculation
-            
-        
         """
-        #import ipdb
-        #ipdb.set_trace()
+        import dynlite, mcalite
+        reload(dynlite)
+        reload(mcalite)
+        if np.inf in butil.flatten(expts['times']):
+            return mcalite.get_predict(self, expts, **kwargs)
+        else:
+            return dynlite.get_predict(self, expts, **kwargs)
+            
         
         """
         if test:
@@ -1501,7 +1516,7 @@ class Network(object, Network0):
                 except Exception:
                     expts.rm_condition(cond)
                     logging.warn("Remove condition: %s"%str(cond))
-        """
+
         
         # this will ...
         #expts = expts.regularize()
@@ -1541,7 +1556,7 @@ class Network(object, Network0):
         pred = predict.Predict(f=f, Df=Df, p0=net0.p, name=name, pids=net0.pids, 
                                yids=expts.yids, expts=expts)
         return pred
-        
+        """        
         
         
         """
@@ -1783,7 +1798,7 @@ class Network(object, Network0):
     #    return traj.loc[t, self.dynvarids]
     
     
-    def get_dxdt(self, t=None, x=None, to_ser=False):
+    def get_dxdt(self, x=None, to_ser=False):
         """
         Velocities: velocities of species dynamics, dx/dt. 
         (Another way of getting it is N*v.)  
@@ -1791,11 +1806,8 @@ class Network(object, Network0):
         Input:
             t: time
         """
-        if t is None:
-            t = self.t
-            
         if x is None:
-            x = self.get_x(t=t)
+            x = [var.value for var in self.dynamicVars]
         
         if not hasattr(self, 'res_function'):
             self.compile()
@@ -1805,7 +1817,7 @@ class Network(object, Network0):
         # >>> print net.constantVarValues
         # >>> net.set_var_val('p1', 100)
         # >>> print net.constantVarValues
-        dxdt = self.res_function(t, x, np.zeros(len(x)), self.convarvals)
+        dxdt = self.res_function(self.t, x, np.zeros(len(x)), self.constantVarValues)
         if to_ser:
             dxdt = Series(dxdt, index=self.xids)
         return dxdt
@@ -2106,7 +2118,8 @@ class Network(object, Network0):
             varmap: kwargs for individual variable values, eg, Vf_R1=2  (FIXME *: bad design?)
         """
         if p is not None:
-            self.p = p
+            self.update_optimizable_vars(p)
+            
         if varmap:
             for varid, varval in varmap.items():
                 self.set_var_ic(varid, varval)  # FIXME **: this suffices?
@@ -2918,9 +2931,9 @@ def extract_varids(expr):
     
     
 def make_net(eqns, ratelaws, 
-             facelift=False, scheme='num', parametrization='VK',
+             facelift=True, scheme='num', parametrization='VK',
              rxnids=None, cids=None, r=False, add_ratevars=True, 
-             netid='', **kwargs):
+             netid='', compile=False, **kwargs):
     """
     FIXME **: need to be able to add inhibitors and activators...
     
@@ -3045,7 +3058,8 @@ def make_net(eqns, ratelaws,
     if add_ratevars:
         net.add_ratevars()
     
-    net.compile()
+    if compile:
+        net.compile()
     
     return net
 

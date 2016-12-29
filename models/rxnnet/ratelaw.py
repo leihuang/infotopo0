@@ -101,30 +101,10 @@ class RateLaw(object):
             return eval(s, subs)
         self.v = v
     
-    """
-    def __init__2(self, s, xids, pids=None, info='', **kwargs):
-        self.s = s
-        self.xids = xids
-        self.info = info
-        
-        if pids is None:
-            pids0 = set(exprmanip.extract_vars(s)) - set(self.xids)  # a set, unordered
-            items = [(pid, s.index(pid)) for pid in pids0]
-            pids = [item[0] for item in sorted(items, key=lambda item: item[1])]
-        self.pids = pids
-        
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-            
-        def v(x, p):
-            subs = dict(zip(xids+pids, list(x)+list(p)))
-            return eval(s, subs)
-        self.v = v 
-    """
         
     def __repr__(self):
         return self.s
-    
+        
     
     @property
     def pdim(self):
@@ -224,31 +204,6 @@ class RateLaw(object):
         return predict.str2predict(s=self.s, pids=self.pids, uids=self.xids, 
                                    c=c, us=xs, p0=p0)
         
-        
-"""
-rl_make11 = RateLaw(s='kf*(A-P/KE)', xids=['A','P'], cids=['KE'], info='make11')
-rl_ma11 = RateLaw(s='kf*A-kr*P', xids=['A','P'], info='ma11')
-rl_mai1 = RateLaw(s='kf*A', xids=['A'], info='mai1')
-
-rl_mmke11 = RateLaw(s='kf * (A - P/KE) / (1 + bA*A + bP*P)', 
-                    xids=['A','P'], cids=['KE'], info='mmke11')
-rl_mm11 = RateLaw(s='(kf*A - kr*P) / (1 + bA*A + bP*P)', xids=['A','P'], info='mm11')
-rl_mmi1 = RateLaw(s='(kf*A) / (1 + bA*A)', xids=['A'], info='mmi1')
-
-
-rl_mmke21 = RateLaw(s='kf * (A*B - P/KE) / (1 + bA*A + bB*B + bA*bB*A*B + bP*P)',
-                    xids=['A','B','P'], cids=['KE'], info='mmke21')
-
-rl_mmke21_full = RateLaw(s='kf * (A*B - P/KE) / (1 + bA*A + bB*B + 2*bA*bB*rho*A*B + bP*P)',
-                         xids=['A','B','P'], cids=['KE'], info='mmke21_full')
-
-rl_mmke22 = RateLaw(s='kf * (A*B - P*Q/KE) / (1 + bA*A + bB*B + bA*bB*A*B + bP*P + bQ*Q + bP*bQ*P*Q)',
-                    xids=['A','B','P','Q'], info='mmke22')
-"""
-
-#rl_ = rl_ma11.facelift(eqn_new='C1<->X', pmap='num', rxnidx=1)
-#rl2_ = rl2.facelift(eqn_new='C2+X4<->X3', add_idx=4)
-
 
 
 class RateLaw0(object):
@@ -450,16 +405,6 @@ def _has_edge_is_singular(rl1, rl2, rxn):
             return True, True
         else:
             return False, False
-        
-def get_hasse_mm(nsub, npro):
-    """
-     A + B + ... <-> P + Q + ...
-    |___________|   |___________|
-        nsub            npro
-    
-    Too much coding work...
-    """
-    pass
 
 
 def get_hasse_mm11():
@@ -470,29 +415,29 @@ def get_hasse_mm11():
     
     rl4 = _get_rl('(Vf * A/KA - Vr * P/KP) / (1 + A/KA + P/KP)', 'mm11') 
     
-    rl3s = [_get_rl('(Vf * A/KA) / (1 + A/KA + P/KP)', 'mm11f'),
-            _get_rl('(kf*A - Vr * P/KP) / (1 + P/KP)', 'mm11Alin'),
-            _get_rl('(Vf*A - Vr*r*P) / (A + r*P)', 'mm11APsat'),
-            _get_rl('(Vfp * A/KA - kr*P) / (1 + A/KA)', 'mm11Plin'),
-            _get_rl('(- Vr * P/KP) / (1 + A/KA + P/KP)', 'mm11r')]
+    rl3s = [_get_rl('(Vf * A/KA) / (1 + A/KA + P/KP)', 'f'),
+            _get_rl('(kf*A - Vr * P/KP) / (1 + P/KP)', 'Alin'),
+            _get_rl('(Vf*A - Vr*r*P) / (A + r*P)', 'APsat'),
+            _get_rl('(Vfp * A/KA - kr*P) / (1 + A/KA)', 'Plin'),
+            _get_rl('(- Vr * P/KP) / (1 + A/KA + P/KP)', 'r')]
     
-    rl2s = [_get_rl('(Vf * A/KA) / (1 + A/KA)', 'mm11fPlin'),
-            _get_rl('(kf*A) / (1 + P/KP)', 'mm11fAlin'), 
-            _get_rl('Vf*A / (A + r*P)', 'mm11fAPsat'),
-            _get_rl('(Vfp*A - Vr*P) / P', 'mm11AlinPsat'),
-            _get_rl('kf*A - kr*P', 'ma11'),
-            _get_rl('(Vf*A - Vrp*P) / A', 'mm11PlinAsat'),
-            _get_rl('(- Vr*r*P) / (A + r*P)', 'mm11rAPsat'),
-            _get_rl('(- kr*P) / (1 + A/KA)', 'mm11rPlin'),
-            _get_rl('(- Vr * P/KP) / (1 + P/KP)', 'mm11rAlin')]
+    rl2s = [_get_rl('(Vf * A/KA) / (1 + A/KA)', 'fPlin'),
+            _get_rl('(kf*A) / (1 + P/KP)', 'fAlin'), 
+            _get_rl('Vf*A / (A + r*P)', 'fAPsat'),
+            _get_rl('(Vfp*A - Vr*P) / P', 'AlinPsat'),
+            _get_rl('kf*A - kr*P', 'APlin'),
+            _get_rl('(Vf*A - Vrp*P) / A', 'PlinAsat'),
+            _get_rl('(- Vr*r*P) / (A + r*P)', 'rAPsat'),
+            _get_rl('(- kr*P) / (1 + A/KA)', 'rPlin'),
+            _get_rl('(- Vr * P/KP) / (1 + P/KP)', 'rAlin')]
     
-    rl1s = [_get_rl('Vf', 'Vf'), 
-            _get_rl('kf*A', 'ma11f'),
-            _get_rl('Vfp*A/P', 'Qf'),
-            _get_rl('inf * (A - P/KE)', 'ma11inf', style='dashed'),
-            _get_rl('- Vrp*P/A', 'Qr'),
-            _get_rl('- kr*P', 'ma11r'),
-            _get_rl('- Vr', 'Vr')]
+    rl1s = [_get_rl('Vf', 'fPlinAsat'),  # Vf, Asat
+            _get_rl('kf*A', 'fAPlin'),  # ma11f
+            _get_rl('Vfp*A/P', 'fAlinPsat'),  # Qf
+            _get_rl('inf * (A - P/KE)', 'infAPlin', style='dashed'),
+            _get_rl('- Vrp*P/A', 'rPlinAsat'),  # Qr
+            _get_rl('- kr*P', 'rAPlin'),  # ma11r
+            _get_rl('- Vr', 'rAlinPsat')]  # Vr, Psat  
     
     rl0s = [_get_rl('inf', 'inff', style='dashed'),
             _get_rl('0', '0'),
@@ -505,85 +450,73 @@ def get_hasse_mm11():
         for rl, style in rls_rank:
             hd.add_node(rl.info, rank=rank, ratelaw=rl, style=style)
             
-    """        
-    rankpairs = [(4,3), (3,2), (2,1), (1,0)]
-    
-    for rankpair in rankpairs:
-        rank_, rank_succ = rankpair
-        rls_, rls_succ = rls[rank_], rls[rank_succ]
-        for rl_ in rls_:
-            for rl_succ in rls_succ:
-                if _has_edge_is_singular(rl_, rl_succ)[0]:
-                    hd.add_edge(rl_.info, rl_succ.info)
-
-    """
     # between corank 0 and 1
-    hd.add_edge('mm11', 'mm11f', info='Vr->0')
-    hd.add_edge('mm11', 'mm11Alin', info='Vf,KA->inf')
-    hd.add_edge('mm11', 'mm11APsat', info='KA,KP->0')
-    hd.add_edge('mm11', 'mm11Plin', info='Vr,KP->inf')
-    hd.add_edge('mm11', 'mm11r', info='Vf->0')
+    hd.add_edge('mm11', 'f', info='Vr->0')
+    hd.add_edge('mm11', 'Alin', info='Vf,KA->inf')
+    hd.add_edge('mm11', 'APsat', info='KA,KP->0')
+    hd.add_edge('mm11', 'Plin', info='Vr,KP->inf')
+    hd.add_edge('mm11', 'r', info='Vf->0')
     
     # between corank 1 and 2
-    hd.add_edge('mm11f', 'mm11fPlin', info='KP->inf')
-    hd.add_edge('mm11f', 'mm11fAlin', info='Vf,KA->inf')
-    hd.add_edge('mm11f', 'mm11fAPsat', info='KA,KP->0')
+    hd.add_edge('f', 'fPlin', info='KP->inf')
+    hd.add_edge('f', 'fAlin', info='Vf,KA->inf')
+    hd.add_edge('f', 'fAPsat', info='KA,KP->0')
     
-    hd.add_edge('mm11Alin', 'mm11fAlin', info='Vr->0')
-    hd.add_edge('mm11Alin', 'mm11AlinPsat', info='kf->inf,KP->0')
-    hd.add_edge('mm11Alin', 'ma11', info='Vr,KP->inf')
-    hd.add_edge('mm11Alin', 'mm11rAlin', info='kf->0')
+    hd.add_edge('Alin', 'fAlin', info='Vr->0')
+    hd.add_edge('Alin', 'AlinPsat', info='kf->inf,KP->0')
+    hd.add_edge('Alin', 'APlin', info='Vr,KP->inf')
+    hd.add_edge('Alin', 'rAlin', info='kf->0')
     
-    hd.add_edge('mm11APsat', 'mm11fAPsat')
-    hd.add_edge('mm11APsat', 'mm11AlinPsat')
-    hd.add_edge('mm11APsat', 'mm11PlinAsat')
-    hd.add_edge('mm11APsat', 'mm11rAPsat')
+    hd.add_edge('APsat', 'fAPsat')
+    hd.add_edge('APsat', 'AlinPsat')
+    hd.add_edge('APsat', 'PlinAsat')
+    hd.add_edge('APsat', 'rAPsat')
     
-    hd.add_edge('mm11Plin', 'mm11fPlin')
-    hd.add_edge('mm11Plin', 'ma11')
-    hd.add_edge('mm11Plin', 'mm11PlinAsat')
-    hd.add_edge('mm11Plin', 'mm11rPlin')
+    hd.add_edge('Plin', 'fPlin')
+    hd.add_edge('Plin', 'APlin')
+    hd.add_edge('Plin', 'PlinAsat')
+    hd.add_edge('Plin', 'rPlin')
     
-    hd.add_edge('mm11r', 'mm11rAlin')
-    hd.add_edge('mm11r', 'mm11rPlin')
-    hd.add_edge('mm11r', 'mm11rAPsat')
+    hd.add_edge('r', 'rAlin')
+    hd.add_edge('r', 'rPlin')
+    hd.add_edge('r', 'rAPsat')
     
     # between corank 2 and 3
-    hd.add_edge('mm11fPlin', 'Vf')
-    hd.add_edge('mm11fPlin', 'ma11f')
-    hd.add_edge('mm11fAlin', 'ma11f')
-    hd.add_edge('mm11fAlin', 'Qf')
-    hd.add_edge('mm11fAPsat', 'Vf')
-    hd.add_edge('mm11fAPsat', 'Qf')
-    hd.add_edge('mm11AlinPsat', 'Qf')
-    hd.add_edge('mm11AlinPsat', 'Vr')
-    hd.add_edge('ma11', 'ma11f')
-    hd.add_edge('ma11', 'ma11r')
-    hd.add_edge('mm11PlinAsat', 'Vf')
-    hd.add_edge('mm11PlinAsat', 'Qr')
-    hd.add_edge('mm11rAPsat', 'Qr')
-    hd.add_edge('mm11rAPsat', 'Vr')
-    hd.add_edge('mm11rPlin', 'Qr')
-    hd.add_edge('mm11rPlin', 'ma11r')
-    hd.add_edge('mm11rAlin', 'ma11r')
-    hd.add_edge('mm11rAlin', 'Vr')
-    hd.add_edge('ma11', 'ma11inf', style='dashed')
+    hd.add_edge('fPlin', 'fPlinAsat')
+    hd.add_edge('fPlin', 'fAPlin')
+    hd.add_edge('fAlin', 'fAPlin')
+    hd.add_edge('fAlin', 'fAlinPsat')
+    hd.add_edge('fAPsat', 'fPlinAsat')
+    hd.add_edge('fAPsat', 'fAlinPsat')
+    hd.add_edge('AlinPsat', 'fAlinPsat')
+    hd.add_edge('AlinPsat', 'rAlinPsat')
+    hd.add_edge('APlin', 'fAPlin')
+    hd.add_edge('APlin', 'rAPlin')
+    hd.add_edge('PlinAsat', 'fPlinAsat')
+    hd.add_edge('PlinAsat', 'rPlinAsat')
+    hd.add_edge('rAPsat', 'rPlinAsat')
+    hd.add_edge('rAPsat', 'rAlinPsat')
+    hd.add_edge('rPlin', 'rPlinAsat')
+    hd.add_edge('rPlin', 'rAPlin')
+    hd.add_edge('rAlin', 'rAPlin')
+    hd.add_edge('rAlin', 'rAlinPsat')
+    hd.add_edge('APlin', 'infAPlin', style='dashed')
     
     # between corank 3 and 4
-    hd.add_edge('Vf', 'inff', style='dashed')
-    hd.add_edge('Vf', '0')
-    hd.add_edge('ma11f', 'inff', style='dashed')
-    hd.add_edge('ma11f', '0')
-    hd.add_edge('Qf', 'inff', style='dashed')
-    hd.add_edge('Qf', '0')
-    hd.add_edge('Qr', 'infr', style='dashed')
-    hd.add_edge('Qr', '0')
-    hd.add_edge('ma11r', 'infr', style='dashed')
-    hd.add_edge('ma11r', '0')
-    hd.add_edge('Vr', 'infr', style='dashed')
-    hd.add_edge('Vr', '0')
-    hd.add_edge('ma11inf', 'inff', style='dashed')
-    hd.add_edge('ma11inf', 'infr', style='dashed')
+    hd.add_edge('fPlinAsat', 'inff', style='dashed')
+    hd.add_edge('fPlinAsat', '0')
+    hd.add_edge('fAPlin', 'inff', style='dashed')
+    hd.add_edge('fAPlin', '0')
+    hd.add_edge('fAlinPsat', 'inff', style='dashed')
+    hd.add_edge('fAlinPsat', '0')
+    hd.add_edge('rPlinAsat', 'infr', style='dashed')
+    hd.add_edge('rPlinAsat', '0')
+    hd.add_edge('rAPlin', 'infr', style='dashed')
+    hd.add_edge('rAPlin', '0')
+    hd.add_edge('rAlinPsat', 'infr', style='dashed')
+    hd.add_edge('rAlinPsat', '0')
+    hd.add_edge('infAPlin', 'inff', style='dashed')
+    hd.add_edge('infAPlin', 'infr', style='dashed')
 
     texmap = OD([('Vfp',"V_f"), ('Vrp',"V_r"),
                  (' r*','\\\\rho '), ('*r*','\\\\rho '), 
@@ -622,123 +555,157 @@ def get_hasse_mm11():
         
     return hd
 
-hd_mm11 = get_hasse_mm11()
 
-#hd_mm11.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11.get_node(nodeid)['texstr']),
-#             width=600, height=450, nodeid2color='white',  
-#             rank2size={4:(1.2,0.8), 3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
-#             filepath='hasse_mm11.pdf')
-
-
-"""
-    rl_b1 = RateLaw(s='(- kr * P) / (1 + br * P)',
-                   xids=['S','P'], pids=['kr','br'], name='mm_qe_11_b1')
-    rl_b2 = RateLaw(s='(- kr * P) / (1 + bf * S)',
-                   xids=['S','P'], pids=['kr','bf'], name='mm_qe_11_b2')
-    rl_b3 = RateLaw(s='(- rb * Vr * P) / (S + rb * P)', 
-                   xids=['S','P'], pids=['Vr','rb'], name='mm_qe_11_b3')
-    rl_b4 = RateLaw(s='(kf * S) / (1 + br * P)',
-                   xids=['S','P'], pids=['kf','br'], name='mm_qe_11_b4')
-    rl_b5 = RateLaw(s='(kf * S) / (1 + bf * S)',
-                   xids=['S','P'], pids=['kf','bf'], name='mm_qe_11_b5')
-    rl_b6 = RateLaw(s='(Vf * S) / (S + rb * P)',
-                   xids=['S','P'], pids=['Vf','rb'], name='mm_qe_11_b6')
-    rl_b7 = RateLaw(s='kf * S - kr * P', 
-                   xids=['S','P'], pids=['kf','kr'], name='mm_qe_11_b7')
-    rl_b8 = RateLaw(s='(Vf_ * S - Vr * P) / P', info='Vf_=Vf/rb',
-                   xids=['S','P'], pids=['Vf_','Vr'], name='mm_qe_11_b8')
-    rl_b9 = RateLaw(s='(Vf * S - Vr_ * P) / S', info='Vr_=Vr*rb',
-                   xids=['S','P'], pids=['Vf','Vr_'], name='mm_qe_11_b9')
+def get_hasse_mm11_kb():
+    """
+    """
+    def _get_rl(s, info, style='filled'): 
+        return RateLaw(s=s, info=info, xids=['A','P']), style
     
+    rl4 = _get_rl('(kf*A - kr*P) / (1 + bA*A + bP*P)', 'mm11') 
     
-                        
-    v_c1 = RateLaw(s='-kr * P', xids=['S','P'], pids=['kr'], name='mm_qe_11_c1')
-    v_c2 = RateLaw(s='-Vr', xids=['S','P'], pids=['Vr'], name='mm_qe_11_c2')
-    v_c3 = RateLaw(s='-Vr_ * P / S', xids=['S','P'], pids=['Vr_'], name='mm_qe_11_c3')
-    v_c4 = RateLaw(s='Vf_ * S / P', xids=['S','P'], pids=['Vf_'], name='mm_qe_11_c4')
-    v_c5 = RateLaw(s='kf * S', xids=['S','P'], pids=['kf'], name='mm_qe_11_c5')
-    v_c6 = RateLaw(s='Vf', xids=['S','P'], pids=['Vf'], name='mm_qe_11_c6')
+    rl3s = [_get_rl('kf*A / (1 + bA*A + bP*P)', 'f'),
+            _get_rl('(kf*A - kr*P) / (1 + bP*P)', 'Alin'),
+            _get_rl('(Vf*A - Vr*r*P) / (A + r*P)', 'APsat'),
+            _get_rl('(kf*A - kr*P) / (1 + bA*A)', 'Plin'),
+            _get_rl('-kr*P / (1 + bA*A + bP*P)', 'r')]
     
-    v_d1 = RateLaw(s='-inf', xids=['S','P'], pids=[], name='mm_qe_11_d1')
-    v_d2 = RateLaw(s='0', xids=['S','P'], pids=[], name='mm_qe_11_d2')
-    v_d3 = RateLaw(s='inf', xids=['S','P'], pids=[], name='mm_qe_11_d3')
+    rl2s = [_get_rl('kf*A / (1 + bA*A)', 'fPlin'),
+            _get_rl('kf*A / (1 + bP*P)', 'fAlin'), 
+            _get_rl('Vf*A / (A + r*P)', 'fAPsat'),
+            _get_rl('(Vfp*A - Vr*P) / P', 'AlinPsat'),
+            _get_rl('kf*A - kr*P', 'APlin'),
+            _get_rl('(Vf*A - Vrp*P) / A', 'PlinAsat'),
+            _get_rl('(- Vr*r*P) / (A + r*P)', 'rAPsat'),
+            _get_rl('-kr*P / (1 + bA*A)', 'rPlin'),
+            _get_rl('-kr*P / (1 + bP*P)', 'rAlin')]
+    
+    rl1s = [_get_rl('Vf', 'fPlinAsat'),  # Vf, Asat
+            _get_rl('kf*A', 'fAPlin'),  # ma11f
+            _get_rl('Vfp*A/P', 'fAlinPsat'),  # Qf
+            _get_rl('inf * (A - P/KE)', 'infAPlin', style='dashed'),
+            _get_rl('- Vrp*P/A', 'rPlinAsat'),  # Qr
+            _get_rl('- kr*P', 'rAPlin'),  # ma11r
+            _get_rl('- Vr', 'rAlinPsat')]  # Vr, Psat  
+    
+    rl0s = [_get_rl('inf', 'inff', style='dashed'),
+            _get_rl('0', '0'),
+            _get_rl('-inf', 'infr', style='dashed')]
+    
+    hd = hasse.HasseDiagram(rank=4)
+    
+    rls = OD([(4, [rl4]), (3, rl3s), (2, rl2s), (1, rl1s), (0, rl0s)])
+    for rank, rls_rank in rls.items():
+        for rl, style in rls_rank:
+            hd.add_node(rl.info, rank=rank, ratelaw=rl, style=style)
+            
+    # between corank 0 and 1
+    hd.add_edge('mm11', 'f')
+    hd.add_edge('mm11', 'Alin')
+    hd.add_edge('mm11', 'APsat')
+    hd.add_edge('mm11', 'Plin')
+    hd.add_edge('mm11', 'r')
+    
+    # between corank 1 and 2
+    hd.add_edge('f', 'fPlin')
+    hd.add_edge('f', 'fAlin')
+    hd.add_edge('f', 'fAPsat')
+    
+    hd.add_edge('Alin', 'fAlin')
+    hd.add_edge('Alin', 'AlinPsat')
+    hd.add_edge('Alin', 'APlin')
+    hd.add_edge('Alin', 'rAlin')
+    
+    hd.add_edge('APsat', 'fAPsat')
+    hd.add_edge('APsat', 'AlinPsat')
+    hd.add_edge('APsat', 'PlinAsat')
+    hd.add_edge('APsat', 'rAPsat')
+    
+    hd.add_edge('Plin', 'fPlin')
+    hd.add_edge('Plin', 'APlin')
+    hd.add_edge('Plin', 'PlinAsat')
+    hd.add_edge('Plin', 'rPlin')
+    
+    hd.add_edge('r', 'rAlin')
+    hd.add_edge('r', 'rPlin')
+    hd.add_edge('r', 'rAPsat')
+    
+    # between corank 2 and 3
+    hd.add_edge('fPlin', 'fPlinAsat')
+    hd.add_edge('fPlin', 'fAPlin')
+    hd.add_edge('fAlin', 'fAPlin')
+    hd.add_edge('fAlin', 'fAlinPsat')
+    hd.add_edge('fAPsat', 'fPlinAsat')
+    hd.add_edge('fAPsat', 'fAlinPsat')
+    hd.add_edge('AlinPsat', 'fAlinPsat')
+    hd.add_edge('AlinPsat', 'rAlinPsat')
+    hd.add_edge('APlin', 'fAPlin')
+    hd.add_edge('APlin', 'rAPlin')
+    hd.add_edge('PlinAsat', 'fPlinAsat')
+    hd.add_edge('PlinAsat', 'rPlinAsat')
+    hd.add_edge('rAPsat', 'rPlinAsat')
+    hd.add_edge('rAPsat', 'rAlinPsat')
+    hd.add_edge('rPlin', 'rPlinAsat')
+    hd.add_edge('rPlin', 'rAPlin')
+    hd.add_edge('rAlin', 'rAPlin')
+    hd.add_edge('rAlin', 'rAlinPsat')
+    hd.add_edge('APlin', 'infAPlin', style='dashed')
+    
+    # between corank 3 and 4
+    hd.add_edge('fPlinAsat', 'inff', style='dashed')
+    hd.add_edge('fPlinAsat', '0')
+    hd.add_edge('fAPlin', 'inff', style='dashed')
+    hd.add_edge('fAPlin', '0')
+    hd.add_edge('fAlinPsat', 'inff', style='dashed')
+    hd.add_edge('fAlinPsat', '0')
+    hd.add_edge('rPlinAsat', 'infr', style='dashed')
+    hd.add_edge('rPlinAsat', '0')
+    hd.add_edge('rAPlin', 'infr', style='dashed')
+    hd.add_edge('rAPlin', '0')
+    hd.add_edge('rAlinPsat', 'infr', style='dashed')
+    hd.add_edge('rAlinPsat', '0')
+    hd.add_edge('infAPlin', 'inff', style='dashed')
+    hd.add_edge('infAPlin', 'infr', style='dashed')
 
-    g = graph.AdjacencyGraph()
-    g.add_node('v', level=0, ratelaw=v)
-    for v in [v_a1, v_a2, v_a3, v_a4, v_a5]:
-        g.add_node(v.name[-2:], level=1, ratelaw=v)
-    for v in [v_b1, v_b2, v_b3, v_b4, v_b5, v_b6, v_b7, v_b8, v_b9]:
-        g.add_node(v.name[-2:], level=2, ratelaw=v)
-    for v in [v_c1, v_c2, v_c3, v_c4, v_c5, v_c6]:
-        g.add_node(v.name[-2:], level=3, ratelaw=v)
-    for v in [v_d1, v_d2, v_d3]:
-        g.add_node(v.name[-2:], level=4, ratelaw=v)
+    texmap = OD([('Vfp',"V_f"), ('Vrp',"V_r"),
+                 (' r*','\\\\rho '), ('*r*','\\\\rho '), 
+                 ('Vf','V_f'), ('Vr','V_r'), ('KA','K_A'), ('KP','K_P'), 
+                 ('KE','K_E'), ('kf','k_f'), ('kr','k_r'), 
+                 ('bA','b_A'), ('bP','b_P'),
+                 ('inf','\\\\infty '), ('*','')])
+    
+    def _str2tex(s):  
+        def _repl(s):
+            return s.replace('A/KA', '\\\\frac{A}{KA}').\
+                replace('P/KP', '\\\\frac{P}{KP}').\
+                replace('(P/A)', '\\\\frac{P}{A}').\
+                replace('P/A', '\\\\frac{P}{A}').\
+                replace('A/P', '\\\\frac{A}{P}').\
+                replace('P/KE', '\\\\frac{P}{KE}')
+                
+        if ' / ' in s:  # central /
+            n, d = s.split(' / ')
+            tex = '\\\\frac{%s}{%s}' % (_repl(n).strip('()'), _repl(d).strip('()'))
+        else:
+            tex = _repl(s)
+        for k, v in texmap.items():  # sequential replacement so order matters
+            tex = tex.replace(k, v)
+        return '\\\\displaystyle ' + tex
+    
+    for nodeid in hd.nodeids:
+        s = hd.get_node(nodeid)['ratelaw'].s
+        # Not using str2tex which uses SloppyCell's exprmanip as it disrupts
+        # the expression structure (like moving a denominator in the numerator
+        # to the denominator)
+        # Not much work (only two ratelaw hds would be shown the formula) 
+        # so an ad-hoc solution suffices here
+        #texstr = str2tex(s, texmap)  
+        texstr = _str2tex(s)
+        hd.get_node(nodeid)['texstr'] = texstr
         
-    g.add_edge('v', 'a1')
-    g.add_edge('v', 'a2')
-    g.add_edge('v', 'a3')
-    g.add_edge('v', 'a4')
-    g.add_edge('v', 'a5')
-    
-    g.add_edge('a1', 'b1')
-    g.add_edge('a1', 'b2')
-    g.add_edge('a1', 'b3')
-    g.add_edge('a2', 'b4')
-    g.add_edge('a2', 'b5')
-    g.add_edge('a2', 'b6')
-    g.add_edge('a3', 'b1')
-    g.add_edge('a3', 'b4')
-    g.add_edge('a3', 'b7')
-    g.add_edge('a4', 'b2')
-    g.add_edge('a4', 'b5')
-    g.add_edge('a4', 'b7')
-    g.add_edge('a5', 'b3')
-    g.add_edge('a5', 'b6')
-    g.add_edge('a5', 'b8')
-    g.add_edge('a5', 'b9')
-    
-    g.add_edge('b1', 'c1')
-    g.add_edge('b1', 'c2')
-    g.add_edge('b2', 'c1')
-    g.add_edge('b2', 'c3')
-    g.add_edge('b3', 'c2')
-    g.add_edge('b3', 'c3')
-    g.add_edge('b4', 'c4')
-    g.add_edge('b4', 'c5')
-    g.add_edge('b5', 'c5')
-    g.add_edge('b5', 'c6')
-    g.add_edge('b6', 'c4')
-    g.add_edge('b6', 'c6')
-    g.add_edge('b7', 'c1')
-    g.add_edge('b7', 'c5')
-    g.add_edge('b8', 'c2')
-    g.add_edge('b8', 'c4')
-    g.add_edge('b9', 'c3')
-    g.add_edge('b9', 'c6')
-    
-    g.add_edge('c1', 'd1')
-    g.add_edge('c1', 'd2')
-    g.add_edge('c2', 'd1')
-    g.add_edge('c2', 'd2')
-    g.add_edge('c3', 'd1')
-    g.add_edge('c3', 'd2')
-    g.add_edge('c4', 'd2')
-    g.add_edge('c4', 'd3')
-    g.add_edge('c5', 'd2')
-    g.add_edge('c5', 'd3')
-    g.add_edge('c6', 'd2')
-    g.add_edge('c6', 'd3')
-    
-    #texmap = dict(kf='k_f', kr='k_r', bf='b_f', br='b_r', rb='\\rho', 
-    #         Vf='V_f', Vr='V_r', Vf_="V_f'", Vr_="V_r'", inf='\\infty')
-    #texcode = texcode.replace('\\cdot ', '').\
-    #        replace('\\left(', '').replace('\\right)', '')
-    
-    #g.change_labels(OD([(nodeid, '%s'%node['ratelaw'].s_tex) 
-    #                    for nodeid, node in g.node.items()]))
-    return g
-"""
-    
+    return hd
+
+
 
 def get_hasse_mm11Vf1():
     """
@@ -840,13 +807,6 @@ def get_hasse_mm11Vf1():
         
     return hd
 
-hd_mm11Vf1 = get_hasse_mm11Vf1()
-#hd_mm11Vf1.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11Vf1.get_node(nodeid)['texstr']),
-#                width=600, height=450, nodeid2color='white',  
-#                rank2size={3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
-#                filepath='hasse_mm11Vf1.pdf')
-
-
 
 def get_hasse_mm11KA1():
     """
@@ -946,12 +906,6 @@ def get_hasse_mm11KA1():
         
     return hd
 
-hd_mm11KA1 = get_hasse_mm11KA1()
-#hd_mm11KA1.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11KA1.get_node(nodeid)['texstr']),
-#                width=600, height=450, nodeid2color='white',  
-#                rank2size={3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
-#                filepath='hasse_mm11KA1.pdf')
-
 
 def get_hasse_mmh11():
     
@@ -1039,13 +993,6 @@ def get_hasse_mmh11():
     
     return hd
 
-hd_mmh11 = get_hasse_mmh11()
-
-#hd_mmh11.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mmh11.get_node(nodeid)['texstr']),
-#              width=500, height=500, nodeid2color='white', 
-#              rank2size={3:(1.3,1), 2:(1,0.9), 1:(1,0.8), 0:(1,0.8)},
-#              filepath='hasse_mmh11.pdf')
-
 
 def get_hasse_mmh11_kb():
     
@@ -1090,16 +1037,13 @@ def get_hasse_mmh11_kb():
     
     return hd
 
-hd_mmh11_kb = get_hasse_mmh11_kb()
 
-
+"""
 func_nodeattr = lambda nodeattrs: {'ratelaws': 
                                    tuple([d['ratelaw'] for d in nodeattrs])}
     
-
-hd_2mmh11 = hasse.get_product([hd_mmh11]*2)
 hd2 = hd_2mmh11
-#a
+
 for nodeid in hd2.nodeids:
     hd2.node[nodeid]['style'] = 'filled'
 
@@ -1114,6 +1058,8 @@ def feq(nodeid):
             xid1, op1, xid2, op2 = vid[5], vid[6:9], vid[9:10], vid[10:]
             return 'mmh11' + xmap[xid1] + opmap[op1] + xmap[xid2] + opmap[op2]
     return [(_flip(v2), _flip(v1))]
+"""
+
 
 """
 hd.order[4] = [('b1', 'mmke11'),
@@ -1277,83 +1223,6 @@ hd_2mmke11.eqclss[0] = [(('c1', 'c2'), ('c2', 'c1')),
                         (('c2', 'c2'),)]
 
 """
-               
-
-def _repl(nodeid):
-    if nodeid[0] in list('abcd'):
-        return '_'.join(list(nodeid))
-    else:
-        return nodeid
-
-
-#hd.draw(nodeid2label=lambda nodeid: str(tuple(map(_repl, nodeid))).replace("'",""),
-#        #width=50, height=50,
-#        rank2size={6:(10,3), 5:(2,1), 4:(1,0.5), 3:(1,0.5), 2:(1,0.5), 1:(1,0.5), 0:(1,0.5)},
-#        #rank2size=dict.fromkeys(range(10),(0.1,0.1)),
-#        nodeshape='box', filepath='hasse_2mmke11_symmetry.pdf')
-
-
-#hd_mmke11.draw(nodeid2label=lambda nodeid: hd_mmke11.get_node(nodeid)['texstr'],
-#               width=800, height=600, nodeid2color='white', 
-#               rank2size={3:(1.5,0.7), 2:(1,0.7), 1:(1,0.7), 0:(1,0.5)},
-#               filepath='hasse_mmke11.pdf')
-
-
-
-"""
-def draw_ratelaw_hasse(hd):
-    # deprecation warning: rl.s_tex
-    texmap = dict(kf='k_f', kr='k_r', bA='b_A', bB='b_B', bP='b_P', bQ='b_Q',
-                  Vf='V_f', Vr='V_r', 
-                  rb='\\rho_b', 
-                  inf='\\infty', KE='K_E')
-    
-    for nodeid in hd.nodeids:
-        rl = hd.node[nodeid]['ratelaw']
-        rl.s_tex = '\\displaystyle ' + exprmanip.expr2TeX(rl.s, texmap).\
-            replace('\\cdot ', '') #.replace('\\left(', '').replace('\\right)', '')
-    
-    hd.set_labels(OD([(nid, node['ratelaw'].s_tex) for nid, node in hd.node.items()]))
-    hd.set_infos(OD([(nid, node['ratelaw'].s) for nid, node in hd.node.items()]))
-""" 
-
-
-
-#g_vmmke11 = get_graph_vmmke11()
-#g_vmmke11.plot(filepath='tmp/tmp2.tex', height=200, width=200, crop=True, border=3)
-    
-    
-
-
-
-"""
-v1 = '(k1f*C1-k1r*X)/(1+b1f*C1+b1r*X)'
-v1ke = 'k1f*(C1-X/KE1)/(1+b1f*C1+b1r*X)'
-v2 = '(k2f*X-k2r*C2)/(1+b2f*X+b2r*C2)'
-v2k2 = 'k2f*(X-C2/KE2)/(1+b2f*X+b2r*C2)'
-v2r = '(k2f*X-C2)/(1+b2f*X)'
-
-s = solve_path2(v1ke, v2k2, 'J', 1)
-#sr = solve_path2(v1, v2r, 'J', 1)
-
-C1s = C2s = range(1,5)
-C12s = list(itertools.product(C1s, C2s))
-
-pred = predict.str2pred(s, pids=['k1f','b1f','b1r','k2f','b2f','b2r'], 
-                        uids=['C1','C2'], us=C12s, c={'KE1':2,'KE2':3}, p0=None)
-
-#predr = pred.currying(b1r=1)
-gdss = pred.get_geodesics(p0=pred.p0.randomize(sigma=1, seed=2))
-gdss.integrate(tmax=10, dt=1, print_cond=1)
-gdss.plot()
-
-a
-"""
-#predr = predict.str2pred(sr, pids=['k1f','k1r','b1f','b1r','k2f','b2f'], 
-#                         uids=['C1','C2'], us=C12s, c=None, p0=None)
-
-#predr2 = pred.currying(k2r=1, b2r=0)
-#gdss = pred.get_geodesics(p0=)
 
 
     
@@ -1463,42 +1332,6 @@ def get_reactants(stoich_or_eqn, multi=False):
         get_products(stoich_or_eqn, multi=multi)
 
 """
-
-rl_mmh11 = RateLaw(s='Vf/KA * (A - P/KE) / (1 + A/KA + P/KP)', xids=['A','P'])
-rl_mmh11_kb = RateLaw(s='kf*(A-P/KE) / (1+bA*A+bP*P)', xids=list('AP'))
-rl_mm11_kb = RateLaw(s='(kf*A-kr*P) / (1+bA*A+bP*P)', xids=list('AP'))
-rl_mmh21 = RateLaw(s='Vf/(KA*KB) * (A*B - P/KE) / (1 + A/KA + B/KB + A*B/(KA*KB) + P/KP)', 
-                   xids=['A','B','P'])
-rl_mmh21_kb = RateLaw(s='kf*(A*B - P/KE) / (1 + A*bA + B*bB + bA*bB*A*B + bP*P)', 
-                      xids=['A','B','P'])
-
-rl_mmh_ABPQ = RateLaw(s='Vf/(KA*KB) * (A*B - P*Q/KE) / (1 + A/KA + B/KB + A*B/(KA*KB) + P/KP + Q/KQ + P*Q/(KP*KQ))',
-                      xids=['A','B','P','Q'])
-rl_mmh_ABPP = RateLaw(s='Vf/(KA*KB) * (A*B - P*P/KE) / (1 + A/KA + B/KB + A*B/(KA*KB) + 2*P/KP + P*P/(KP*KP))',
-                      xids=['A','B','P'])
-rl_mmh22 = rl_mmh_ABPQ
-
-rl_mmh22_kb = RateLaw(s='kf*(A*B-P*Q/KE) / (1 + bA*A + bB*B + bA*bB*A*B + bP*P + bQ*Q + bP*bQ*P*Q)', xids=list('ABPQ'))
-
-rl_mm_ABPP = RateLaw(s='(Vf*A*B/(KA*KB) - Vr*P*P/(KP*KP)) / (1 + A/KA + B/KB + A*B/(KA*KB) + 2*P/KP + P*P/(KP*KP))',
-                     xids=['A','B','P'])
-rl_ma_ABPP = RateLaw(s='kf * A*B - kr * P*P', xids=['A','B','P'])
-rl_mah_ABPP = RateLaw(s='kf * (A*B - P*P/KE)', xids=['A','B','P'])
-
-#rl_mmke11_kb = reparametrize(rl_mmke11, pscheme='VK', pscheme_new='kb')
-
-rls = OD([('rl_mmh_ABPP', rl_mmh_ABPP),
-          ('rl_mm_ABPP', 
-           RateLaw(s='(Vf*A*B/(KA*KB) - Vr*P*P/(KP*KP)) / (1 + A/KA + B/KB + A*B/(KA*KB) + 2*P/KP + P*P/(KP*KP))', 
-                   xids=['A','B','P'])),
-          ])
-
-
-def reparametrize(rl, scheme, scheme_new):
-    
-    pass
-    
-
 
 
 
@@ -2102,12 +1935,6 @@ def get_hasse_mmh22_ABPP():
         
     return hd
 
-hd_mmh22ABPP = get_hasse_mmh22_ABPP()
-#hd_mmh22ABPP.draw(nodeid2label=lambda nodeid: '\\\\textsf{%s}'%nodeid,
-#                  width=100, height=100, nodeid2color='white', 
-#              rank2size={4:(0.9,0.5),3:(0.7,0.4), 2:(0.65,0.4), 1:(0.65,0.4), 0:(0.5,0.3)},
-#              filepath='hasse_mmh22ABPP.pdf')
-
 
 def get_ratelaw(id, parametrization='VK'):
         """
@@ -2129,6 +1956,7 @@ def get_ratelaw(id, parametrization='VK'):
             xids = subids + proids
             
             masubstr, maprostr = '*'.join(subids), '*'.join(proids)
+            # mafstr, marstr = '*'.join(subids), '*'.join(proids)
             # XK: X over K
             XKsubstrs = ['(%s/K%s)'%(subid, subid) for subid in subids]
             XKprostrs = ['(%s/K%s)'%(proid, proid) for proid in proids]
@@ -2165,7 +1993,7 @@ def get_ratelaw(id, parametrization='VK'):
                     rl = RateLaw('Vf/(%s)*(%s-%s/KE)/%s'%(Ksubstr, masubstr, maprostr, XKdenstr),
                                  xids=xids)
                 if parametrization == 'kb':
-                    rl = RateLaw('kf*(%s-%s/KE)/%s'%(Ksubstr, masubstr, maprostr, Xbdenstr),
+                    rl = RateLaw('kf*(%s-%s/KE)/%s'%(masubstr, maprostr, Xbdenstr),
                                  xids=xids)
             elif rltype == 'mmi':
                 if parametrization == 'VK':
@@ -2179,20 +2007,128 @@ def get_ratelaw(id, parametrization='VK'):
             return rls[id]
 
 
+ma11 = get_ratelaw('ma11')
+ma21 = get_ratelaw('ma21')
+ma22 = get_ratelaw('ma22')
+ma22_ABPP = RateLaw(s='kf * A*B - kr * P*P', xids=['A','B','P'])
+
+mah11 = get_ratelaw('mah11')
+mah21 = get_ratelaw('mah21')
+mah22 = get_ratelaw('mah22')
+mah22_ABPP = RateLaw(s='kf * (A*B - P*P/KE)', xids=['A','B','P'])
+
+mm11 = get_ratelaw('mm11')
+mm21 = get_ratelaw('mm21')
+mm22 = get_ratelaw('mm22')
+mm22_ABPP = RateLaw(s='(Vf*A*B/(KA*KB) - Vr*P*P/(KP*KP)) / (1 + A/KA + B/KB + A*B/(KA*KB) + 2*P/KP + P*P/(KP*KP))',
+                    xids=['A','B','P'])
+
+mmh11 = get_ratelaw('mmh11')
+mmh21 = get_ratelaw('mmh21')
+mmh22 = get_ratelaw('mmh22')
+mmh22_ABPP = RateLaw(s='Vf/(KA*KB) * (A*B - P*P/KE) / (1 + A/KA + B/KB + A*B/(KA*KB) + 2*P/KP + P*P/(KP*KP))',
+                    xids=['A','B','P'])
+
+mm11_kb = get_ratelaw('mm11', 'kb')
+mm21_kb = get_ratelaw('mm21', 'kb')
+mm22_kb = get_ratelaw('mm22', 'kb')
+mm22_ABPP_kb = RateLaw(s='(kf*A*B - kr*P*P) / (1 + bA*A + bB*B + bA*A*bB*B + 2*bP*P + bP*P*bP*P)',
+                       xids=['A','B','P'])
+
+mmh11_kb = get_ratelaw('mmh11', 'kb')
+mmh21_kb = get_ratelaw('mmh21', 'kb')
+mmh22_kb = get_ratelaw('mmh22', 'kb')
+mmh22_ABPP_kb = RateLaw(s='kf*(A*B - P*P/KE) / (1 + bA*A + bB*B + bA*A*bB*B + 2*bP*P + bP*P*bP*P)',
+                        xids=['A','B','P'])
+
+hd_mmh11 = get_hasse_mmh11()
+
+hd_mm11 = get_hasse_mm11()
+
+hd_mm11Vf1 = get_hasse_mm11Vf1()
+
+hd_mm11KA1 = get_hasse_mm11KA1()
+
+hd_mmh22_ABPP = get_hasse_mmh22_ABPP()
+
+hd_mmh11_kb = get_hasse_mmh11_kb()
+
+hd_mm11_kb = get_hasse_mm11_kb()
+
+#hd_2mmh11 = hasse.get_product([hd_mmh11]*2)
+
+
 # todo's (in principle):
 # - clean up latex: fractional structure; remove parentheses
 # - clean up dot2tex: control fig size; make box appear; dashed boxes and edges
 # automate edge creation? requires a good understanding of physics and naming scheme
 if __name__ == '__main__':
 
-    hd = get_hasse_mm21()
-    hd.draw(nodeid2label=lambda nodeid: hd.get_node(nodeid)['texstr'], 
-            width=60, height=60, nodeid2color='white', 
-            rank2size={5:(2.5,0.8), 4:(2,0.8), 3:(1.5,0.7), 2:(1.2,0.5), 1:(1.2,0.5), 0:(1.2,0.5)},
-            filepath='hasse_mm21_tmp.pdf')
+    #hd = get_hasse_mm21()
+    #hd.draw(nodeid2label=lambda nodeid: hd.get_node(nodeid)['texstr'], 
+    #        width=60, height=60, nodeid2color='white', 
+    #        rank2size={5:(2.5,0.8), 4:(2,0.8), 3:(1.5,0.7), 2:(1.2,0.5), 1:(1.2,0.5), 0:(1.2,0.5)},
+    #        filepath='hasse_mm21_tmp.pdf')
 
-#subhd = hd.get_subdiagram(nodeids=hd.order[4]+hd.order[3][:-1]+hd.order[2][:-2]+hd.order[1][:-3])
-#subhd.draw(nodeid2label=lambda nodeid: subhd.get_node(nodeid)['texstr'], 
-#            width=60, height=60, nodeid2color='white', 
-#            rank2size={4:(2.5,0.8), 3:(2,0.8), 2:(1.5,0.7), 1:(1.2,0.5), 0:(1.2,0.5)},
-#            filepath='subhasse_mmke21.pdf')
+    #subhd = hd.get_subdiagram(nodeids=hd.order[4]+hd.order[3][:-1]+hd.order[2][:-2]+hd.order[1][:-3])
+    #subhd.draw(nodeid2label=lambda nodeid: subhd.get_node(nodeid)['texstr'], 
+    #            width=60, height=60, nodeid2color='white', 
+    #            rank2size={4:(2.5,0.8), 3:(2,0.8), 2:(1.5,0.7), 1:(1.2,0.5), 0:(1.2,0.5)},
+    #            filepath='subhasse_mmke21.pdf')
+    
+    
+    hd_mm11_kb.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11_kb.get_node(nodeid)['texstr']),
+                 width=600, height=450, nodeid2color='white',  
+                 rank2size={4:(1.2,0.8), 3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
+                 filepath='hasse_mm11_kb.pdf')
+    
+    
+    #hd_mm11Vf1.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11Vf1.get_node(nodeid)['texstr']),
+    #                width=600, height=450, nodeid2color='white',  
+    #                rank2size={3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
+    #                filepath='hasse_mm11Vf1.pdf')
+    
+    
+    #hd_mm11KA1.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11KA1.get_node(nodeid)['texstr']),
+    #                width=600, height=450, nodeid2color='white',  
+    #                rank2size={3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
+    #                filepath='hasse_mm11KA1.pdf')
+    
+    
+    #hd_mmh11.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mmh11.get_node(nodeid)['texstr']),
+    #              width=500, height=500, nodeid2color='white', 
+    #              rank2size={3:(1.3,1), 2:(1,0.9), 1:(1,0.8), 0:(1,0.8)},
+    #              filepath='hasse_mmh11.pdf')
+    
+    
+    
+    #hd_mmh22ABPP.draw(nodeid2label=lambda nodeid: '\\\\textsf{%s}'%nodeid,
+    #                  width=100, height=100, nodeid2color='white', 
+    #              rank2size={4:(0.9,0.5),3:(0.7,0.4), 2:(0.65,0.4), 1:(0.65,0.4), 0:(0.5,0.3)},
+    #              filepath='hasse_mmh22ABPP.pdf')
+    
+    
+            
+    """
+    rl_make11 = RateLaw(s='kf*(A-P/KE)', xids=['A','P'], cids=['KE'], info='make11')
+    rl_ma11 = RateLaw(s='kf*A-kr*P', xids=['A','P'], info='ma11')
+    rl_mai1 = RateLaw(s='kf*A', xids=['A'], info='mai1')
+    
+    rl_mmke11 = RateLaw(s='kf * (A - P/KE) / (1 + bA*A + bP*P)', 
+                        xids=['A','P'], cids=['KE'], info='mmke11')
+    rl_mm11 = RateLaw(s='(kf*A - kr*P) / (1 + bA*A + bP*P)', xids=['A','P'], info='mm11')
+    rl_mmi1 = RateLaw(s='(kf*A) / (1 + bA*A)', xids=['A'], info='mmi1')
+    
+    
+    rl_mmke21 = RateLaw(s='kf * (A*B - P/KE) / (1 + bA*A + bB*B + bA*bB*A*B + bP*P)',
+                        xids=['A','B','P'], cids=['KE'], info='mmke21')
+    
+    rl_mmke21_full = RateLaw(s='kf * (A*B - P/KE) / (1 + bA*A + bB*B + 2*bA*bB*rho*A*B + bP*P)',
+                             xids=['A','B','P'], cids=['KE'], info='mmke21_full')
+    
+    rl_mmke22 = RateLaw(s='kf * (A*B - P*Q/KE) / (1 + bA*A + bB*B + bA*bB*A*B + bP*P + bQ*Q + bP*bQ*P*Q)',
+                        xids=['A','B','P','Q'], info='mmke22')
+    """
+    
+    #rl_ = rl_ma11.facelift(eqn_new='C1<->X', pmap='num', rxnidx=1)
+    #rl2_ = rl2.facelift(eqn_new='C2+X4<->X3', add_idx=4)

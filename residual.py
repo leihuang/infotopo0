@@ -1,5 +1,5 @@
 """
-Add Mark's geometry-accelerated LM algorithm?
+Add Transtrum's geodesic-accelerated LM algorithm?
 """
 
 from __future__ import division
@@ -17,8 +17,10 @@ Series, DF = butil.Series, butil.DF
 
 from util.matrix import Matrix
 
-from infotopo import sampling
+from infotopo import fitting, sampling
+reload(fitting)
 reload(sampling)
+
 
 
 class Residual(object):
@@ -112,6 +114,9 @@ class Residual(object):
         """Scale posterior distribution."""
         pass
     
+    
+    def fit(self, **kwargs):
+        return fitting.fit(self, **kwargs)
     
     
     def sampling(self, p0=None, **kwargs):
