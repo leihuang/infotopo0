@@ -715,13 +715,121 @@ def get_hasse_mm11Vf1():
     
     rl3 = _get_rl('(1 * A/KA - Vr * P/KP) / (1 + A/KA + P/KP)', 'mm11Vf1') 
     
-    rl2s = [_get_rl('(1 * A/KA) / (1 + A/KA + P/KP)', 'mm11Vf1f'),
-            _get_rl('(1 * A - Vr*r*P) / (A + r*P)', 'mm11Vf1APsat'),
-            _get_rl('(1 * A/KA - kr*P) / (1 + A/KA)', 'mm11Vf1Plin'),
-            _get_rl('(- Vr * P/KP) / (1 + P/KP)', 'mm11rAlin')]
+    rl2s = [_get_rl('(1 * A/KA) / (1 + A/KA + P/KP)', 'Vf1f'),
+            _get_rl('(1 * A - Vr*r*P) / (A + r*P)', 'Vf1APsat'),
+            _get_rl('(1 * A/KA - kr*P) / (1 + A/KA)', 'Vf1Plin'),
+            _get_rl('(- Vr * P/KP) / (1 + P/KP)', 'rAlin')]
     
-    rl1s = [_get_rl('(1 * A/KA) / (1 + A/KA)', 'mm11Vf1fPlin'),
-            _get_rl('1 * A / (A + r*P)', 'mm11Vf1fAPsat'),
+    rl1s = [_get_rl('(1 * A/KA) / (1 + A/KA)', 'Vf1fPlin'),
+            _get_rl('1 * A / (A + r*P)', 'Vf1fAPsat'),
+            _get_rl('(1 * A - Vr*P) / A', 'Vf1PlinAsat'),
+            _get_rl('-kr * P', 'rAPlin'),
+            _get_rl('-Vr', 'rAlinPsat')]
+    
+    rl0s = [_get_rl('1', '1'),
+            _get_rl('0', '0'),
+            _get_rl('-inf', 'infr', style='dashed')]
+    
+    hd = hasse.HasseDiagram(rank=3)
+    
+    rls = OD([(3, [rl3]), (2, rl2s), (1, rl1s), (0, rl0s)])
+    for rank, rls_rank in rls.items():
+        for rl, style in rls_rank:
+            hd.add_node(rl.info, rank=rank, ratelaw=rl, style=style)
+            
+    # between corank 0 and 1
+    hd.add_edge('mm11Vf1', 'Vf1f', info='Vr->0')
+    hd.add_edge('mm11Vf1', 'Vf1APsat', info='KA,KP->0')
+    hd.add_edge('mm11Vf1', 'Vf1Plin', info='Vr,KP->inf')
+    hd.add_edge('mm11Vf1', 'rAlin', info='KA->inf')
+    
+    # between corank 1 and 2
+    hd.add_edge('Vf1f', 'Vf1fPlin', info='')
+    hd.add_edge('Vf1f', 'Vf1fAPsat', info='')
+        
+    hd.add_edge('Vf1APsat', 'Vf1fAPsat', info='Vr->0')
+    hd.add_edge('Vf1APsat', 'Vf1PlinAsat', info='Vf->0,r->inf')
+    hd.add_edge('Vf1APsat', 'rAlinPsat', info='r->inf')
+    
+    hd.add_edge('Vf1Plin', 'rAPlin', info='KA->inf')
+    hd.add_edge('Vf1Plin', 'Vf1PlinAsat', info='kr->inf,KA->0')
+    hd.add_edge('Vf1Plin', 'Vf1fPlin', info='kr->0')
+    
+    hd.add_edge('rAlin', 'rAPlin')
+    hd.add_edge('rAlin', 'rAlinPsat')
+    
+    # between corank 2 and 3
+    hd.add_edge('rAPlin', '0')
+    hd.add_edge('rAPlin', 'infr', style='dashed')
+    hd.add_edge('rAlinPsat', '0')
+    hd.add_edge('rAlinPsat', 'infr', style='dashed')
+    hd.add_edge('Vf1PlinAsat', '1')
+    hd.add_edge('Vf1PlinAsat', 'infr', style='dashed')
+    hd.add_edge('Vf1fPlin', '0')
+    hd.add_edge('Vf1fPlin', '1')
+    hd.add_edge('Vf1fAPsat', '0')
+    hd.add_edge('Vf1fAPsat', '1')
+    
+
+    texmap = OD([('Vfp',"V_f"), ('Vrp',"V_r"),
+                 (' r*','\\\\rho '), ('*r*','\\\\rho '), 
+                 ('Vf','V_f'), ('Vr','V_r'), ('KA','K_A'), ('KP','K_P'), 
+                 ('KE','K_E'), ('kf','k_f'), ('kr','k_r'), 
+                 ('inf','\\\\infty '), ('*','')])
+    
+    def _str2tex(s):  
+        def _repl(s):
+            return s.replace('A/KA', '\\\\frac{A}{KA}').\
+                replace('P/KP', '\\\\frac{P}{KP}').\
+                replace('(P/A)', '\\\\frac{P}{A}').\
+                replace('P/A', '\\\\frac{P}{A}').\
+                replace('A/P', '\\\\frac{A}{P}')
+                
+        if ' / ' in s:  # central /
+            n, d = s.split(' / ')
+            tex = '\\\\frac{%s}{%s}' % (_repl(n).strip('()'), _repl(d).strip('()'))
+        else:
+            tex = _repl(s)
+        for k, v in texmap.items():  # sequential replacement so order matters
+            tex = tex.replace(k, v)
+        return '\\\\displaystyle ' + tex
+    
+    for nodeid in hd.nodeids:
+        s = hd.get_node(nodeid)['ratelaw'].s
+        # Not using str2tex which uses SloppyCell's exprmanip as it disrupts
+        # the expression structure (like moving a denominator in the numerator
+        # to the denominator)
+        # Not much work (only two ratelaw hds would be shown the formula) 
+        # so an ad-hoc solution suffices here
+        #texstr = str2tex(s, texmap)  
+        texstr = _str2tex(s)
+        hd.get_node(nodeid)['texstr'] = texstr
+        
+    return hd
+
+
+def get_hasse_mm11Vf1_kb():
+    """Undone yet...
+    """
+    def _get_rl(s, info, style='filled'): 
+        return RateLaw(s=s, info=info, xids=['A','P']), style
+    
+    rl3 = _get_rl('(1 * A - kr * P) / (1 + bA*A + bP*P)', 'mm11kf1') 
+    
+    rl2s = [_get_rl('A / (1 + bA*A + bP*P)', 'kf1f'),
+            _get_rl('(1 * A - kr * P) / (1 + bA*A)', 'kf1Plin'),
+            _get_rl('(1 * A - kr * P) / (1 + bP*P)', 'kf1Alin'),
+            _get_rl('(- Vr*P) / (A + r*P)', 'kf1APsat')]
+    
+    rl1s = [_get_rl('A / (1 + bA*A)', 'kf1fPlin'),
+            _get_rl('A / (1 + bP*P)', 'kf1fAlin'),
+            
+            ### below undone...
+            
+            _get_rl('(- Vr*P) / A', 'kf1'),
+            
+            _get_rl('1 * A / (A + r*P)', 'kf1'),
+            
             _get_rl('(1 * A - Vr*P) / A', 'mm11Vf1PlinAsat'),
             _get_rl('-kr * P', 'ma11r'),
             _get_rl('-Vr', 'Vr')]
@@ -925,17 +1033,17 @@ def get_hasse_mmh11():
     
     rl3 = _get_rl('Vf/KA * (A - P/KE) / (1 + A/KA + P/KP)', info='mmh11')
     
-    rl2s = [_get_rl('Vf/KA * (A - P/KE) / (1 + A/KA)', 'mmh11Plin'),  # mmh11VrKPinf
-            _get_rl('Vf * (A - P/KE) / (A + rK*P)', 'mmh11APsat'),  # mmh11KAKP0
-            _get_rl('kf * (A - P/KE) / (1 + P/KP)', 'mmh11Alin')]  # mmh11VfKAinf
+    rl2s = [_get_rl('Vf/KA * (A - P/KE) / (1 + A/KA)', 'Plin'),  # mmh11VrKPinf
+            _get_rl('Vf * (A - P/KE) / (A + rK*P)', 'APsat'),  # mmh11KAKP0
+            _get_rl('kf * (A - P/KE) / (1 + P/KP)', 'Alin')]  # mmh11VfKAinf
             
-    rl1s = [_get_rl('Vf * (A - P/KE) / A', 'mmh11PlinAsat'),  # mmh11KA0
-            _get_rl('kf * (A - P/KE)', 'mmh11APlin'),  # mah11 
-            _get_rl('Vfp * (A - P/KE) / P', 'mmh11AlinPsat')]  # Vfp: Vf'=Vr*KE 
+    rl1s = [_get_rl('Vf * (A - P/KE) / A', 'PlinAsat'),  # mmh11KA0
+            _get_rl('kf * (A - P/KE)', 'APlin'),  # mah11 
+            _get_rl('Vfp * (A - P/KE) / P', 'AlinPsat')]  # Vfp: Vf'=Vr*KE 
     
     rl0s = [#RateLaw(s='0', xids=['A','P']),  # 110
             _get_rl('0', '0'),
-            _get_rl('inf * (A - P/KE)', 'mah11inf', style='dashed')]
+            _get_rl('inf * (A - P/KE)', 'infAPlin', style='dashed')]
     
     info = dict(kf='Vf/KA', kr='Vr/KP', rK='KP/KA', Vfp='Vr*KE',
                 KE='(Vf/KA)/(Vr/KP)')
@@ -947,21 +1055,21 @@ def get_hasse_mmh11():
         for rl, style in rls_rank:
             hd.add_node(rl.info, rank=rank, ratelaw=rl, style=style)
     
-    hd.add_edge('mmh11', 'mmh11Plin', info='Vr,KP->inf')
-    hd.add_edge('mmh11', 'mmh11APsat', info='KA,KP->0')
-    hd.add_edge('mmh11', 'mmh11Alin', info='Vf,KA->inf')
-    hd.add_edge('mmh11Plin', 'mmh11PlinAsat')
-    hd.add_edge('mmh11Plin', 'mmh11APlin')
-    hd.add_edge('mmh11APsat', 'mmh11PlinAsat')
-    hd.add_edge('mmh11APsat', 'mmh11AlinPsat')
-    hd.add_edge('mmh11Alin', 'mmh11AlinPsat')
-    hd.add_edge('mmh11Alin', 'mmh11APlin')
-    hd.add_edge('mmh11PlinAsat', '0')
-    hd.add_edge('mmh11PlinAsat', 'mah11inf', style='dashed')
-    hd.add_edge('mmh11APlin', '0')
-    hd.add_edge('mmh11APlin', 'mah11inf', style='dashed')
-    hd.add_edge('mmh11AlinPsat', '0')
-    hd.add_edge('mmh11AlinPsat', 'mah11inf', style='dashed')
+    hd.add_edge('mmh11', 'Plin', info='Vr,KP->inf')
+    hd.add_edge('mmh11', 'APsat', info='KA,KP->0')
+    hd.add_edge('mmh11', 'Alin', info='Vf,KA->inf')
+    hd.add_edge('Plin', 'PlinAsat')
+    hd.add_edge('Plin', 'APlin')
+    hd.add_edge('APsat', 'PlinAsat')
+    hd.add_edge('APsat', 'AlinPsat')
+    hd.add_edge('Alin', 'AlinPsat')
+    hd.add_edge('Alin', 'APlin')
+    hd.add_edge('PlinAsat', '0')
+    hd.add_edge('PlinAsat', 'infAPlin', style='dashed')
+    hd.add_edge('APlin', '0')
+    hd.add_edge('APlin', 'infAPlin', style='dashed')
+    hd.add_edge('AlinPsat', '0')
+    hd.add_edge('AlinPsat', 'infAPlin', style='dashed')
     
     texmap = OD([('Vfp',"V_f'"), ('Vrp',"V_r'"), ('rK','\\\\rho '), 
                  ('Vf','V_f'), ('Vr','V_r'), ('KA','K_A'), ('KP','K_P'), 
@@ -1047,16 +1155,21 @@ hd2 = hd_2mmh11
 for nodeid in hd2.nodeids:
     hd2.node[nodeid]['style'] = 'filled'
 
-def feq(nodeid):
+def feq_mmh11(nodeid):
     v1, v2 = nodeid
     xmap = {'A':'P', 'P':'A', '':''}
     opmap = {'lin':'lin', 'sat':'sat', '':''}
     def _flip(vid):
-        if vid in ['mmh11', 'mmh11APsat', 'mmh11APlin', '0', 'mah11inf']:
+        if vid in ['mmh11', 'APsat', 'APlin', '0', 'infAPlin']:
             return vid
+        elif len(vid) == 4:
+            xid, op = vid[0], vid[1:4]
+            return xmap[xid] + opmap[op]
+        elif len(vid) == 8:
+            xid1, op1, xid2, op2 = vid[0], vid[1:4], vid[4], vid[5:]
+            return xmap[xid1] + opmap[op1] + xmap[xid2] + opmap[op2]
         else:
-            xid1, op1, xid2, op2 = vid[5], vid[6:9], vid[9:10], vid[10:]
-            return 'mmh11' + xmap[xid1] + opmap[op1] + xmap[xid2] + opmap[op2]
+            pass
     return [(_flip(v2), _flip(v1))]
 """
 
@@ -2076,11 +2189,15 @@ if __name__ == '__main__':
     #            rank2size={4:(2.5,0.8), 3:(2,0.8), 2:(1.5,0.7), 1:(1.2,0.5), 0:(1.2,0.5)},
     #            filepath='subhasse_mmke21.pdf')
     
-    
-    hd_mm11_kb.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11_kb.get_node(nodeid)['texstr']),
+    hd_mm11.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11.get_node(nodeid)['texstr']),
                  width=600, height=450, nodeid2color='white',  
                  rank2size={4:(1.2,0.8), 3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
-                 filepath='hasse_mm11_kb.pdf')
+                 filepath='hasse_mm11.pdf')
+    
+    #hd_mm11_kb.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11_kb.get_node(nodeid)['texstr']),
+    #             width=600, height=450, nodeid2color='white',  
+    #             rank2size={4:(1.2,0.8), 3:(1.2,0.8), 2:(1.1,0.8), 1:(1.1,0.8), 0:(0.7,0.6)},
+    #             filepath='hasse_mm11_kb.pdf')
     
     
     #hd_mm11Vf1.draw(nodeid2label=lambda nodeid: '\\\\begin{tabular}{c} \\\\textcolor{red}{\\\\textsf{%s}} \\\\\\\\  \\\\\\\\ $%s$ \\\\end{tabular}'%(nodeid,hd_mm11Vf1.get_node(nodeid)['texstr']),

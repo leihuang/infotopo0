@@ -375,8 +375,9 @@ def get_modules(net):
         Jm[s] = J[s]
         dxdtm = np.dot(N, Jm)
         
-        
-    
+
+def get_bipartite(net):    
+    pass
 
 
 """

@@ -12,6 +12,8 @@ from scipy.optimize import leastsq, minimize
 
 from SloppyCell import lmopt
 
+from util.matrix import Matrix
+
 from util import butil
 Series, DF = butil.Series, butil.DF
 
@@ -404,3 +406,8 @@ def fit(res, p0=None, np0=1, sigma=1,
             outs.append(out)
         return min(outs, key=lambda out: out.cost) 
     """
+
+def _r2cost(r):
+    """
+    """
+    return np.linalg.norm(r)**2 / 2

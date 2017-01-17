@@ -557,7 +557,7 @@ def sampling(func, nstep, p0=None, in_logp=True, seed=None, scheme_sampling='jtj
     def _get_smat(p, scheme, cutoff_singval, stepscale, temperature):
         if scheme == 'jtj':
             jac = Dfunc(p)
-            jtj = jac.T * jac
+            jtj = np.dot(jac.T, jac)
             smat = _hess2smat(jtj, cutoff_singval, stepscale, temperature)
         if scheme == 'eye':
             smat = Matrix.eye(func.pids) * stepscale
@@ -675,7 +675,7 @@ def _hess2smat(hess, cutoff_singval, stepscale, temperature):
                         + sum(cutoff_vals)/cutoff_singval)
     else:
         scale = np.sqrt(len(singvals))
-    print scale
+    #print scale
     
     smat /= scale
     smat *= stepscale

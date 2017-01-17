@@ -117,7 +117,19 @@ class Residual(object):
     
     def fit(self, **kwargs):
         return fitting.fit(self, **kwargs)
+
+
+    def fit_lm_sloppycell(self, **kwargs):
+        return fitting.fit_lm_sloppycell(self, **kwargs)
     
+    
+    def fit_lm_scipy(self, **kwargs):
+        return fitting.fit_lm_scipy(self, **kwargs)
+    
+    
+    def fit_lm_custom(self, **kwargs):
+        return fitting.fit_custom(self, **kwargs)
+        
     
     def sampling(self, p0=None, **kwargs):
         """
@@ -159,10 +171,6 @@ class Residual(object):
    
    
    
-def _r2cost(r):
-    """
-    """
-    return np.linalg.norm(r)**2 / 2
         
          
     """

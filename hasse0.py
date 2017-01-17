@@ -382,15 +382,9 @@ class HasseDiagram(nx.DiGraph):
 
     """
     
-    def draw(self, 
-             nodeid2pos=None, 
-             nodeid2label=None, 
-             nodeid2color='white',
-             nodeid2style='filled',
-             nodeid2shape='box',
-             edgeid2color='black', 
-             stack=False,
-             width=1000, height=1000, 
+    def draw(self, nodeid2pos=None, nodeid2label=None, nodeid2color='white',
+             edgeid2color='black', stack=False,
+             width=1000, height=1000, nodeshape='box',
              rank2size=None, margin=10, filepath=''):
         """Draw the diagram.
         
@@ -434,24 +428,13 @@ class HasseDiagram(nx.DiGraph):
         # get nodeid2color
         if not isinstance(nodeid2color, dict):
             nodeid2color = dict.fromkeys(self.nodeids, nodeid2color)
-        # get nodeid2shape
-        if not isinstance(nodeid2shape, dict):
-            nodeid2shape = dict.fromkeys(self.nodeids, nodeid2shape)
         # get nodeid2style
-        if nodeid2style is None:
-            nodeid2style = self.nodeattrs.style.to_dict()
-        elif not isinstance(nodeid2style, dict):
-            nodeid2style = dict.fromkeys(self.nodeids, nodeid2style)
-        else:
-            pass
+        nodeid2style = self.nodeattrs.style.to_dict()
         # get edgeid2style
         edgeid2style = self.edgeattrs.style.to_dict()
         # get edgeid2color
         if not isinstance(edgeid2color, Mapping):
             edgeid2color = dict.fromkeys(self.edgeids, edgeid2color)
-        # get rank2size
-        if rank2size is None:
-            rank2size = dict.fromkeys(self.order.keys(), (1,1))
 
         
         ## Create a pygraphviz.AGraph instance
@@ -460,8 +443,7 @@ class HasseDiagram(nx.DiGraph):
                        overlap='scale')
         g.add_nodes_from(self.nodeids)
         g.add_edges_from(self.edges())  #, arrowsize=arrowsize)
-        
-        
+
         #for nodeid1, nodeid2, edgeattr in self.edges(data=True):
         #    edge = g.get_edge(nodeid1, nodeid2)
         #    edge.attr['label'] = edgeattr.get('info', '')
@@ -477,11 +459,9 @@ class HasseDiagram(nx.DiGraph):
                 node.attr['pos'] = '%f,%f' % nodeid2pos[nodeid]
                 node.attr['label'] = nodeid2label[nodeid]
                 node.attr['fillcolor'] = _colormap(nodeid2color.get(nodeid, 'white'))
-                #node.attr['color'] = _colormap(nodeid2color.get(nodeid, 'black'))
-                node.attr['shape'] = nodeid2shape[nodeid]
+                node.attr['shape'] = nodeshape
                 node.attr['style'] = nodeid2style[nodeid]
                 node.attr['fontsize'] = 50
-                node.attr['penwidth'] = 5
                 if rank2size:
                     rw, rh = rank2size[rank]
                     node.attr['width'] = rw #* width
@@ -1091,11 +1071,9 @@ def get_product(hds, f_nodeattr=None):
     return hd    
         
 
-def get_vertex_covers(edges):
+def get_vertex_covers(nodeids, edges):
     """
     """
-    nodeids = list(set(butil.flatten(edges, 1)))
-    
     def _work(subset):
         for edge in edges:
             if all([nodeid not in edge for nodeid in subset]):
@@ -1111,7 +1089,7 @@ def is_disjoint(cover, edges):
     """
     """
     for edge in edges:
-        if edge[0] in cover and edge[1] in cover:
+        if edge[0] in subset and edge[1] in cover:
             return False
     return True
 
