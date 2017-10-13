@@ -94,7 +94,7 @@ class Residual(object):
     
     
     def cost(self, p=None):
-        return _r2cost(self(p))
+        return np.linalg.norm(self(p))**2 / 2
     
     
     def set_prior_gaussian(self, means, sigmas, log=True):

@@ -344,6 +344,9 @@ class Experiments(butil.DF):
     def times(self):
         pass
     
+    def __add__(self, other):
+        return self.append(other)
+    
     
 class Measurements(list):
     """

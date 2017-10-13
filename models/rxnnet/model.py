@@ -157,7 +157,7 @@ class Network(object, Network0):
     @property
     def p0(self):
         #return self.optvars.apply(lambda var: var.initialValue)
-        return Series([var.val0 for var in self.optimizableVars], self.pids)
+        return Series([var.initialValue for var in self.optimizableVars], self.pids)
         
     @property
     def pids(self):
@@ -489,41 +489,42 @@ class Network(object, Network0):
         return eqns
 
     
-    def add_reaction_ma(self, id, stoich_or_eqn, p, reversible=True, 
+    def add_reaction_ma(self, rxnid, stoich_or_eqn, p, reversible=True, 
                         haldane='kf', add_thermo=False, T=25):
         """
-        Add a reaction assuming mass action kinetics.
+        Add a reaction with mass-action kinetics to a network in-place.
         
-        Input:
-            rxnid: a str; id of the reaction
-            stoich_or_eqn: a mapping (stoich, eg, {'S':-1, 'P':1}) or 
-                a str (eqn, eg, 'S<->P'); if an eqn is provided, 
-                bidirectional arrow ('<->') denotes reversible reaction and 
-                unidirectional arrow ('->') denotes irreversible reaction
-            p: a dict; mapping from pid to pinfo, where pinfo can be 
-                a float (pval) or a tuple (pval, is_optimizable); 
-                eg, p = {'kf':1, 'kb':2, 'KE':(1, False)}
-            reversible: a bool; specify whether the reaction is reversible
-            haldane: a str; specify whether to constrain the kinetic parameters
-                and hence reduce the number of independent parameters using 
-                Haldane's relationship, which describes the thermodynamic 
-                dependence of kinetic parameters: kf/kb = KE
-                - '': not use haldane relationship 
-                    (both kf and kb are free parameters)
-                - 'kf': use haldane relationship with 'kf' as the 
-                    independent parameter: kb = kf/KE
-                - 'k': use haldane relationship with 'k' as the independent 
-                    parameter (aka parameter balancing by Liebermeister et al.):
-                    kf/kb=KE, kf*kb=k^2 => 
-                        kf=k*sqrt(KE)
-                        kb=k/sqrt(KE)
-            add_thermo: a bool; specify whether to add thermodynamic variables
-                if dG0 or KE is provided in p: dG=dG0+RT*log(Q), g=dG/RT
-            T: a float; temperature in celsius, used for RT in thermodynamic 
-                relationships
+        Parameters
+        ----------
+        rxnid: a str; id of the reaction
+        stoich_or_eqn: a mapping (stoich, eg, {'S':-1, 'P':1}) or 
+            a str (eqn, eg, 'S<->P'); if an eqn is provided, 
+            bidirectional arrow ('<->') denotes reversible reaction and 
+            unidirectional arrow ('->') denotes irreversible reaction
+        p: a dict or float
+            If dict, it maps from pid to pinfo, where pinfo can be 
+            a float (pval) or a tuple (pval, is_optimizable); 
+            eg, p = {'kf':1, 'kb':2, 'KE':(1, False)}.
+            If float, the default value of whatever parameters.
+        reversible: a bool; specify whether the reaction is reversible
+        haldane: a str; specify whether to constrain the kinetic parameters
+            and hence reduce the number of independent parameters using 
+            Haldane's relationship, which describes the thermodynamic 
+            dependence of kinetic parameters: kf/kb = KE
+            - '': not use haldane relationship 
+                (both kf and kb are free parameters)
+            - 'kf': use haldane relationship with 'kf' as the 
+                independent parameter: kb = kf/KE
+            - 'k': use haldane relationship with 'k' as the independent 
+                parameter (aka parameter balancing by Liebermeister et al.):
+                kf/kb=KE, kf*kb=k^2 => 
+                    kf=k*sqrt(KE)
+                    kb=k/sqrt(KE)
+        add_thermo: a bool; specify whether to add thermodynamic variables
+            if dG0 or KE is provided in p: dG=dG0+RT*log(Q), g=dG/RT
+        T: a float; temperature in celsius, used for RT in thermodynamic 
+            relationships
         """
-        rxnid = id  ## FIXME **
-        
         ## get stoich
         if isinstance(stoich_or_eqn, str):
             eqn = stoich_or_eqn
@@ -542,6 +543,16 @@ class Network(object, Network0):
         
         ## add parameters
         RT = 8.31446 * (T + 273.15) / 1000
+        if not isinstance(p, Mapping):
+            p0 = p
+            if not add_thermo:
+                if haldane == '':
+                    p = dict.fromkeys(['kf', 'kb'], p0)
+                elif haldane == 'kf':
+                    p = {'kf':(p0, True), 'KE':(p0, False)}
+                else:
+                    pass
+            
         for pid, pinfo in p.items():
             if isinstance(pinfo, tuple):
                 pval, is_optimizable = pinfo
@@ -2736,7 +2747,7 @@ def _get_products(stoich_or_eqn, multi=False):
     """
     Input: 
         stoich_or_eqn: a mapping, from species ids to stoich coefs which can be
-                an int, a float, or a string; or a str
+                an int, a float, or a string
         multi: a bool; if True, return a multiset by repeating
             for stoichcoef times
     
@@ -2754,10 +2765,13 @@ def _get_products(stoich_or_eqn, multi=False):
             #stoichcoef = int(float(stoichcoef))
             stoichcoef = float(stoichcoef)
         except ValueError:
-            stoichcoef = 1
+            print "ValueError: stoichcoef = ", stoichcoef
         if stoichcoef > 0:
             if not np.isclose(stoichcoef, int(stoichcoef)):
                 multi = False
+            else:
+                stoichcoef = int(stoichcoef)
+                
             if multi:
                 proids.extend([spid]*stoichcoef)
             else:

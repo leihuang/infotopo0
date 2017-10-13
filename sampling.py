@@ -25,7 +25,6 @@ import pandas as pd
 #from matplotlib.mlab import PCA  # write my own pca codes?
 import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D
-from more_itertools import unique_everseen
 
 from util import butil, plotutil
 Series, DF = butil.Series, butil.DF
@@ -68,7 +67,11 @@ class Ensemble(DF):
         """
         """
         assert self.columns.nlevels == 2  # a composite ensemble
-        return list(unique_everseen(self.columns.get_level_values(0)))
+        try:
+            from more_itertools import unique_everseen
+            return list(unique_everseen(self.columns.get_level_values(0)))
+        except ImportError:
+            print "Package more_itertools has not been installed."
     
     def set_vartypes(self, vartypes):
         """
@@ -274,23 +277,33 @@ class Ensemble(DF):
     
     
     
-    def hist(self, log10=False, figshape=None, filepath='', adjust=None, **kwargs_hist):
+    def hist(self, log10=False, figshape=None, filepath='', adjust=None, figsize=None,
+             xlims=None, 
+             **kwargs_hist):
         """
         """
-        fig = plt.figure()
+        fig = plt.figure(figsize=figsize)
         if figshape is None:
-            figshape = (self.nvar, 1)
-        for i in range(self.nvar):
+            figshape = (self.shape[1], 1)
+        for i in range(self.shape[1]):
             ax = fig.add_subplot(figshape[0], figshape[1], i+1)
             if log10:
                 dat = np.log10(self.iloc[:,i])
-                xlabel = 'log10(%s)'%self.columns[i] 
+                label = 'log10(%s)'%self.columns[i] 
             else:
                 dat = self.iloc[:,i]
-                xlabel = self.columns[i]
+                label = self.columns[i]
+            if xlims is not None:
+                ax.set_xlim(xlims[i])
             ax.hist(dat, **kwargs_hist)
-            ax.set_xlabel(xlabel)
+            ax.set_ylabel(label[4:], rotation='horizontal', labelpad=20)
             ax.set_yticklabels([])
+            ax.plot(xlims[i], [0,0], '-k', lw=2)
+            
+            ax.grid(False)
+            
+            if i != 8:
+                ax.set_xticklabels([])
             
         kwargs_adjust = {'wspace':0, 'hspace':0, 'top':0.9, 'bottom':0.1, 
                          'left':0.1, 'right':0.9}    
@@ -346,7 +359,7 @@ class Ensemble(DF):
 
     def scatter(self, hist=False, log10=False, pts=None, colors=None,
                 figsize=None, adjust=None, labels=None, labelsize=6, filepath='',
-                nodiag=True, lims=None):
+                nodiag=False, lims=None):
         """
         Input:
             hist: if True, also plot histograms for the marginal distributions
@@ -406,6 +419,15 @@ class Ensemble(DF):
 
                 ax.set_xticks([])
                 ax.set_yticks([])
+                
+                
+                xmin, xmax = ax.get_xlim()  
+                ymin, ymax = ax.get_ylim()
+                ax.plot([xmin, xmax], [ymin, ymin], lw=2, color='k')
+                ax.plot([xmin, xmax], [ymax, ymax], lw=2, color='k')
+                ax.plot([xmin, xmin], [ymin, ymax], lw=2, color='k')
+                ax.plot([xmax, xmax], [ymin, ymax], lw=2, color='k')
+                  
 
                 if i == 0:
                     ax.set_xlabel(varid_j, fontsize=labelsize)
@@ -525,7 +547,7 @@ def sampling(func, nstep, p0=None, in_logp=True, seed=None, scheme_sampling='jtj
     Input:
         func: predict or residual
         p0: 
-        sampmat: either 'JtJ' or 'I' or a matrix
+        sampmat: either 'jtj' or 'eye' or a matrix
         w1 and w2: floats between 0 and 1; weights on the prior and data
             components of posterior distribution respectively;
             Pr(p|d) \propto Pr(p) Pr(d|p) \propto Pr(p) exp(-C(p))
@@ -544,7 +566,6 @@ def sampling(func, nstep, p0=None, in_logp=True, seed=None, scheme_sampling='jtj
             if func.prior is None:
                 nlprior = 0
             else:
-                #print p[0], func.prior(p)
                 nlprior = -np.log(func.prior(p))
             cost = _get_cost(p)
         except:
